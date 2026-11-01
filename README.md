@@ -53,6 +53,12 @@ Builds are described by CMake presets (`CMakePresets.json`), also used by the VS
 - `cmake --preset windows-debug`, then `cmake --build --preset windows-debug`
 - `cmake --list-presets=all` lists the available presets (`macos-*` on macOS)
 
+## Translations
+
+Texts are written in English in the code (`tr()`, or `i18n::tr()` outside of Qt classes). Their translations are compiled into the app from `src/i18n/*.inc` tables (`{ "English text", "translation" },`), and the language follows the system's user interface one.
+
+To translate a new text, add it to `src/i18n/fr.inc`. Debug builds log every untranslated text as `[i18n] missing translation : "..."`.
+
 ## Publishing a release
 
 SoundBuddy is installed and updated through [Velopack](https://velopack.io) : installed copies check this repository's GitHub releases, then download and apply newer versions by themselves.

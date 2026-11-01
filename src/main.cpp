@@ -26,6 +26,7 @@
 
 #include <Velopack.hpp>
 
+#include "i18n/QtTranslatorBridge.hpp"
 #include "ui/monitor/mainWindow.h"
 
 QString getResourcesPath() {
@@ -49,25 +50,19 @@ int main(int argc, char** argv) {
     // setup app
     QApplication app(argc, argv);
 
-    // activate translations...
-        auto expectedBinaryTranslationsDir = getResourcesPath() + "translations";
+    // activate translations, in the user interface language of the system...
+        const auto locale = i18n::language() == i18n::Language::French
+            ? QLocale(QLocale::French)
+            : QLocale(QLocale::English);
 
-        //
-        // CAREFUL ! Debugging with GDB / LLVM from MINGW / MSYS will retrive lang from shell (LC_ALL...) !
-        //
-        auto locale = QLocale::system();
-
-        // Qt
+        // Qt own texts (standard buttons...)
         auto _qtTranslator = new QTranslator(&app);
-        if (_qtTranslator->load(locale, "qt", "_", expectedBinaryTranslationsDir)) {
+        if (_qtTranslator->load(locale, "qt", "_", getResourcesPath() + "translations")) {
             app.installTranslator(_qtTranslator);
         }
 
         // app
-        auto _appTranslator = new QTranslator(&app);
-        if (_appTranslator->load(locale, "app", "_", expectedBinaryTranslationsDir)) {
-            app.installTranslator(_appTranslator);
-        }
+        app.installTranslator(new QtTranslatorBridge(&app));
 
     //
     app.setQuitOnLastWindowClosed(false);

@@ -91,14 +91,10 @@ find_package(Qt6 REQUIRED COMPONENTS
     Core 
     Gui 
     Widgets
-    LinguistTools
 )
 
 #
-qt_standard_project_setup(
-    I18N_SOURCE_LANGUAGE en
-    I18N_TRANSLATED_LANGUAGES fr
-)
+qt_standard_project_setup()
 
 if(APPLE)
     find_package(Qt6 REQUIRED COMPONENTS 
@@ -243,21 +239,7 @@ endif()
 # translations #
 ################
 
-include(QtTranslation)
-
-# app sources
-HandleQtTranslation(
-    TARGET appExec
-    INSTALL_COMPONENT "App"
-    OUTPUT_LOCATION ${CMAKE_CURRENT_BINARY_DIR}/app_qm
-    SOURCES 
-        ${APP_CPP_FILES}
-        ${APP_HPP_FILES}
-    TRANSLATION_FILES
-        "src/i18n/app_fr.ts"
-)
-
-add_dependencies(appExec update_translations)
+# compiled in from src/i18n/*.inc tables (see src/i18n/Translations.h) : only Qt own translations are deployed
 
 ############
 # Velopack #
