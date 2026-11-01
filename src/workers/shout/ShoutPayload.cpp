@@ -1,8 +1,7 @@
 #include "ShoutPayload.h"
 #include "src/helpers/HashHelper.hpp"
-#include <QDateTime>
-
 #include "src/helpers/Json.hpp"
+#include "src/helpers/Timestamps.hpp"
 
 namespace {
 
@@ -41,8 +40,9 @@ ShoutJSONParsingResult ShoutPayload::toJSON() const
     const auto obj = yyjson_mut_obj(doc.get());
     yyjson_mut_doc_set_root(doc.get(), obj);
 
-    // ISO date, JS compatible (2011-10-08T07:07:09Z). Important ! we should not use local time, only UTC+0 !
-    addString(doc.get(), obj, "date", QDateTime::currentDateTimeUtc().toString(Qt::DateFormat::ISODate));
+    // Important ! we should not use local time, only UTC+0 !
+    const auto date = timestamps::utcISO();
+    yyjson_mut_obj_add_strncpy(doc.get(), obj, "date", date.data(), date.size());
 
     if (!isEmptyShout) {
         addString(doc.get(), obj, "name", tName);

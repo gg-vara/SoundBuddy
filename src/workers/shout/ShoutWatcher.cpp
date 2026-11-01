@@ -25,6 +25,7 @@
 #include <QEventLoop>
 
 #include "src/i18n/trad.hpp"
+#include "src/helpers/Timestamps.hpp"
 
 ShoutWatcher::ShoutWatcher() {}
 
@@ -92,14 +93,14 @@ void ShoutWatcher::processPayload(const ShoutPayload &incomingPayload) {
             //
             emit forwardMessage(
                 tr("%1: Shouting -> Nothing")
-                    .arg(QDateTime::currentDateTime().toString())
+                    .arg(QString::fromStdString(timestamps::local()))
             );
         } else {
             // log content
             const auto pState = incomingPayload.iPlayerState ? tr("playing") : tr("paused");
             const auto logMessage =
                 tr("%1: Shouting -> %2 - %3 - %4 (%5)")
-                    .arg(QDateTime::currentDateTime().toString())
+                    .arg(QString::fromStdString(timestamps::local()))
                     .arg(incomingPayload.tName)
                     .arg(incomingPayload.tAlbum)
                     .arg(incomingPayload.tArtist)
