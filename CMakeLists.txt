@@ -302,6 +302,8 @@ if(APPLE)
         Qt6::DBus
         # HTTP client
         "-framework Foundation"
+        # platform services
+        "-framework AppKit"
     )
 endif()
 

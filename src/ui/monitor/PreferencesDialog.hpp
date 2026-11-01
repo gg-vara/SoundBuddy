@@ -79,7 +79,7 @@ class PreferencesDialog : public QDialog {
 
             automationGroup->layout()->addWidget(this->_launchAppAtStartupChk);
 
-            if (PlatformHelper::isLaunchingAtStartup()) {
+            if (platform::isLaunchingAtStartup()) {
                 this->_launchAppAtStartupChk->setChecked(true);
             }
 
@@ -102,7 +102,7 @@ class PreferencesDialog : public QDialog {
     QCheckBox* _launchAppAtStartupChk;
 
     void _mightAddAppToStartup(Qt::CheckState checkState) {
-        PlatformHelper::switchStartupLaunch();
+        platform::setLaunchingAtStartup(Qt::CheckState::Checked == checkState);
         this->_appSettings->values().runAtStartup = Qt::CheckState::Checked == checkState;
         this->_appSettings->save();
     }

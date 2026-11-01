@@ -19,16 +19,16 @@
 
 #include "FeederThread.h"
 
-#include <QFile>
-
+#include <fstream>
 #include <string>
+#include <system_error>
 #include <utility>
 #include <exception>
 
 #include <zlib.h>
 #include <stdlib.h>
 
-#include "src/helpers/PlatformHelper.h"
+#include "src/helpers/Platform.h"
 #include "src/helpers/UploadHelper.hpp"
 #include "src/net/HttpClient.h"
 #include "version.h"
@@ -50,9 +50,10 @@ void FeederThread::run() {
         //
         emit forwardMessage(tr("Getting XML file location..."));
 
-            const auto musicAppLibPath = PlatformHelper::getMusicAppLibLocation().toStdString();
-            const auto outputPath = AppSettings::getFeedOutputFilePath(false).toStdString();
-            const auto warningPath = AppSettings::getFeedWarningFilePath().toStdString();
+            // UTF-8 paths, as the library parser takes them
+            const auto musicAppLibPath = platform::toUtf8(platform::musicLibraryFile());
+            const auto outputPath = platform::toUtf8(AppSettings::getFeedOutputFilePath(false));
+            const auto warningPath = platform::toUtf8(AppSettings::getFeedWarningFilePath());
 
         //
         emit forwardMessage(tr("Collecting tracks infos..."));
@@ -72,7 +73,7 @@ void FeederThread::run() {
                     "metadata and consequently were removed from the output file ! "
                     "Please check the \"%2\" file for more informations.")
                         .arg(json.warningsCount())
-                        .arg(warningPath.c_str()),
+                        .arg(QString::fromStdString(warningPath)),
                     MessageType::WARNING
                 );
 
@@ -80,7 +81,8 @@ void FeederThread::run() {
                 json.writeWarnings(warningPath.c_str());
             } else {
                 // else remove warning file
-                QFile::remove(warningPath.c_str());
+                std::error_code error;
+                std::filesystem::remove(AppSettings::getFeedWarningFilePath(), error);
             }
 
             //
@@ -124,9 +126,8 @@ void FeederThread::run() {
             }
 
             // write into file
-            QFile file(AppSettings::getFeedOutputFilePath(true));
-            file.open(QIODevice::WriteOnly);
-            file.write(reinterpret_cast<const char *>(compressedData), compressedDataSize);
+            std::ofstream file { AppSettings::getFeedOutputFilePath(true), std::ios::binary | std::ios::trunc };
+            file.write(reinterpret_cast<const char *>(compressedData), static_cast<std::streamsize>(compressedDataSize));
             file.close();
 
         emit forwardMessage(
@@ -175,7 +176,7 @@ void FeederThread::run() {
     } catch (const std::exception& e) {
         // emit error as log
         emit forwardMessage(
-            QString(e.what()),
+            QString::fromUtf8(e.what()),
             MessageType::ISSUE
         );
     }

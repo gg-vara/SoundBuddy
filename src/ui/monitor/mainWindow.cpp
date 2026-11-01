@@ -20,7 +20,11 @@
 #include "mainWindow.h"
 #include "version.h"
 
+#include <fstream>
+#include <iterator>
+#include <string>
 #include <string_view>
+#include <system_error>
 #include <vector>
 
 #include "src/helpers/Json.hpp"
@@ -61,7 +65,8 @@ void MainWindow::onAppSettingsChanged() {
 }
 
 void MainWindow::updateWarningsMenuItem() {
-    bool hasFeederWarnings = QFileInfo(AppSettings::getFeedWarningFilePath()).exists();
+    std::error_code error;
+    bool hasFeederWarnings = std::filesystem::exists(AppSettings::getFeedWarningFilePath(), error);
     this->openWarningsAction->setEnabled(hasFeederWarnings);
 }
 
@@ -82,7 +87,7 @@ void MainWindow::accessPlatform() {
     }
 
     //
-    PlatformHelper::openUrlInBrowser(platformHomeUrl);
+    platform::openUrl(platformHomeUrl.toStdString());
 }
 
 void MainWindow::accessPreferences() {
@@ -92,16 +97,12 @@ void MainWindow::accessPreferences() {
 
 // open the warnings file on the OS
 void MainWindow::openWarnings() {
-    // PlatformHelper::openFileInOS(AppSettings::getFeedWarningFilePath());
-
     //
-    QFile warnings(AppSettings::getFeedWarningFilePath());
-    warnings.open(QIODevice::ReadOnly | QIODevice::Text);
-        const auto content = warnings.readAll();
-    warnings.close();
+    std::ifstream warnings { AppSettings::getFeedWarningFilePath(), std::ios::binary };
+    const std::string content { std::istreambuf_iterator<char>(warnings), std::istreambuf_iterator<char>() };
 
     // array of tracks, each an object of string values
-    const auto doc = json::parse(std::string_view(content.constData(), static_cast<std::size_t>(content.size())));
+    const auto doc = json::parse(content);
     const auto rows = json::root(doc);
 
     //
@@ -538,8 +539,7 @@ QMenu* MainWindow::_getFileMenu(bool withMonitor) {
     // openData
     auto openDataFolder = new QAction(tr("Access upload data folder"), fileMenuItem);
     QObject::connect(openDataFolder, &QAction::triggered, [=]() {
-        auto directory = PlatformHelper::getDataStorageDirectory();
-        PlatformHelper::openFileInOS(directory);
+        platform::openPath(platform::dataDirectory());
     });
 
     // quit

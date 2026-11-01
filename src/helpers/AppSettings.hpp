@@ -1,20 +1,20 @@
 #pragma once
 
 #include <QSettings>
-#include <QDir>
+#include <QVariant>
 
 #include <filesystem>
 #include <optional>
 #include <utility>
 
-#include "src/helpers/PlatformHelper.h"
+#include "src/helpers/Platform.h"
 #include "src/settings/Settings.h"
 #include "version.h"
 
 class AppSettings {
  public:
     // loads the settings file, or imports the settings of the previous versions on first launch
-    AppSettings() : _file(std::filesystem::path(PlatformHelper::getDataStorageDirectory().toStdWString()) / "settings.json") {
+    AppSettings() : _file(platform::dataDirectory() / "settings.json") {
         if (auto stored = settings::load(_file)) {
             _values = std::move(*stored);
         } else if (auto legacy = _readLegacySettings()) {
@@ -85,12 +85,12 @@ class AppSettings {
         return { "/uploadMusicLibrary", QString(DEST_PLATFORM_PRODUCT_NAME) + "_file" };
     }
 
-    static const QString getFeedWarningFilePath() {
-        return PlatformHelper::getDataStorageDirectory() + QDir::separator() + _FeedWarningFileName;
+    static std::filesystem::path getFeedWarningFilePath() {
+        return platform::dataDirectory() / _FeedWarningFileName;
     }
 
-    static const QString getFeedOutputFilePath(bool isCompressed) {
-        return PlatformHelper::getDataStorageDirectory() + QDir::separator() + _FeedOutputBaseFileName + getFeedOutputExtension(isCompressed);
+    static std::filesystem::path getFeedOutputFilePath(bool isCompressed) {
+        return platform::dataDirectory() / (std::string(_FeedOutputBaseFileName) + (isCompressed ? _ZippedFeedOutputExtension : _BasicFeedOutputExtension));
     }
 
     static const QString getFeedOutputExtension(bool isCompressed) {

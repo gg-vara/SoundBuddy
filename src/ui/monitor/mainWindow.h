@@ -37,7 +37,7 @@
 #include <QIcon>
 #include <QStatusBar>
 
-#include "src/helpers/PlatformHelper.h"
+#include "src/helpers/Platform.h"
 
 #include "src/workers/shout/ShoutUploader.h"
 #include "src/ui/tabs/ShoutTab.hpp"
