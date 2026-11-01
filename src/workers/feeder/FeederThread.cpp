@@ -52,43 +52,37 @@ void FeederThread::run() {
             const auto outputPath = AppSettings::getFeedOutputFilePath(false).toStdString();
             const auto warningPath = AppSettings::getFeedWarningFilePath().toStdString();
 
-            //
-            ITunesLibraryParser parser (
-                musicAppLibPath.c_str(),
-                outputPath.c_str(),
-                warningPath.c_str()
-            );
-
         //
         emit forwardMessage(tr("Collecting tracks infos..."));
-            auto [libFile, results] = parser.getStoragedResults();
+            const ITunesXMLLibrary library { musicAppLibPath.c_str() };
         emit forwardMessage(tr("Collection done !"));
 
         //
         emit forwardMessage(tr("Parsing infos into JSON..."));
 
+            const JSONLibrary json { library };
+
             // if has missing fields tracks
-            if(results.missingFieldsTracks.size()) {
+            if(json.warningsCount()) {
                 //
                 emit forwardMessage(
                     tr("WARNING ! %1 files in your library are missing important "
                     "metadata and consequently were removed from the output file ! "
                     "Please check the \"%2\" file for more informations.")
-                        .arg(results.missingFieldsTracks.size())
+                        .arg(json.warningsCount())
                         .arg(warningPath.c_str()),
                     MessageType::WARNING
                 );
 
                 //
-                MissingFieldsJSONParser { std::move(results.missingFieldsTracks) }
-                    .copyToFile(warningPath.c_str());
+                json.writeWarnings(warningPath.c_str());
             } else {
                 // else remove warning file
                 QFile::remove(warningPath.c_str());
             }
 
             //
-            if(!results.allTracksCount()) {
+            if(!json.tracksCount() && !json.warningsCount()) {
                 //
                 emit forwardMessage(
                     tr("No music found in your %1 library. Please feed it some.")
@@ -101,8 +95,7 @@ void FeederThread::run() {
             }
 
             //
-            SuccessfulJSONParser outputParser { std::move(results.OKTracks) };
-            outputParser.copyToFile(outputPath.c_str());
+            json.writeTracks(outputPath.c_str());
 
         emit forwardMessage(tr("Parsing done !"));
 
@@ -113,15 +106,15 @@ void FeederThread::run() {
 
         emit forwardMessage(tr("Now we try to compress it..."));
 
-            const auto output_view = outputParser.dataBuffer().view();
-            auto compressedDataSize = compressBound(output_view.size()); // must be at least source len for starters, may be updated by zlib after sucessful compression
+            const auto output_json = json.tracksJSON();
+            auto compressedDataSize = compressBound(output_json.size()); // must be at least source len for starters, may be updated by zlib after sucessful compression
             auto compressedData = (unsigned char *)malloc(compressedDataSize);
 
             const auto compressionResult = compress(
                 compressedData, 
                 &compressedDataSize, 
-                reinterpret_cast<const unsigned char *>(output_view.data()), 
-                output_view.size()
+                reinterpret_cast<const unsigned char *>(output_json.data()), 
+                output_json.size()
             );
 
             if (compressionResult != Z_OK) {
@@ -136,7 +129,7 @@ void FeederThread::run() {
 
         emit forwardMessage(
             tr("Went from %1 to %2")
-            .arg(QLocale::system().formattedDataSize(output_view.size()))
+            .arg(QLocale::system().formattedDataSize(output_json.size()))
             .arg(QLocale::system().formattedDataSize(compressedDataSize))
         );
 
