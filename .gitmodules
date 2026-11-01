@@ -1,6 +1,3 @@
 [submodule "deps/ItunesLibraryParser"]
 	path = deps/ItunesLibraryParser
 	url = https://github.com/Amphaal/ItunesLibraryParser
-[submodule "deps/IFWUpdateChecker"]
-	path = deps/IFWUpdateChecker
-	url = https://github.com/Amphaal/IFWUpdateChecker

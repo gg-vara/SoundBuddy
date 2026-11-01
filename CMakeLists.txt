@@ -34,7 +34,7 @@ SET(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/out)
 
 cmake_minimum_required(VERSION 3.19)
 
-SET(GITHUB_REPO_OWNER "Amphaal")
+SET(GITHUB_REPO_OWNER "gg-vara")
 SET(GITHUB_REPO_NAME "SoundBuddy")
 
 ### PLEASE LET VERSION NEXT TO PROJECT NAME !!! since cmake has no documented way to do this, We use grep to ack project version on this specific line 
@@ -249,38 +249,55 @@ HandleQtTranslation(
 
 add_dependencies(appExec update_translations)
 
-add_library(ifw INTERFACE)
-target_sources(ifw INTERFACE "ifw/EndInstallerForm.ui")
+############
+# Velopack #
+############
 
-#
-# as IFW binary translation file must be in file system when configuring, ensure copy of said file
-#
+# installer and auto-updates, through GitHub releases.
+# Prebuilt library with a C ABI, so the MSVC build can be linked from MinGW / clang
+SET(VELOPACK_VERSION 1.2.161)
 
-# IFW sources
-# for .qm file to work with IFW auto-translation, file must be manually renamed to ts.qm, en.qm, de.qm...
-HandleQtTranslation(
-    TARGET ifw
-    OUTPUT_LOCATION "ifw/i18n"
-    SOURCES 
-        "ifw/EndInstallerForm.ui"
-    TRANSLATION_FILES 
-        "ifw/i18n/custom_ifw_fr.ts"
+include(FetchContent)
+FetchContent_Declare(velopack
+    URL https://github.com/velopack/velopack/releases/download/${VELOPACK_VERSION}/velopack_libc_${VELOPACK_VERSION}.zip
+    URL_HASH SHA256=31de8f2cf05a47bd5328a9f98b0c41aec1582156f6075f1058b26941f7f17c20
+    DOWNLOAD_EXTRACT_TIMESTAMP ON
+)
+FetchContent_MakeAvailable(velopack)
+
+add_library(velopack SHARED IMPORTED)
+set_target_properties(velopack PROPERTIES
+    INTERFACE_INCLUDE_DIRECTORIES ${velopack_SOURCE_DIR}/include
 )
 
-####################
-# IFWUpdateChecker #
-####################
+if(WIN32)
+    SET(VELOPACK_LIB ${velopack_SOURCE_DIR}/lib/velopack_libc_win_x64_msvc.dll)
+    set_target_properties(velopack PROPERTIES
+        IMPORTED_LOCATION ${VELOPACK_LIB}
+        IMPORTED_IMPLIB ${VELOPACK_LIB}.lib
+    )
 
-add_subdirectory(deps/IFWUpdateChecker)
+    # the import library refers to "velopack_libc.dll"
+    add_custom_command(TARGET appExec POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${VELOPACK_LIB} $<TARGET_FILE_DIR:appExec>/velopack_libc.dll
+    )
+elseif(APPLE)
+    SET(VELOPACK_LIB ${velopack_SOURCE_DIR}/lib/velopack_libc_osx.dylib)
+    set_target_properties(velopack PROPERTIES
+        IMPORTED_LOCATION ${VELOPACK_LIB}
+    )
 
-# https://github.com/chriskohlhoff/asio/pull/910
-target_compile_definitions(IFWUpdateChecker 
-    INTERFACE 
-        ASIO_HAS_STD_INVOKE_RESULT=1
-)
+    # the library id is an absolute path from Velopack's CI : load it from the bundle instead
+    add_custom_command(TARGET appExec POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${VELOPACK_LIB} $<TARGET_FILE_DIR:appExec>/libvelopack_libc.dylib
+        COMMAND install_name_tool -id @executable_path/libvelopack_libc.dylib $<TARGET_FILE_DIR:appExec>/libvelopack_libc.dylib
+        COMMAND install_name_tool -change /Users/runner/_work/velopack/velopack/target/x86_64-apple-darwin/release/deps/libvelopack_libc.dylib
+            @executable_path/libvelopack_libc.dylib $<TARGET_FILE:appExec>
+    )
+endif()
 
 target_link_libraries(appExec PRIVATE
-    IFWUpdateChecker
+    velopack
 )
 
 #######################
@@ -356,14 +373,28 @@ if(WIN32)
     DeployPEDependencies(appExec "AppRuntime")
 endif()
 
-######################
-# add Publish target #
-######################
+###########
+# Version #
+###########
 
-include(CMakePublish)
+# GitHub repository whose releases (published with vpk, see toolchains/publish_release.sh) feed updates
+SET(APP_UPDATES_REPOSITORY_URL ${PROJECT_HOMEPAGE_URL})
+
+configure_file(
+    ${CMAKE_CURRENT_SOURCE_DIR}/templates/_version.h
+    ${CMAKE_CURRENT_BINARY_DIR}/generated/version.h
+)
 
 #
 install(TARGETS appExec
     COMPONENT "App"
     BUNDLE DESTINATION "."
 )
+
+if(WIN32)
+    install(FILES ${VELOPACK_LIB}
+        RENAME velopack_libc.dll
+        TYPE BIN
+        COMPONENT "AppRuntime"
+    )
+endif()

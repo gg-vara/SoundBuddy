@@ -24,6 +24,8 @@
 #include <QLockFile>
 #include <QDebug>
 
+#include <Velopack.hpp>
+
 #include "ui/monitor/mainWindow.h"
 
 QString getResourcesPath() {
@@ -35,6 +37,9 @@ QString getResourcesPath() {
 }
 
 int main(int argc, char** argv) {
+    // must run first : handles install / update / uninstall hooks, and may exit the process right away
+    Velopack::VelopackApp::Build().Run();
+
     // prevent multiples instances
     QLockFile lockFile(QDir::tempPath() + QDir::separator() + APP_NAME + ".lock");
     if (!lockFile.tryLock(100)) {

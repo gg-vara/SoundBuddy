@@ -20,21 +20,75 @@
 #pragma once
 
 #include <QThread>
-#include <IFWUpdateChecker.hpp>
-Q_DECLARE_METATYPE(UpdateChecker::CheckResults)
+#include <QString>
+
+#include <exception>
+#include <memory>
+#include <optional>
+
+#include <Velopack.hpp>
 
 #include "version.h"
 
+// Checks GitHub releases for a newer version, and downloads it, through Velopack
 class UpdateCheckerThread : public QThread {
     Q_OBJECT
 
  public:
+    enum class Result {
+        UpdateReady,   // downloaded, ready to be applied
+        NoUpdate,
+        NotInstalled,  // not running from a Velopack installation (development builds...)
+        Failed
+    };
+
+    struct CheckResults {
+        Result result = Result::Failed;
+        QString version;  // of the downloaded update
+        QString error;
+    };
+
     void run() override {
-        UpdateChecker checker(APP_REMOTE_MANIFEST_URL);
-        auto result = checker.isNewerVersionAvailable();
-        emit isNewerVersionAvailable(result);
+        CheckResults results;
+
+        _update.reset();
+        _manager.reset();
+
+        try {
+            _manager = std::make_unique<Velopack::UpdateManager>(
+                std::make_unique<Velopack::GithubSource>(APP_UPDATES_REPOSITORY_URL)
+            );
+
+            _update = _manager->CheckForUpdates();
+            if (_update) {
+                _manager->DownloadUpdates(*_update);
+                results = { Result::UpdateReady, QString::fromStdString(_update->TargetFullRelease.Version) };
+            } else {
+                results.result = Result::NoUpdate;
+            }
+        } catch (const std::exception& e) {
+            // the manager cannot be created outside of an installation
+            results.result = _manager ? Result::Failed : Result::NotInstalled;
+            results.error = QString::fromUtf8(e.what());
+            _update.reset();
+        }
+
+        emit checked(results);
+    }
+
+    // once an update is ready : the application must exit right after, Velopack then applies it and restarts
+    void applyUpdateOnExit() {
+        if (_manager && _update) {
+            _manager->WaitExitThenApplyUpdates(*_update);
+        }
     }
 
  signals:
-    void isNewerVersionAvailable(const UpdateChecker::CheckResults results);
+    void checked(const UpdateCheckerThread::CheckResults results);
+
+ private:
+    std::unique_ptr<Velopack::UpdateManager> _manager;
+    std::optional<Velopack::UpdateInfo> _update;
 };
+
+Q_DECLARE_METATYPE(UpdateCheckerThread::CheckResults)

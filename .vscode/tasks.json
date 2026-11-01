@@ -55,41 +55,12 @@
             "problemMatcher": []
         },
         {
-            "label": "3a. Generate package (ZIP)",
-            "dependsOn": "2*. Build (Release)",
-            "type": "shell",
-            "options": {
-                "cwd": "${workspaceRoot}/build_release"
-            },
-            "command": "cpack -G ZIP",
-            "problemMatcher": []
-        },
-        {
-            "label": "3a. Generate package (NSIS)",
-            "dependsOn": "2*. Build (Release)",
-            "type": "shell",
-            "options": {
-                "cwd": "${workspaceRoot}/build_release"
-            },
-            "command": "cpack -G NSIS",
-            "problemMatcher": []
-        },
-        {
-            "label": "3b. Generate package (IFW)",
-            "dependsOn": "2*. Build (Release)",
-            "type": "shell",
-            "options": {
-                "cwd": "${workspaceRoot}/build_release"
-            },
-            "command": "cpack -G IFW"
-        },
-        {
-            "label": "00. Push release and artifacts to Github",
+            "label": "3. Publish release (Velopack, GitHub)",
             "type": "shell",
             "options": {
                 "cwd": "${workspaceRoot}"
             },
-            "command": "bash -x ./toolchains/push_release_and_artefact_github.sh"
+            "command": "bash -x ./toolchains/publish_release.sh"
         },
         {
             "label": "BB. Generate .pfx file for Windows certification",

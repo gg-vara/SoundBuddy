@@ -19,8 +19,6 @@
 
 #pragma once
 
-#include <IFWUpdateChecker.hpp>
-
 #include <QCoreApplication>
 #include <QString>
 #include <QSize>
@@ -116,7 +114,7 @@ class MainWindow : public QMainWindow {
     QAction *versionAction = nullptr;
     QAction *cfugAction = nullptr;
     void setupAutoUpdate();
-    void onUpdateChecked(const UpdateChecker::CheckResults checkResults);
+    void onUpdateChecked(const UpdateCheckerThread::CheckResults checkResults);
     void requireUpdateCheckFromUser();
     void checkForAppUpdates();
     void UpdateSearch_switchUI(bool isSearching);

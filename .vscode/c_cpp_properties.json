@@ -5,8 +5,7 @@
             "defines": [
                 "_DEBUG",
                 "UNICODE",
-                "_UNICODE",
-                "SPDLOG_FMT_EXTERNAL"
+                "_UNICODE"
             ],
             "compilerPath": "/usr/bin/clang",
             "cStandard": "c11",
@@ -17,13 +16,8 @@
                 "${workspaceFolder}",
                 "${workspaceFolder}/src",
                 "${workspaceFolder}/build_debug/generated",
-                "${workspaceFolder}/deps/IFWUpdateChecker/src",
-                "${workspaceFolder}/deps/IFWUpdateChecker/deps/StupidHTTPDownloader/include",
-                "${workspaceFolder}/deps/IFWUpdateChecker/deps/tiny-process-library",
                 "${workspaceFolder}/deps/ItunesLibraryParser/src",
-                "/opt/homebrew/opt/spdlog/include",
-                "/opt/homebrew/opt/fmt/include",
-                "/opt/homebrew/opt/asio/include",
+                "${workspaceFolder}/build_debug/_deps/velopack-src/include",
                 "/opt/homebrew/opt/qt/include",
                 "/opt/homebrew/opt/qt/include/QtCore",
                 "/opt/homebrew/opt/qt/include/QtWidgets",
@@ -37,8 +31,7 @@
             "defines": [
                 "_DEBUG",
                 "UNICODE",
-                "_UNICODE",
-                "SPDLOG_FMT_EXTERNAL"
+                "_UNICODE"
             ],
             "windowsSdkVersion": "10.0.18362.0",
             "cStandard": "c11",
@@ -56,9 +49,7 @@
                 "${env:MINGW64_ROOT}/include/qt6/QtGui",
                 "${env:MINGW64_ROOT}/include/qt6/QtNetwork",
                 "${workspaceFolder}/deps/ItunesLibraryParser/src",
-                "${workspaceFolder}/deps/IFWUpdateChecker/src",
-                "${workspaceFolder}/deps/IFWUpdateChecker/deps/StupidHTTPDownloader/include",
-                "${workspaceFolder}/deps/IFWUpdateChecker/deps/tiny-process-library",
+                "${workspaceFolder}/build_debug/_deps/velopack-src/include",
                 "${env:MINGW64_ROOT}/include/c++/v1",
                 "${env:MINGW64_ROOT}/lib/clang/22/include"
             ]

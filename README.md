@@ -10,7 +10,7 @@ Small companion app that feeds SoundVitrine with ITunes / Music library metadata
 Available for MacOS (BigSur 11.0+) and Windows 10+. Usage of Visual Studio Code (https://code.visualstudio.com) as IDE is recommanded.
 Requires a C++20 enabled compiler. We assume you have Git installed on your system.
 
-- Run command in terminal to clone this repository: `git clone --recurse-submodules -j8 https://github.com/Amphaal/SoundBuddy`
+- Run command in terminal to clone this repository: `git clone --recurse-submodules -j8 https://github.com/gg-vara/SoundBuddy`
 - In VS Code, use the command palette to run `Tasks : Run Tests Task`, which will configure the build
 - In VS Code, simply run `Launch` in the `Execute and Debug` tab to build the executable 
 
@@ -23,7 +23,7 @@ All dependencies are fetched via Homebrew (https://brew.sh), make sure you have 
 - Run command in terminal to fetch depedencies : `brew install $(cat ./prerequisites/brew.txt)`
 
 #### Security
-Now from OSX 13.2+, executables have to be signed with a developper identity to be even lauched (for Qt binary depedencies via `macdeployqt`, for IFW OSX Bundle via `CPack`...).
+Now from OSX 13.2+, executables have to be signed with a developper identity to be even lauched (for Qt binary depedencies via `macdeployqt`, for the Velopack package...).
 You need a locally registered XCode / Apple developper platform linked to your XCode app, and then set `APPLE_CODESIGN_ID` and `APPLE_CERT_APP_CODE_SIGN_IDENTITY` env variables:
 They would look like:
 - APPLE_CODESIGN_ID=U2T7J2AC52
@@ -46,6 +46,22 @@ On Windows, if installer is not signed, Chrome + Windows Defender will ring alar
 - First, generate `.pfx` file by running `toolchains/win_generate_pfx.sh`. Script will ask for publisher infos: give required infos if relevant.
   - Make sure that the Organisation Name is the same as the `APP_PUBLISHER_ORG` in `CMakeLists.txt` !
 - Then, build and run the project as usual
+- For local development builds, signing can be skipped with the `-DSOUNDBUDDY_CODESIGN=OFF` CMake option
+
+## Publishing a release
+
+SoundBuddy is installed and updated through [Velopack](https://velopack.io) : installed copies check this repository's GitHub releases, then download and apply newer versions by themselves.
+
+Requirements, in addition to the build dependencies :
+- .NET SDK (https://dotnet.microsoft.com/download), to run Velopack's CLI
+- Velopack's CLI, with the same version as `VELOPACK_VERSION` in `CMakeLists.txt` : `dotnet tool install -g vpk --version <VELOPACK_VERSION>`
+- GitHub CLI, logged in : `gh auth login`
+
+Then :
+- Bump the version in `CMakeLists.txt` (`project(... VERSION X.Y.Z`)
+- Run `toolchains/publish_release.sh` (or the `3. Publish release` VS Code task), on Windows from the CLANG64 shell, and on macOS.
+
+The script builds in Release, packages the app with `vpk pack` (including delta updates from the previous release, fetched with `vpk download github`), and publishes it as the `vX.Y.Z` GitHub release with `vpk upload github`. Use `--draft` to review the release before publishing it.
 
 ## License
     SoundBuddy

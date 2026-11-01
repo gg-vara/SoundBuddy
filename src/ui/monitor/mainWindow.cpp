@@ -156,7 +156,7 @@ void MainWindow::openWarnings() {
 
 void MainWindow::setupAutoUpdate() {
     QObject::connect(
-        &this->updateCheckerWorker, &UpdateCheckerThread::isNewerVersionAvailable,
+        &this->updateCheckerWorker, &UpdateCheckerThread::checked,
         this, &MainWindow::onUpdateChecked
     );
 
@@ -164,82 +164,63 @@ void MainWindow::setupAutoUpdate() {
     this->checkForAppUpdates();
 }
 
-void MainWindow::onUpdateChecked(const UpdateChecker::CheckResults checkResults) {
+void MainWindow::onUpdateChecked(const UpdateCheckerThread::CheckResults checkResults) {
     // if the user asks directly to check updates
-    if (this->userNotificationOnUpdateCheck) {
-        // next check will go un-notified
-        this->userNotificationOnUpdateCheck = false;
+    const bool userAsked = this->userNotificationOnUpdateCheck;
 
-        // error
-        if (checkResults.result != UpdateChecker::CheckCode::Succeeded) {
-            //
-            QString errMsg;
-            switch (checkResults.result) {
-                case UpdateChecker::CheckCode::NoRemoteURL:
-                    errMsg = tr("No remote URL given, probably because of an issue with the executable. Contact the developpers.");
-                break;
-                case UpdateChecker::CheckCode::LocalManifestFetch:
-                    errMsg = tr("Issue while finding the local package manifest.");
-                break;
-                case UpdateChecker::CheckCode::LocalManifestRead:
-                    errMsg = tr("Issue while reading the local package manifest.");
-                break;
-                case UpdateChecker::CheckCode::RemoteManifestFetch:
-                    errMsg = tr("Issue while finding the remote package update manifest.");
-                break;
-                case UpdateChecker::CheckCode::RemoteManifestRead:
-                    errMsg = tr("Issue while reading the remote package update manifest.");
-                break;
-                default:
-                case UpdateChecker::CheckCode::UnspecifiedFail:
-                    errMsg = tr("No specified code linked to the error happening. Contact the developpers.");
-                break;
+    // next check will go un-notified
+    this->userNotificationOnUpdateCheck = false;
+
+    this->UpdateSearch_switchUI(false);
+
+    switch (checkResults.result) {
+        case UpdateCheckerThread::Result::UpdateReady:
+            break;
+
+        case UpdateCheckerThread::Result::NoUpdate:
+            if (userAsked) {
+                QMessageBox::information(this,
+                    tr("Checking updates"),
+                    tr("No updates available at the time."),
+                    QMessageBox::Ok,
+                    QMessageBox::Ok);
             }
+            return;
 
-            //
-            QMessageBox::critical(this,
-                tr("Error while checking updates"),
-                errMsg,
-                QMessageBox::Ok,
-                QMessageBox::Ok);
+        case UpdateCheckerThread::Result::NotInstalled:
+            if (userAsked) {
+                QMessageBox::information(this,
+                    tr("Checking updates"),
+                    tr("Updates are only available for installed versions of %1.").arg(APP_NAME),
+                    QMessageBox::Ok,
+                    QMessageBox::Ok);
+            }
+            return;
 
-        // no updates
-        } else if (!checkResults.hasNewerVersion) {
-            QMessageBox::information(this,
-                tr("Checking updates"),
-                tr("No updates available at the time."),
-                QMessageBox::Ok,
-                QMessageBox::Ok);
-        }
+        case UpdateCheckerThread::Result::Failed:
+            if (userAsked) {
+                QMessageBox::critical(this,
+                    tr("Error while checking updates"),
+                    checkResults.error,
+                    QMessageBox::Ok,
+                    QMessageBox::Ok);
+            }
+            return;
     }
 
-    // no update, no go
-    if (!checkResults.hasNewerVersion) {
-        this->UpdateSearch_switchUI(false);
-        return;
-    }
-
-    // if has update
+    // update downloaded : if declined, it is applied on next launch anyway
     auto msgboxRslt = QMessageBox::information(this,
         tr("Update Available"),
-        tr("An update is available for %1. Would you like to install it now ?").arg(APP_NAME),
+        tr("%1 %2 is ready to be installed. Would you like to restart %1 now to install it ?")
+            .arg(APP_NAME)
+            .arg(checkResults.version),
         QMessageBox::Yes | QMessageBox::No,
         QMessageBox::Yes);
 
     if (msgboxRslt == QMessageBox::Yes) {
-        switch (checkResults.source) {
-        case UpdateChecker::CheckSource::GithubCheck:
-            QDesktopServices::openUrl(QUrl(APP_PATCHNOTE_URL));
-        break;
-        
-        case UpdateChecker::CheckSource::IFWCheck:
-            UpdateChecker::tryToLaunchUpdater();
-            this->forcedClose();
-        break;
-        }
+        this->updateCheckerWorker.applyUpdateOnExit();
+        this->forcedClose();
     }
-
-    this->UpdateSearch_switchUI(false);
 }
 
 void MainWindow::requireUpdateCheckFromUser() {

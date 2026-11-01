@@ -1,1 +1,1 @@
-ninja cmake llvm openssl@3 qt asio spdlog catch2 gh zlib
+ninja cmake llvm openssl@3 qt gh zlib
