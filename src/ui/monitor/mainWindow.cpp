@@ -264,74 +264,6 @@ void MainWindow::runMBeat() {
     thread->start();
 }
 
-void MainWindow::_mayRunDASHStreamer() {
-    if (!this->appSettings.isDashStreamFeatureEnabled()) {
-        return;
-    }
-
-    assert(this->shoutWorker);
-    auto &thread = this->dashWorker;
-
-    //
-    if(thread && thread->isRunning()) {
-        thread->quit();
-        thread->wait();
-    }
-
-    thread = new DASHThread();
-
-        QObject::connect( 
-            thread, &QThread::finished,
-            thread, &QObject::deleteLater
-        );
-
-        QObject::connect(
-            thread, &DASHThread::errorOccurred,
-            [](const QString &err) {
-                qDebug() << err;
-            }
-        );
-
-        QObject::connect(
-            thread,  &DASHThread::muxStarted, this,
-            [this](){
-                this->dashProgressBar->setRange(0, 100);
-                this->dashProgressBar->setValue(0);
-            }
-        , Qt::QueuedConnection);
-
-        QObject::connect(
-            thread, &DASHThread::muxProgress, this,
-            [this](int64_t at, int64_t of) {
-                this->dashProgressBar->setRange(0, of);
-                this->dashProgressBar->setValue(at);
-            },
-        Qt::QueuedConnection);
-
-        QObject::connect(
-            thread,  &DASHThread::muxEnding, this,
-            [this](){
-                this->dashProgressBar->setRange(0, 0); // undetermined state
-                this->dashProgressBar->setValue(0);
-            }
-        , Qt::QueuedConnection);
-
-        QObject::connect(
-            thread, &DASHThread::muxDone, this,
-            [this]() {
-                this->dashProgressBar->setRange(0, 1);
-                this->dashProgressBar->setValue(1);
-            },
-        Qt::QueuedConnection);
- 
-        QObject::connect(
-            this->shoutWorker, &ShoutWatcher::newAudioFileShouted,
-            thread, &DASHThread::doStreamNewFile
-        );
-
-    thread->start();
-}
-
 void MainWindow::runShouts() {
     //
     auto &thread = this->shoutWorker;
@@ -380,8 +312,6 @@ void MainWindow::runShouts() {
 
     thread->start();
 
-    //
-    _mayRunDASHStreamer();
 }
 
 void MainWindow::runFeeder() {
@@ -485,11 +415,6 @@ void MainWindow::_initStatusBar() {
     sb_widget->layout()->addWidget(this->statusLight);
     sb_widget->layout()->addWidget(this->statusLabel);
     statusBar->addWidget(sb_widget);
-
-    // add DASH infos to bar
-    dashProgressBar = new QProgressBar();
-    dashProgressBar->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
-    statusBar->addPermanentWidget(dashProgressBar);
 
     //
     this->setStatusBar(statusBar);
@@ -596,20 +521,6 @@ QMenu* MainWindow::_getFileMenu(bool withMonitor) {
         PlatformHelper::openFileInOS(directory);
     });
 
-   // openData
-    auto openDashFolder = new QAction(tr("Access DASH folder"), fileMenuItem);
-    QObject::connect(openDashFolder, &QAction::triggered, [=]() {
-        //
-        auto directory = DASHCreationOrder::getPathToDashTempFolder();
-        
-        // create dir if not existing
-        QDir destDir(directory);
-        if (!destDir.exists()) destDir.mkpath(".");
-
-        // 
-        PlatformHelper::openFileInOS(directory);
-    });
-
     // quit
     auto quitAction = new QAction(tr("Quit"), fileMenuItem);
     QObject::connect(
@@ -634,8 +545,6 @@ QMenu* MainWindow::_getFileMenu(bool withMonitor) {
     fileMenuItem->addSeparator();
     fileMenuItem->addAction(openWarningsAction);
     fileMenuItem->addAction(openDataFolder);
-    fileMenuItem->addSeparator();
-    fileMenuItem->addAction(openDashFolder);
     fileMenuItem->addSeparator();
     fileMenuItem->addAction(quitAction);
 

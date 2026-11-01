@@ -89,19 +89,6 @@ class PreferencesDialog : public QDialog {
 
         layout->addWidget(automationGroup);
 
-        //
-        // Experimental features
-        //
-
-        auto experimentalGroup = new QGroupBox(tr("Experimental"), this);
-        experimentalGroup->setLayout(new QVBoxLayout);
-
-            this->_enableDashStreamChk = new QCheckBox(tr("Enable DASH streaming"), this);
-            this->_enableDashStreamChk->setChecked(this->_appSettings->value(AppSettings::DASH_STREAM_FEATURE_ENABLED).toBool());
-
-            experimentalGroup->layout()->addWidget(this->_enableDashStreamChk);
-
-        layout->addWidget(experimentalGroup);
     }
 
  private:
@@ -112,7 +99,6 @@ class PreferencesDialog : public QDialog {
     QLineEdit* _PlatformPasswordEdit;
 
     QCheckBox* _launchAppAtStartupChk;
-    QCheckBox* _enableDashStreamChk;
 
     void _mightAddAppToStartup(Qt::CheckState checkState) {
         PlatformHelper::switchStartupLaunch();
@@ -124,8 +110,6 @@ class PreferencesDialog : public QDialog {
         this->_appSettings->setValue(AppSettings::PLATFORM_HOST_URL, this->_PlatformURLEdit->text());
         this->_appSettings->setValue(AppSettings::PLATFORM_USERNAME, this->_PlatformUsernameEdit->text());
         this->_appSettings->setValue(AppSettings::PLATFORM_PASSWORD, this->_PlatformPasswordEdit->text());
-        //
-        this->_appSettings->setValue(AppSettings::DASH_STREAM_FEATURE_ENABLED, this->_enableDashStreamChk->isChecked());
 
         //
         this->_appSettings->sync();

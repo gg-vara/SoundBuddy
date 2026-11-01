@@ -118,32 +118,32 @@
 <context>
     <name>MainWindow</name>
     <message>
-        <location filename="../ui/monitor/mainWindow.cpp" line="534"/>
+        <location filename="../ui/monitor/mainWindow.cpp" line="459"/>
         <source>Options</source>
         <translation>Options</translation>
     </message>
     <message>
-        <location filename="../ui/monitor/mainWindow.cpp" line="537"/>
+        <location filename="../ui/monitor/mainWindow.cpp" line="462"/>
         <source>Check for updates</source>
         <translation>Vérification de mises à jour</translation>
     </message>
     <message>
-        <location filename="../ui/monitor/mainWindow.cpp" line="559"/>
+        <location filename="../ui/monitor/mainWindow.cpp" line="484"/>
         <source>Searching for updates...</source>
         <translation>Recherche des mises à jour...</translation>
     </message>
     <message>
-        <location filename="../ui/monitor/mainWindow.cpp" line="567"/>
+        <location filename="../ui/monitor/mainWindow.cpp" line="492"/>
         <source>File</source>
         <translation>Fichier</translation>
     </message>
     <message>
-        <location filename="../ui/monitor/mainWindow.cpp" line="622"/>
+        <location filename="../ui/monitor/mainWindow.cpp" line="533"/>
         <source>Open monitor...</source>
         <translation>Ouvrir le tableau de bord</translation>
     </message>
     <message>
-        <location filename="../ui/monitor/mainWindow.cpp" line="570"/>
+        <location filename="../ui/monitor/mainWindow.cpp" line="495"/>
         <source>My %1</source>
         <translation>Mon %1</translation>
     </message>
@@ -158,32 +158,31 @@
         <translation>%1 %2 est prête à être installée. Voulez-vous redémarrer %1 maintenant pour l&apos;installer ?</translation>
     </message>
     <message>
-        <location filename="../ui/monitor/mainWindow.cpp" line="585"/>
+        <location filename="../ui/monitor/mainWindow.cpp" line="510"/>
         <source>Read latest upload warnings report</source>
         <translation>Visualiser les derniers avertissements d&apos;export</translation>
     </message>
     <message>
-        <location filename="../ui/monitor/mainWindow.cpp" line="593"/>
+        <location filename="../ui/monitor/mainWindow.cpp" line="518"/>
         <source>Access upload data folder</source>
         <translation>Accéder aux données d&apos;export</translation>
     </message>
     <message>
-        <location filename="../ui/monitor/mainWindow.cpp" line="600"/>
         <source>Access DASH folder</source>
-        <translation>Accéder au dossier DASH</translation>
+        <translation type="vanished">Accéder au dossier DASH</translation>
     </message>
     <message>
-        <location filename="../ui/monitor/mainWindow.cpp" line="614"/>
+        <location filename="../ui/monitor/mainWindow.cpp" line="525"/>
         <source>Quit</source>
         <translation>Quitter</translation>
     </message>
     <message>
-        <location filename="../ui/monitor/mainWindow.cpp" line="664"/>
+        <location filename="../ui/monitor/mainWindow.cpp" line="573"/>
         <source>Shout worker running !</source>
         <translation>Shout en cours !</translation>
     </message>
     <message>
-        <location filename="../ui/monitor/mainWindow.cpp" line="665"/>
+        <location filename="../ui/monitor/mainWindow.cpp" line="574"/>
         <source>Shout worker is actually running : Are you sure you want to exit ?</source>
         <translation>Les shouts sont actuellement scannés : Voulez-vous vraiment quitter ?</translation>
     </message>
@@ -252,7 +251,7 @@
         <translation>Erreur durant la vérification des mises à jour</translation>
     </message>
     <message>
-        <location filename="../ui/monitor/mainWindow.cpp" line="578"/>
+        <location filename="../ui/monitor/mainWindow.cpp" line="503"/>
         <source>Preferences</source>
         <translation>Paramètres</translation>
     </message>
@@ -305,14 +304,12 @@
         <translation>Lancer %1 au démarrage système</translation>
     </message>
     <message>
-        <location filename="../ui/monitor/PreferencesDialog.hpp" line="96"/>
         <source>Experimental</source>
-        <translation>Expérimental</translation>
+        <translation type="vanished">Expérimental</translation>
     </message>
     <message>
-        <location filename="../ui/monitor/PreferencesDialog.hpp" line="99"/>
         <source>Enable DASH streaming</source>
-        <translation>Activer le streaming DASH</translation>
+        <translation type="vanished">Activer le streaming DASH</translation>
     </message>
 </context>
 <context>

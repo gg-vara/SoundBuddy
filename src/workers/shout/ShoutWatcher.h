@@ -39,8 +39,6 @@ class ShoutWatcher : public MessengerThread {
     Q_OBJECT
 
  signals:
-    /** sent when a new audio file is played */
-    void newAudioFileShouted(const QString &filePath, const QString &fileHash);
     void shoutReadyToSend(const QJsonObject &shoutAsJson);
 
  public:

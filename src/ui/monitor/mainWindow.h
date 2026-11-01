@@ -36,7 +36,6 @@
 #include <QHideEvent>
 #include <QIcon>
 #include <QStatusBar>
-#include <QProgressBar>
 
 #include "src/helpers/PlatformHelper.h"
 
@@ -50,8 +49,6 @@
 
 #include "src/helpers/AppSettings.hpp"
 #include "src/ui/monitor/PreferencesDialog.hpp"
-
-#include "src/workers/dash/DASHThread.hpp"
 
 class MainWindow : public QMainWindow {
    Q_OBJECT
@@ -73,8 +70,6 @@ class MainWindow : public QMainWindow {
     void updateStatusBar(const QString &message, const ConnectivityIndicator &indic);
     QLabel* statusLabel;
     TrafficLightWidget* statusLight;
-
-    QProgressBar* dashProgressBar;
 
     ///
     /// UI instantiation 
@@ -129,11 +124,9 @@ class MainWindow : public QMainWindow {
     ShoutUploader* shoutUploader = nullptr;
     FeederThread* feederWorker = nullptr;
     MBeatThread* mbeatWorker = nullptr;
-    DASHThread* dashWorker = nullptr;
     UpdateCheckerThread updateCheckerWorker;
 
     void runMBeat();
     void runShouts();
     void runFeeder();
-    void _mayRunDASHStreamer();
 };

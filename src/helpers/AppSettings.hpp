@@ -49,10 +49,6 @@ class AppSettings : public QSettings {
         };
     }
 
-    const bool isDashStreamFeatureEnabled() const {
-        return this->value(DASH_STREAM_FEATURE_ENABLED, false).toBool();
-    }
-
     static const UploadInfos getShoutUploadInfos() {
         return { "/uploadShout", "shout_file" };
     }
@@ -82,7 +78,6 @@ class AppSettings : public QSettings {
     static inline const char * PLATFORM_PASSWORD = "PlatformPassword";
     static inline const char * PLATFORM_HOST_URL = "PlatformHostUrl";
     static inline const char * MUST_RUN_AT_STARTUP = "MustRunAtStartup";
-    static inline const char * DASH_STREAM_FEATURE_ENABLED = "DashFeatureEnabled";
 
  private:
     static inline const char * _FeedWarningFileName = "warnings.json";

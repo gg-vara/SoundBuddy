@@ -23,13 +23,11 @@
 #include "ShoutPayload.h"
 
 struct ShoutConsumeResult {
-    bool trackChanged;
     bool hasMeaningfulChange;
     ShoutJSONParsingResult parsingResult;
 };
 
 struct ShoutPayloadConsumer {
-    QString lastTrackFileHash;
     QString lastHasChangedHash;
 
     /** updates state and produce a JSON output */

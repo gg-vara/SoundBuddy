@@ -10,8 +10,6 @@ ShoutConsumeResult ShoutPayloadConsumer::consume(const ShoutPayload &incomingPay
 
     //
     output.parsingResult = incomingPayload.toJSON();
-    output.trackChanged = lastTrackFileHash != output.parsingResult.audioFileHash;
-    lastTrackFileHash = output.parsingResult.audioFileHash;
 
     //
     return output;

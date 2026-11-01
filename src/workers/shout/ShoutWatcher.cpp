@@ -112,9 +112,4 @@ void ShoutWatcher::processPayload(const ShoutPayload &incomingPayload) {
             emit forwardMessage(logMessage);
         }
     }
-
-    //
-    if (output.trackChanged) {
-        emit newAudioFileShouted(incomingPayload.tFileLocation, output.parsingResult.audioFileHash);
-    }
 }

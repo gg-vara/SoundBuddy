@@ -279,23 +279,6 @@ target_link_libraries(appExec PRIVATE
     ZLIB::ZLIB
 )
 
-#
-#
-#
-
-find_package(PkgConfig)
-
-# only the libraries used by DASH streaming (libpostproc no longer exists since FFmpeg 8)
-pkg_check_modules(ffmpeg REQUIRED IMPORTED_TARGET
-    libavcodec
-    libavformat
-    libavutil
-    libswresample
-)
-
-target_link_libraries(appExec PRIVATE PkgConfig::ffmpeg)
-
-
 ########
 # QT 6 #
 ########
