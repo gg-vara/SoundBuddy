@@ -23,7 +23,19 @@
 
 #include <unistd.h>
 #include <QProcess>
-#include <QJsonDocument>
+
+#include <string_view>
+
+#include "src/helpers/Json.hpp"
+
+namespace {
+
+QString toQString(yyjson_val * value) {
+    const auto text = json::string(value);
+    return QString::fromUtf8(text.data(), static_cast<qsizetype>(text.size()));
+}
+
+}  // namespace
 
 // consider the session always available on OSX since we do not depend on the app beeing ran to request for shout states
 bool ShoutWatcher::_waitForAvailableSession() {
@@ -72,20 +84,22 @@ void ShoutWatcher::_execWatchSession() {
             result[result.size() - 1] = ']';
 
             // cast to json
-            const auto trackData = QJsonDocument::fromJson(result.data()).array();
+            const auto doc = json::parse(std::string_view(result.constData(), static_cast<std::size_t>(result.size())));
+            const auto trackData = json::root(doc);
+            const auto at = [trackData](std::size_t index) { return yyjson_arr_get(trackData, index); };
 
             // get values for shout
-            payload.tFileLocation = trackData[0].toString();
-            payload.tName = trackData[1].toString();
-            payload.tAlbum = trackData[2].toString();
-            payload.tArtist = trackData[3].toString();
-            payload.tGenre = trackData[4].toString();
-            payload.iDuration = trackData[5].toInt();
-            payload.tYear = trackData[6].toInt();
-            payload.iPlayerPosMS = trackData[7].toInt() * 1000; // TODO get the real thing instead of emulating the millisecond track state
-            payload.iPlayerState = trackData[8].toString() == "paused" ? 0 : 1;
-            payload.tDateSkipped = trackData[9].toString();
-            payload.tDatePlayed = trackData[10].toString();
+            payload.tFileLocation = toQString(at(0));
+            payload.tName = toQString(at(1));
+            payload.tAlbum = toQString(at(2));
+            payload.tArtist = toQString(at(3));
+            payload.tGenre = toQString(at(4));
+            payload.iDuration = static_cast<int>(json::integer(at(5)));
+            payload.tYear = static_cast<int>(json::integer(at(6)));
+            payload.iPlayerPosMS = static_cast<int>(json::integer(at(7)) * 1000); // TODO get the real thing instead of emulating the millisecond track state
+            payload.iPlayerState = json::string(at(8)) == "paused" ? 0 : 1;
+            payload.tDateSkipped = toQString(at(9));
+            payload.tDatePlayed = toQString(at(10));
         }
 
         // compare with old shout, if equivalent, don't reshout

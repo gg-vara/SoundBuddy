@@ -19,7 +19,7 @@
 
 #pragma once
 
-#include <qlogging.h>
+#include <QDebug>
 #include <QCryptographicHash>
 #include <QFile>
 

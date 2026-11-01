@@ -21,8 +21,6 @@
 
 #include <functional>
 
-#include <QJsonDocument>
-#include <QJsonObject>
 #include <QTimer>
 #include <QEventLoop>
 

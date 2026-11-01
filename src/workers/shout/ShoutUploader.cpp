@@ -21,7 +21,6 @@
 #include "ShoutUploader.h"
 
 #include <QDebug>
-#include <QJsonDocument>
 
 #include <chrono>
 
@@ -61,13 +60,13 @@ void ShoutUploader::waitForDrain(unsigned long timeout) {
 }
 
 //
-void ShoutUploader::uploadAsShout(const QJsonObject &parsedShout) {
+void ShoutUploader::uploadAsShout(const std::string &shoutAsJson) {
     //
     qDebug() << "[ShoutUploader] Shout received, uploading...";
 
     {
         std::lock_guard lock { _mutex };
-        _queue.push_back(QJsonDocument { parsedShout }.toJson().toStdString());
+        _queue.push_back(shoutAsJson);
     }
 
     _queueChanged.notify_all();

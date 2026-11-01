@@ -21,7 +21,6 @@
 #pragma once
 
 #include <QObject>
-#include <QJsonObject>
 
 #include <condition_variable>
 #include <deque>
@@ -45,7 +44,7 @@ class ShoutUploader : public QObject, public IMessenger {
     ~ShoutUploader();
 
     // queues the shout for upload
-    void uploadAsShout(const QJsonObject &parsedShout);
+    void uploadAsShout(const std::string &shoutAsJson);
 
     /** waits until either timeout or all queued shouts are uploaded */
     void waitForDrain(unsigned long timeout = 1000);

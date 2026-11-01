@@ -19,13 +19,11 @@
 
 #include "Settings.h"
 
-#include <yyjson.h>
-
-#include <cstdlib>
 #include <fstream>
 #include <iterator>
-#include <memory>
 #include <system_error>
+
+#include "src/helpers/Json.hpp"
 
 namespace settings {
 
@@ -37,18 +35,12 @@ constexpr const char * PLATFORM_PASSWORD = "platformPassword";
 constexpr const char * AUTO_RUN_SHOUT = "autoRunShout";
 constexpr const char * RUN_AT_STARTUP = "runAtStartup";
 
-using Document = std::unique_ptr<yyjson_doc, decltype(&yyjson_doc_free)>;
-using MutableDocument = std::unique_ptr<yyjson_mut_doc, decltype(&yyjson_mut_doc_free)>;
-
 std::string readString(yyjson_val * object, const char * key, const std::string& fallback) {
-    const auto value = yyjson_obj_get(object, key);
-    if (!yyjson_is_str(value)) return fallback;
-    return { yyjson_get_str(value), yyjson_get_len(value) };
+    return std::string { json::string(yyjson_obj_get(object, key), fallback) };
 }
 
 bool readBool(yyjson_val * object, const char * key, bool fallback) {
-    const auto value = yyjson_obj_get(object, key);
-    return yyjson_is_bool(value) ? yyjson_get_bool(value) : fallback;
+    return json::boolean(yyjson_obj_get(object, key), fallback);
 }
 
 void addString(yyjson_mut_doc * doc, yyjson_mut_val * object, const char * key, const std::string& value) {
@@ -62,8 +54,8 @@ std::optional<Settings> load(const std::filesystem::path& file) {
     if (!stream) return std::nullopt;
     const std::string content { std::istreambuf_iterator<char>(stream), std::istreambuf_iterator<char>() };
 
-    const Document doc { yyjson_read(content.data(), content.size(), 0), &yyjson_doc_free };
-    const auto root = yyjson_doc_get_root(doc.get());
+    const auto doc = json::parse(content);
+    const auto root = json::root(doc);
     if (!yyjson_is_obj(root)) return std::nullopt;
 
     const Settings defaults;
@@ -77,7 +69,7 @@ std::optional<Settings> load(const std::filesystem::path& file) {
 }
 
 bool save(const std::filesystem::path& file, const Settings& settings) {
-    const MutableDocument doc { yyjson_mut_doc_new(nullptr), &yyjson_mut_doc_free };
+    const auto doc = json::create();
     if (!doc) return false;
 
     const auto root = yyjson_mut_obj(doc.get());
@@ -89,12 +81,8 @@ bool save(const std::filesystem::path& file, const Settings& settings) {
     yyjson_mut_obj_add_bool(doc.get(), root, AUTO_RUN_SHOUT, settings.autoRunShout);
     yyjson_mut_obj_add_bool(doc.get(), root, RUN_AT_STARTUP, settings.runAtStartup);
 
-    std::size_t length = 0;
-    const std::unique_ptr<char, decltype(&std::free)> json {
-        yyjson_mut_write(doc.get(), YYJSON_WRITE_PRETTY_TWO_SPACES | YYJSON_WRITE_NEWLINE_AT_END, &length),
-        &std::free
-    };
-    if (!json) return false;
+    const auto text = json::write(doc, YYJSON_WRITE_PRETTY_TWO_SPACES | YYJSON_WRITE_NEWLINE_AT_END);
+    if (text.empty()) return false;
 
     std::error_code error;
     std::filesystem::create_directories(file.parent_path(), error);
@@ -105,7 +93,7 @@ bool save(const std::filesystem::path& file, const Settings& settings) {
     temporary += ".tmp";
 
     std::ofstream stream { temporary, std::ios::binary | std::ios::trunc };
-    stream.write(json.get(), static_cast<std::streamsize>(length));
+    stream.write(text.data(), static_cast<std::streamsize>(text.size()));
     stream.close();
 
     if (stream) std::filesystem::rename(temporary, file, error);

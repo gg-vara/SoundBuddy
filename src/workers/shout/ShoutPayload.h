@@ -20,10 +20,11 @@
 #pragma once
 
 #include <QString>
-#include <QJsonObject>
+
+#include <string>
 
 struct ShoutJSONParsingResult {
-    QJsonObject json;
+    std::string json;
     QString audioFileHash;
     bool isEmpty;
 };
@@ -48,9 +49,6 @@ struct ShoutPayload {
     /** gets the associated file's footprint */
     QString getFileHash() const;
 
-    /** */
-    static QJsonObject toTimestampedJSON();
-
-    /** */
+    /** serializes the shout, timestamped; only the date if no track is playing */
     struct ShoutJSONParsingResult toJSON() const;
 };

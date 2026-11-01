@@ -20,6 +20,11 @@
 #include "mainWindow.h"
 #include "version.h"
 
+#include <string_view>
+#include <vector>
+
+#include "src/helpers/Json.hpp"
+
 MainWindow::MainWindow() {
     // generate the UI
     this->_initUI();
@@ -92,11 +97,15 @@ void MainWindow::openWarnings() {
     //
     QFile warnings(AppSettings::getFeedWarningFilePath());
     warnings.open(QIODevice::ReadOnly | QIODevice::Text);
-        auto data = QJsonDocument::fromJson(warnings.readAll()).array();
+        const auto content = warnings.readAll();
     warnings.close();
 
+    // array of tracks, each an object of string values
+    const auto doc = json::parse(std::string_view(content.constData(), static_cast<std::size_t>(content.size())));
+    const auto rows = json::root(doc);
+
     //
-    auto howMany = data.count();
+    auto howMany = static_cast<int>(yyjson_arr_size(rows));
     if(howMany == 0) {
         QMessageBox::information(this, tr("No warnings found"), tr("Congratulations, your latest export was flawless !"));
         return;
@@ -106,22 +115,34 @@ void MainWindow::openWarnings() {
     display.setModal(true);
     display.setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 
-    auto colDef = data[0].toObject();
-    QTableWidget table(howMany, colDef.count(), &display);
+    // columns : the keys of the first track
+    std::vector<std::string_view> columns;
+    QStringList headers;
+    {
+        std::size_t index, count;
+        yyjson_val *key, *value;
+        yyjson_obj_foreach(yyjson_arr_get_first(rows), index, count, key, value) {
+            columns.push_back(json::string(key));
+            headers << QString::fromUtf8(columns.back().data(), static_cast<qsizetype>(columns.back().size()));
+        }
+    }
+
+    QTableWidget table(howMany, static_cast<int>(columns.size()), &display);
     table.setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     table.horizontalHeader()->setSectionResizeMode(QHeaderView::Interactive);
     table.setEditTriggers(QAbstractItemView::NoEditTriggers);
-    table.setHorizontalHeaderLabels(colDef.keys());
+    table.setHorizontalHeaderLabels(headers);
 
     // for each row
     howMany = 0;
-    for(auto i = data.begin(); i != data.end(); ++i) {
-       auto cellsData = i->toObject();
-
+    std::size_t rowIndex, rowCount;
+    yyjson_val * cellsData;
+    yyjson_arr_foreach(rows, rowIndex, rowCount, cellsData) {
         // each cell
         int col = 0;
-        foreach(const QString &key, cellsData.keys()) {
-            auto cellData = cellsData.value(key).toString();
+        for (const auto key : columns) {
+            const auto cell = json::string(yyjson_obj_getn(cellsData, key.data(), key.size()));
+            const auto cellData = QString::fromUtf8(cell.data(), static_cast<qsizetype>(cell.size()));
             if(cellData.isEmpty()) {
                 auto item = new QTableWidgetItem(this->style()->standardIcon(QStyle::SP_MessageBoxWarning), tr("Missing !"));
                 auto font = item->font();

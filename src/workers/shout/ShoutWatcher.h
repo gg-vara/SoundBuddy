@@ -20,9 +20,9 @@
 #pragma once
 
 #include <QString>
-#include <QJsonObject>
 
 #include <atomic>
+#include <string>
 
 #include "src/workers/base/MessengerThread.hpp"
 #include "src/helpers/AppSettings.hpp"
@@ -38,7 +38,7 @@ class ShoutWatcher : public MessengerThread {
     Q_OBJECT
 
  signals:
-    void shoutReadyToSend(const QJsonObject &shoutAsJson);
+    void shoutReadyToSend(const std::string &shoutAsJson);
 
  public:
     ShoutWatcher();
