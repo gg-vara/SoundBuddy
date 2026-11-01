@@ -1,5 +1,5 @@
 #include "ShoutPayload.h"
-#include "src/helpers/HashHelper.hpp"
+#include "src/helpers/Hash.h"
 #include "src/helpers/Json.hpp"
 #include "src/helpers/Timestamps.hpp"
 
@@ -28,7 +28,7 @@ QString ShoutPayload::getFileHash() const {
     }
 
     //
-    return QString(calculateMD5(tFileLocation));
+    return QString::fromStdString(hash::md5File(std::filesystem::path(tFileLocation.toStdWString())));
 }
 
 ShoutJSONParsingResult ShoutPayload::toJSON() const

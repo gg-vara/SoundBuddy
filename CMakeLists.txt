@@ -292,6 +292,8 @@ if(WIN32)
         uuid
         # HTTP client
         winhttp
+        # file hashes
+        bcrypt
     )
 endif()
 
