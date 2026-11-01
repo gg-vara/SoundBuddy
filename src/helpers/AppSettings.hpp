@@ -3,11 +3,39 @@
 #include <QSettings>
 #include <QDir>
 
+#include <filesystem>
+#include <optional>
+#include <utility>
+
 #include "src/helpers/PlatformHelper.h"
+#include "src/settings/Settings.h"
 #include "version.h"
 
-class AppSettings : public QSettings {
+class AppSettings {
  public:
+    // loads the settings file, or imports the settings of the previous versions on first launch
+    AppSettings() : _file(std::filesystem::path(PlatformHelper::getDataStorageDirectory().toStdWString()) / "settings.json") {
+        if (auto stored = settings::load(_file)) {
+            _values = std::move(*stored);
+        } else if (auto legacy = _readLegacySettings()) {
+            _values = std::move(*legacy);
+            save();
+        }
+    }
+
+    settings::Settings& values() {
+        return _values;
+    }
+
+    const settings::Settings& values() const {
+        return _values;
+    }
+
+    // writes the current values to the settings file
+    bool save() const {
+        return settings::save(_file, _values);
+    }
+
     struct ConnectivityInfos {
         const QString platformHostUrl = QString();
         const QString username = QString();
@@ -34,9 +62,9 @@ class AppSettings : public QSettings {
     };
 
     const ConnectivityInfos getConnectivityInfos() const {
-        auto hostUrl =  this->value(PLATFORM_HOST_URL).toString();
-        auto username = this->value(PLATFORM_USERNAME).toString();
-        auto password = this->value(PLATFORM_PASSWORD).toString();
+        auto hostUrl = QString::fromStdString(_values.platformHostUrl);
+        auto username = QString::fromStdString(_values.platformUsername);
+        auto password = QString::fromStdString(_values.platformPassword);
 
         if(username.isEmpty() || hostUrl.isEmpty() || password.isEmpty())
             return {};
@@ -73,13 +101,25 @@ class AppSettings : public QSettings {
         return QVariant(isCompressed ? "application/compressed-mlib" : "application/json");
     }
 
-    static inline const char * MUST_AUTORUN_SHOUT = "AutoRunShout";
-    static inline const char * PLATFORM_USERNAME = "PlatformUsername";
-    static inline const char * PLATFORM_PASSWORD = "PlatformPassword";
-    static inline const char * PLATFORM_HOST_URL = "PlatformHostUrl";
-    static inline const char * MUST_RUN_AT_STARTUP = "MustRunAtStartup";
-
  private:
+    std::filesystem::path _file;
+    settings::Settings _values;
+
+    // previous versions stored their settings with QSettings (registry on Windows, plist on macOS) : read once, to create the settings file.
+    // To remove with Qt.
+    static std::optional<settings::Settings> _readLegacySettings() {
+        const QSettings legacy;  // organization and application names are set in main()
+        if (legacy.allKeys().isEmpty()) return std::nullopt;
+
+        return settings::Settings {
+            .platformHostUrl = legacy.value("PlatformHostUrl").toString().toStdString(),
+            .platformUsername = legacy.value("PlatformUsername").toString().toStdString(),
+            .platformPassword = legacy.value("PlatformPassword").toString().toStdString(),
+            .autoRunShout = legacy.value("AutoRunShout").toBool(),
+            .runAtStartup = legacy.value("MustRunAtStartup").toBool(),
+        };
+    }
+
     static inline const char * _FeedWarningFileName = "warnings.json";
 
     static inline const char * _FeedOutputBaseFileName = "output";

@@ -45,7 +45,7 @@ class ShoutTab : public TemplateTab {
         this->layout()->addWidget(this->tButton);
         this->layout()->addWidget(this->checkAutoLaunch);
 
-        if (_appSettings->value(AppSettings::MUST_AUTORUN_SHOUT).toBool()) {
+        if (_appSettings->values().autoRunShout) {
             this->checkAutoLaunch->setCheckState(Qt::CheckState::Checked);
         }
     }
@@ -55,6 +55,7 @@ class ShoutTab : public TemplateTab {
     QCheckBox* checkAutoLaunch = nullptr;
 
     void changeAutoLaunch(Qt::CheckState checkState) {
-        _appSettings->setValue(AppSettings::MUST_AUTORUN_SHOUT, checkState == Qt::CheckState::Checked);
+        _appSettings->values().autoRunShout = checkState == Qt::CheckState::Checked;
+        _appSettings->save();
     }
 };

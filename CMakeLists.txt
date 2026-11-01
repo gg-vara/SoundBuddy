@@ -248,6 +248,12 @@ endif()
 # installer, auto-updates, and velopack_pack / velopack_publish packaging targets
 include(Velopack)
 
+##########
+# yyjson #
+##########
+
+include(yyjson)
+
 #######################
 # ITunesLibraryParser #
 #######################

@@ -30,7 +30,7 @@ MainWindow::MainWindow() {
     this->setupAutoUpdate();
 
     // autostart shout thread ?
-    if (this->appSettings.value(AppSettings::MUST_AUTORUN_SHOUT).toBool()) {
+    if (this->appSettings.values().autoRunShout) {
         this->shoutTab->tButton->click();
     }
 }

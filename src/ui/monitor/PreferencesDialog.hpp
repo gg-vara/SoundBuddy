@@ -55,9 +55,10 @@ class PreferencesDialog : public QDialog {
             this->_PlatformUsernameEdit->setPlaceholderText(tr("Username"));
             this->_PlatformPasswordEdit->setPlaceholderText(tr("Password"));
 
-            this->_PlatformURLEdit->setText(this->_appSettings->value(AppSettings::PLATFORM_HOST_URL).toString());
-            this->_PlatformUsernameEdit->setText(this->_appSettings->value(AppSettings::PLATFORM_USERNAME).toString());
-            this->_PlatformPasswordEdit->setText(this->_appSettings->value(AppSettings::PLATFORM_PASSWORD).toString());
+            const auto& values = this->_appSettings->values();
+            this->_PlatformURLEdit->setText(QString::fromStdString(values.platformHostUrl));
+            this->_PlatformUsernameEdit->setText(QString::fromStdString(values.platformUsername));
+            this->_PlatformPasswordEdit->setText(QString::fromStdString(values.platformPassword));
 
             connectivityGroup->layout()->addWidget(this->_PlatformURLEdit);
             connectivityGroup->layout()->addWidget(this->_PlatformUsernameEdit);
@@ -74,7 +75,7 @@ class PreferencesDialog : public QDialog {
 
             this->_launchAppAtStartupChk = new QCheckBox(tr("Launch %1 at system boot").arg(APP_NAME), this);
 
-            this->_launchAppAtStartupChk->setChecked(this->_appSettings->value(AppSettings::MUST_RUN_AT_STARTUP).toBool());
+            this->_launchAppAtStartupChk->setChecked(values.runAtStartup);
 
             automationGroup->layout()->addWidget(this->_launchAppAtStartupChk);
 
@@ -102,16 +103,18 @@ class PreferencesDialog : public QDialog {
 
     void _mightAddAppToStartup(Qt::CheckState checkState) {
         PlatformHelper::switchStartupLaunch();
-        this->_appSettings->setValue(AppSettings::MUST_RUN_AT_STARTUP, Qt::CheckState::Checked == checkState);
+        this->_appSettings->values().runAtStartup = Qt::CheckState::Checked == checkState;
+        this->_appSettings->save();
     }
 
     void closeEvent(QCloseEvent *event) override {
         //
-        this->_appSettings->setValue(AppSettings::PLATFORM_HOST_URL, this->_PlatformURLEdit->text());
-        this->_appSettings->setValue(AppSettings::PLATFORM_USERNAME, this->_PlatformUsernameEdit->text());
-        this->_appSettings->setValue(AppSettings::PLATFORM_PASSWORD, this->_PlatformPasswordEdit->text());
+        auto& values = this->_appSettings->values();
+        values.platformHostUrl = this->_PlatformURLEdit->text().toStdString();
+        values.platformUsername = this->_PlatformUsernameEdit->text().toStdString();
+        values.platformPassword = this->_PlatformPasswordEdit->text().toStdString();
 
         //
-        this->_appSettings->sync();
+        this->_appSettings->save();
     }
 };
