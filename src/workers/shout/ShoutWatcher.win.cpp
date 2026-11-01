@@ -21,15 +21,12 @@
 
 #include "src/i18n/trad.hpp"
 
-#include "src/workers/shout/win/iTunesCOMHandler.h"
-
-#include <QTimer>
-#include <QAxObject>
 #include <windows.h>
 #include <combaseapi.h>
 
-#include "win/iTunesCOMHandler.h"
-#include "win/iTunesCOMInterface_i.c"
+#include <exception>
+
+#include "win/iTunesSession.h"
 
 //
 bool ShoutWatcher::_waitForAvailableSession() {
@@ -71,6 +68,32 @@ bool ShoutWatcher::_waitForAvailableSession() {
 }
 
 
+namespace {
+
+ShoutPayload toPayload(const iTunesCOMClient::Snapshot& snapshot) {
+    const auto &track = snapshot.track;
+
+    // no current track, shout empty
+    if (!track.exists) return ShoutPayload{};
+
+    ShoutPayload payload{};
+    payload.tName = QString::fromStdWString(track.name);
+    payload.tAlbum = QString::fromStdWString(track.album);
+    payload.tArtist = QString::fromStdWString(track.artist);
+    payload.tGenre = QString::fromStdWString(track.genre);
+    payload.iDuration = track.duration;
+    payload.tDatePlayed = QString::fromStdWString(track.playedDate);
+    payload.tDateSkipped = QString::fromStdWString(track.skippedDate);
+    payload.tYear = track.year;
+    payload.tFileLocation = QString::fromStdWString(track.location);
+    payload.iPlayerPosMS = snapshot.positionMS;
+    payload.iPlayerState = snapshot.playing;
+
+    return payload;
+}
+
+}  // namespace
+
 void ShoutWatcher::_execWatchSession() {
     // log..
     emit forwardMessage(
@@ -78,68 +101,28 @@ void ShoutWatcher::_execWatchSession() {
             .arg(musicAppName())
     );
 
-    // Music app IID extracted from Apple API
-    wchar_t* wch;
-    HRESULT hr = ::StringFromCLSID(CLSID_iTunesApp, &wch);
-    const auto ComCLID = QString::fromWCharArray(wch);
-
-    // initiate COM object
+    // initiate COM
     CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
 
-    // log..
-    emit forwardMessage(tr("Initializing communication..."));
+    try {
+        // log..
+        emit forwardMessage(tr("Initializing communication..."));
 
-    // Music App IID extracted from Apple API
-    auto musicAppObj = new QAxObject(ComCLID);
-    this->_handler = new iTunesCOMHandler(musicAppObj, this);
+        iTunesSession session;
 
-    // bind events to sink handler
-        auto oatputqe = QObject::connect(
-            musicAppObj, SIGNAL(OnAboutToPromptUserToQuitEvent()),
-            this->_handler, SLOT(stopListening())
+        // log..
+        emit forwardMessage(
+            tr("Listening to %1 !")
+                .arg(musicAppName())
         );
-
-        auto oppe = QObject::connect(
-            musicAppObj, SIGNAL(OnPlayerPlayEvent(QVariant)),
-            this->_handler, SLOT(onPlayerStateChanged(QVariant))
-        );
-
-        auto opse = QObject::connect(
-            musicAppObj, SIGNAL(OnPlayerStopEvent(QVariant)),
-            this->_handler, SLOT(onPlayerStateChanged(QVariant))
-        );
-
-    QTimer timer;
-    timer.setInterval(1000);
-    QObject::connect(
-        &timer, SIGNAL(timeout()),
-        this->_handler, SLOT(onPeriodicalCheckJumpingTrack())
-    );
-    timer.start();
-
-    // log..
-    emit forwardMessage(
-        tr("Listening to %1 !")
-            .arg(musicAppName())
-    );
 
         // process events
-        this->_handler->listenUntilShutdown();
-
-    timer.deleteLater();
-
-    // disconnect events
-        QObject::disconnect(oatputqe);
-        QObject::disconnect(oppe);
-        QObject::disconnect(opse);
-
-    // clear COM related Obj
-        //
-        this->_handler->deleteLater();
-        
-        //
-        musicAppObj->clear();
-        musicAppObj->deleteLater();
+        session.run(this->_keepWatching, [this](const iTunesCOMClient::Snapshot& snapshot) {
+            this->processPayload(toPayload(snapshot));
+        });
+    } catch (const std::exception& e) {
+        emit forwardMessage(QString(e.what()), MessageType::ISSUE);
+    }
 
     // uninitialize COM
     CoUninitialize();

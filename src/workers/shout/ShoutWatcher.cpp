@@ -32,15 +32,8 @@
 ShoutWatcher::ShoutWatcher() {}
 
 void ShoutWatcher::quit() {
-    //
+    // on Windows, the watch session notices it within a second
     this->_keepWatching = false;
-
-    //
-    #ifdef _WIN32
-        if(this->_handler) {
-            this->_handler->stopListening();
-        }
-    #endif
 
     MessengerThread::quit();
 }

@@ -22,19 +22,18 @@
 #include <QString>
 #include <QJsonObject>
 
+#include <atomic>
+
 #include "src/workers/base/MessengerThread.hpp"
 #include "src/helpers/AppSettings.hpp"
 #include "src/helpers/UploadHelper.hpp"
 
 #ifdef _WIN32
-    #include "src/workers/shout/win/iTunesCOMHandler.h"
-    #include <combaseapi.h>
+    #include <windows.h>
 #endif
 
 #include "ShoutPayload.h"
 #include "ShoutPayloadConsumer.h"
-
-class iTunesCOMHandler;
 
 class ShoutWatcher : public MessengerThread {
     Q_OBJECT
@@ -54,10 +53,10 @@ class ShoutWatcher : public MessengerThread {
 
  private:
     ShoutPayloadConsumer _consumer;
-    bool _keepWatching = true;
+    // set from the thread calling quit()
+    std::atomic<bool> _keepWatching { true };
 
     #ifdef _WIN32
-        iTunesCOMHandler* _handler = nullptr;
         DWORD _oldProcessID = NULL;
     #endif
 

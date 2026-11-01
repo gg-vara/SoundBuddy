@@ -10,7 +10,6 @@ mingw-w64-clang-x86_64-spdlog
 mingw-w64-clang-x86_64-catch
 mingw-w64-clang-x86_64-qt6-base
 mingw-w64-clang-x86_64-qt6-tools
-mingw-w64-clang-x86_64-qt6-activeqt
 mingw-w64-clang-x86_64-qt6-translations
 mingw-w64-clang-x86_64-qt6-declarative
 mingw-w64-clang-x86_64-qt-installer-framework

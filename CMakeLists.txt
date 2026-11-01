@@ -98,13 +98,6 @@ qt_standard_project_setup(
     I18N_TRANSLATED_LANGUAGES fr
 )
 
-if(WIN32)
-    find_package(Qt6 REQUIRED COMPONENTS 
-        ActiveQt
-        AxContainer
-    )
-endif()
-
 if(APPLE)
     find_package(Qt6 REQUIRED COMPONENTS 
         DBus
@@ -149,7 +142,8 @@ file(GLOB_RECURSE APP_HPP_FILES "src/*.hpp")
 
 if (APPLE)
     list(REMOVE_ITEM APP_CPP_FILES 
-        ${CMAKE_CURRENT_SOURCE_DIR}/src/workers/shout/win/iTunesCOMHandler.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/workers/shout/win/iTunesCOMClient.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/workers/shout/win/iTunesSession.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/workers/shout/ShoutWatcher.win.cpp
     )
 elseif (WIN32)
@@ -338,9 +332,11 @@ target_link_libraries(appExec PRIVATE
 )
 
 if(WIN32)
+    # iTunes COM API
     target_link_libraries(appExec PRIVATE
-        Qt6::ActiveQt
-        Qt6::AxContainer
+        ole32
+        oleaut32
+        uuid
     )
 endif()
 

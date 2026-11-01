@@ -55,8 +55,6 @@
                 "${env:MINGW64_ROOT}/include/qt6/QtWidgets",
                 "${env:MINGW64_ROOT}/include/qt6/QtGui",
                 "${env:MINGW64_ROOT}/include/qt6/QtNetwork",
-                "${env:MINGW64_ROOT}/include/qt6/QtAxBase",
-                "${env:MINGW64_ROOT}/include/qt6/QtAxContainer",
                 "${workspaceFolder}/deps/ItunesLibraryParser/src",
                 "${workspaceFolder}/deps/IFWUpdateChecker/src",
                 "${workspaceFolder}/deps/IFWUpdateChecker/deps/StupidHTTPDownloader/include",
