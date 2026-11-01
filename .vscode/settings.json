@@ -7,7 +7,7 @@
                 "-i"
             ],
             "env": {
-                "MSYSTEM": "MINGW64",
+                "MSYSTEM": "CLANG64",
                 "MSYS2_PATH_TYPE": "inherit",
                 "CHERE_INVOKING": "1",
                 "MSVSCODE": "1"

@@ -33,7 +33,6 @@ extern "C" {
     #include <libavutil/avutil.h>
     #include <libavutil/opt.h>
     #include <libavutil/audio_fifo.h>
-    #include <libavfilter/avfilter.h>
     #include <libswresample/swresample.h>
     #include "src/helpers/HashHelper.hpp"
     #include "DASHCreationOrder.hpp"

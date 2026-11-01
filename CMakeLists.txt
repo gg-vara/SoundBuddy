@@ -189,8 +189,11 @@ if (WIN32)
     target_sources(appExec PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/version.rc)
 endif()
 
+# can be disabled for local development builds, which do not need to be signed
+option(SOUNDBUDDY_CODESIGN "Sign Windows executables" ON)
+
 #
-if (WIN32)
+if (WIN32 AND SOUNDBUDDY_CODESIGN)
     find_package(signtool REQUIRED)
     
     SET(EXPECTED_PFX_PATH ${CMAKE_CURRENT_SOURCE_DIR}/certs/all.pfx)
@@ -312,15 +315,12 @@ target_link_libraries(appExec PRIVATE
 
 find_package(PkgConfig)
 
+# only the libraries used by DASH streaming (libpostproc no longer exists since FFmpeg 8)
 pkg_check_modules(ffmpeg REQUIRED IMPORTED_TARGET
     libavcodec
-    libavdevice
-    libavfilter
     libavformat
     libavutil
-    libpostproc
     libswresample
-    libswscale
 )
 
 target_link_libraries(appExec PRIVATE PkgConfig::ffmpeg)

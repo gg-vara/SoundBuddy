@@ -4,7 +4,14 @@ macro(DeployQt target)
     # FOR WINDOWS
     if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
         #
-        find_program(DEPLOYQT_EXE "windeployqt-qt6" REQUIRED)
+        # name and location differ between MSYS2 environments : look next to Qt's qmake first
+        get_target_property(_qmake_location Qt6::qmake IMPORTED_LOCATION)
+        get_filename_component(_qt_bin_dir "${_qmake_location}" DIRECTORY)
+        find_program(DEPLOYQT_EXE
+            NAMES windeployqt-qt6 windeployqt6 windeployqt
+            HINTS "${_qt_bin_dir}"
+            REQUIRED
+        )
 
         #
         SET(QT_DEPS_OUTPUT_DIRNAME "QtRuntime")

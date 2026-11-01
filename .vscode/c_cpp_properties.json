@@ -61,8 +61,8 @@
                 "${workspaceFolder}/deps/IFWUpdateChecker/src",
                 "${workspaceFolder}/deps/IFWUpdateChecker/deps/StupidHTTPDownloader/include",
                 "${workspaceFolder}/deps/IFWUpdateChecker/deps/tiny-process-library",
-                "${env:MINGW64_ROOT}/include/c++/15.1.0/**",
-                "${env:MINGW64_ROOT}/lib/clang/20/include"
+                "${env:MINGW64_ROOT}/include/c++/v1",
+                "${env:MINGW64_ROOT}/lib/clang/22/include"
             ]
         }
     ],
