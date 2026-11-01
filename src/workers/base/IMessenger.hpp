@@ -21,7 +21,7 @@
 
 #include <QMetaType>
 #include <QThread>
-#include <QNetworkReply>
+#include <QString>
 
 enum class MessageType {
    STANDARD,
@@ -35,21 +35,6 @@ class IMessenger {
 
  public:
     virtual ~IMessenger(){}
-
-   static QString prettyPrintErrorNetworkMessage(QNetworkReply* replyThatFailed) {
-      //
-      auto qtAutoformatedErrorString = replyThatFailed->errorString().trimmed();
-      auto maybeMoreInfos = QString(replyThatFailed->readAll());
-
-      //
-      if(maybeMoreInfos.isEmpty()) {
-         return qtAutoformatedErrorString;
-      } else if (qtAutoformatedErrorString.endsWith(':')) { // in case of unconventionnal HTTP status code, Qt cannot document it automatically, thus this akward print...
-         return qtAutoformatedErrorString + ' ' + maybeMoreInfos;
-      } else {
-         return qtAutoformatedErrorString + " >> " + maybeMoreInfos;
-      }
-   }
 
  signals:
     virtual void forwardMessage(

@@ -26,7 +26,6 @@
 
 #include "src/workers/base/MessengerThread.hpp"
 #include "src/helpers/AppSettings.hpp"
-#include "src/helpers/UploadHelper.hpp"
 
 #ifdef _WIN32
     #include <windows.h>

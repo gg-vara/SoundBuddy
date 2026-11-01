@@ -23,7 +23,6 @@
 
 #include <QJsonDocument>
 #include <QJsonObject>
-#include <QNetworkReply>
 #include <QTimer>
 #include <QEventLoop>
 

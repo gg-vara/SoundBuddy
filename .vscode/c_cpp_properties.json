@@ -22,7 +22,6 @@
                 "/opt/homebrew/opt/qt/include/QtCore",
                 "/opt/homebrew/opt/qt/include/QtWidgets",
                 "/opt/homebrew/opt/qt/include/QtGui",
-                "/opt/homebrew/opt/qt/include/QtNetwork",
                 "/opt/homebrew/opt/qt/include/QtDBus"
             ]
         },
@@ -47,7 +46,6 @@
                 "${env:MINGW64_ROOT}/include/qt6/QtCore",
                 "${env:MINGW64_ROOT}/include/qt6/QtWidgets",
                 "${env:MINGW64_ROOT}/include/qt6/QtGui",
-                "${env:MINGW64_ROOT}/include/qt6/QtNetwork",
                 "${workspaceFolder}/deps/ItunesLibraryParser/src",
                 "${workspaceFolder}/build_debug/_deps/velopack-src/include",
                 "${env:MINGW64_ROOT}/include/c++/v1",

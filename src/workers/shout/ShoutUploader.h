@@ -17,15 +17,23 @@
 // for further details. Resources without explicit references to a
 // different license and copyright still refer to this GPL.
 
+
 #pragma once
 
 #include <QObject>
-#include <QEventLoop>
+#include <QJsonObject>
+
+#include <condition_variable>
+#include <deque>
+#include <mutex>
+#include <string>
+#include <thread>
 
 #include "src/workers/base/IMessenger.hpp"
 #include "src/helpers/AppSettings.hpp"
-#include "src/helpers/UploadHelper.hpp"
+#include "src/net/HttpClient.h"
 
+// Uploads shouts on its own thread, one at a time and in order
 class ShoutUploader : public QObject, public IMessenger {
     Q_OBJECT
     Q_INTERFACES(IMessenger)
@@ -33,25 +41,34 @@ class ShoutUploader : public QObject, public IMessenger {
  public:
     ShoutUploader(const AppSettings::ConnectivityInfos connectivityInfos);
 
-    //
+    // aborts the upload in progress, if any
+    ~ShoutUploader();
+
+    // queues the shout for upload
     void uploadAsShout(const QJsonObject &parsedShout);
 
-    /** will lock into an event loop until either timeout or all upload attempts finished */
+    /** waits until either timeout or all queued shouts are uploaded */
     void waitForDrain(unsigned long timeout = 1000);
 
  private:
     const AppSettings::ConnectivityInfos _connectivityInfos;
-    UploadHelper* _uploader;
+    net::HttpClient _client;
 
-    //
-    int _pendingUploads = 0;
-    bool _drainTriggered = false;
-    QEventLoop* _drain = nullptr;
+    std::mutex _mutex;
+    std::condition_variable _queueChanged;
+    std::deque<std::string> _queue;
+    bool _uploading = false;
+    bool _stopping = false;
+
+    // declared last : started once the members it uses are initialized
+    std::thread _worker;
+
+    void _uploadQueuedShouts();
 
  signals:
     void forwardMessage(
-      const QString &message, 
-      const MessageType msgType = MessageType::STANDARD, 
+      const QString &message,
+      const MessageType msgType = MessageType::STANDARD,
       const bool replacePreviousLine = false
    );
 };

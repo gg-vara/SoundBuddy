@@ -91,7 +91,6 @@ find_package(Qt6 REQUIRED COMPONENTS
     Core 
     Gui 
     Widgets
-    Network
     LinguistTools
 )
 
@@ -150,9 +149,17 @@ if (APPLE)
         ${CMAKE_CURRENT_SOURCE_DIR}/src/workers/shout/ShoutWatcher.win.cpp
     )
 elseif (WIN32)
-    list(REMOVE_ITEM APP_CPP_FILES 
+    list(REMOVE_ITEM APP_CPP_FILES
         ${CMAKE_CURRENT_SOURCE_DIR}/src/workers/shout/ShoutWatcher.osx.cpp
     )
+endif()
+
+# Objective-C++ sources (native macOS APIs)
+if (APPLE)
+    enable_language(OBJCXX)
+    file(GLOB_RECURSE APP_OBJCXX_FILES "src/*.mm")
+    set_source_files_properties(${APP_OBJCXX_FILES} PROPERTIES COMPILE_OPTIONS "-fobjc-arc")
+    list(APPEND APP_CPP_FILES ${APP_OBJCXX_FILES})
 endif()
 
 #########################
@@ -287,21 +294,24 @@ target_link_libraries(appExec PRIVATE
     Qt6::Core
     Qt6::Gui 
     Qt6::Widgets
-    Qt6::Network
 )
 
 if(WIN32)
-    # iTunes COM API
     target_link_libraries(appExec PRIVATE
+        # iTunes COM API
         ole32
         oleaut32
         uuid
+        # HTTP client
+        winhttp
     )
 endif()
 
 if(APPLE)
     target_link_libraries(appExec PRIVATE
         Qt6::DBus
+        # HTTP client
+        "-framework Foundation"
     )
 endif()
 

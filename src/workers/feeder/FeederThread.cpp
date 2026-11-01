@@ -30,6 +30,8 @@
 
 #include "src/helpers/PlatformHelper.h"
 #include "src/helpers/UploadHelper.hpp"
+#include "src/net/HttpClient.h"
+#include "version.h"
 
 #include <ITunesLibraryParser.hpp>
 
@@ -135,73 +137,39 @@ void FeederThread::run() {
 
         emit forwardMessage(tr("Let's try to send now !"));
             //
-            auto qb_array = QByteArray::fromRawData(reinterpret_cast<const char *>(compressedData), compressedDataSize);
-
-            //
-            UploadHelper uploader;
-
-            auto response = uploader.uploadDataToPlatform({
-                this->_connectivityInfos,
-                AppSettings::getFeederUploadInfos(),
-                qb_array,
-            }, true);
+            net::HttpClient client(APP_NAME "/" APP_CURRENT_VERSION);
 
         emit forwardMessage(tr("Sending... Waiting for response."));
 
-            // on finished
-            QObject::connect(
-                response, &QNetworkReply::finished,
-                [this, response, &compressedData]() {
+            const auto uploadInfos = AppSettings::getFeederUploadInfos();
+            const auto response = UploadHelper::uploadDataToPlatform(client, {
+                this->_connectivityInfos,
+                uploadInfos,
+                std::string_view { reinterpret_cast<const char *>(compressedData), compressedDataSize },
+            }, true);
 
-                    // if an error occured, nothing else to do
-                    if(response->error()) return;
-
-                    //
-                    auto rOutput = response->readAll();
-
-                    //
-                    if (!rOutput.isEmpty()) {
-                        emit forwardMessage(
-                            tr("Server responded: %1")
-                                .arg(rOutput)
-                        );
-                    } else {
-                        emit forwardMessage(
-                            tr("No feedback from the server ? Strange... Please check the targeted host."),
-                            MessageType::WARNING
-                        );
-                    }
-
-                    // back to exec
-                    this->quit();
-                }
-            );
-
-            // on error
-            QObject::connect(
-                response, &QNetworkReply::errorOccurred,
-                [this, response](QNetworkReply::NetworkError) {
-                    //
-                    emit forwardMessage(
-                        tr("An error occured while sending tracks infos to %1 platform : %2")
-                            .arg(DEST_PLATFORM_PRODUCT_NAME)
-                            .arg(IMessenger::prettyPrintErrorNetworkMessage(response)),
-                        MessageType::ISSUE
-                    );
-
-                    // back to exec
-                    this->quit();
-                }
-            );
-
-        // wait for network reply
-        exec();
+            //
+            if (!response.ok()) {
+                emit forwardMessage(
+                    tr("An error occured while sending tracks infos to %1 platform : %2")
+                        .arg(DEST_PLATFORM_PRODUCT_NAME)
+                        .arg(UploadHelper::describeFailure(response)),
+                    MessageType::ISSUE
+                );
+            } else if (!response.body.empty()) {
+                emit forwardMessage(
+                    tr("Server responded: %1")
+                        .arg(QString::fromStdString(response.body))
+                );
+            } else {
+                emit forwardMessage(
+                    tr("No feedback from the server ? Strange... Please check the targeted host."),
+                    MessageType::WARNING
+                );
+            }
 
         // cleanup compressed data
         free(compressedData);
-
-        // ask for deletion
-        response->deleteLater();
 
     //
     } catch (const std::exception& e) {

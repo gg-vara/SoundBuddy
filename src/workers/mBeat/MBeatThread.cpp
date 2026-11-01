@@ -17,14 +17,19 @@
 // for further details. Resources without explicit references to a
 // different license and copyright still refer to this GPL.
 
+
 #include "MBeatThread.h"
 
-#include <QJsonObject>
-#include <QJsonDocument>
+#include <QLocale>
+#include <QUrl>
+
+#include "src/net/Multipart.h"
 
 #include "version.h"
 
-MBeatThread::MBeatThread(const AppSettings::ConnectivityInfos &connectivityInfos) : _connectivityInfos(connectivityInfos) {}
+MBeatThread::MBeatThread(const AppSettings::ConnectivityInfos &connectivityInfos) :
+    _connectivityInfos(connectivityInfos),
+    _client(APP_NAME "/" APP_CURRENT_VERSION) {}
 
 void MBeatThread::run() {
     //
@@ -46,145 +51,105 @@ void MBeatThread::run() {
     }
 
     //
-    // Setup
-    //
+    const auto request = this->_createRequest();
 
-    //
-    QNetworkAccessManager _manager;
-    auto request = this->_createPOSTRequest();
+    while (!this->_isStopping()) {
+        //
+        qDebug("MBeat: Checking credentials...");
+        emit updateConnectivityStatus(
+            tr("Asking for credentials validation..."),
+            ConnectivityIndicator::ONGOING
+        );
 
-    //
-    QTimer pingTimer;
-    pingTimer.setSingleShot(true); // will require manual re-trigger
+        const auto response = _client.send(request);
+        if (this->_isStopping()) break;
 
-    // on heartbeat intervals...
-    QObject::connect(
-        &pingTimer, &QTimer::timeout,
-        [this, &pingTimer, request, &_manager]() {
+        //
+        // handle status bar update
+        //
+
+        if (response.status != 200) {
+            // body first, as the platform explains why credentials are refused
+            QString details = QString::fromStdString(response.body);
+            if (details.isEmpty()) {
+                details = response.error.empty()
+                    ? QString("HTTP %1").arg(response.status)
+                    : QString::fromStdString(response.error);
+            }
+
             //
-            auto reply = this->_checkCredentials(request, &_manager);
-
-            // on finished
-            QObject::connect(
-                reply, &QNetworkReply::finished,
-                [this, &pingTimer, reply]() {
-                    // get HTTP status code
-                    const auto httpCode = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
-
-                    //
-                    // handle status bar update
-                    //
-
-                    if (httpCode != 200) {
-                        // get body
-                        auto rOutput = reply->readAll();
-
-                        //
-                        emit updateConnectivityStatus(
-                            tr("An error occured while connecting with %1 platform : %2")
-                                .arg(DEST_PLATFORM_PRODUCT_NAME)
-                                .arg(rOutput.isEmpty() ? reply->errorString() : rOutput),
-                            ConnectivityIndicator::NOK
-                        );
-
-                        //
-                        qDebug("MBeat: Failure !");
-
-                    } else {
-                        //
-                        emit updateConnectivityStatus(
-                            tr("Logged as \"%1\"")
-                                .arg(_connectivityInfos.username),
-                            ConnectivityIndicator::OK
-                        );
-
-                        //
-                        qDebug("MBeat: Credentials OK !");
-                    }
-
-                    //
-                    // handle thread lifecycle
-                    //
-
-                    // if credentials are not accepted, no need to loop back again, user needs to update them.
-                    if (httpCode == 403) {
-                        this->quit(); // exit loop and thread
-                    } else {
-                        // get rid of this reply
-                        reply->deleteLater();
-
-                        // will retry to confirm 
-                        pingTimer.setInterval(HEARTBEAT_INTERVAL_MS);
-                        pingTimer.start();
-                        qDebug("MBeat: Will retry soon.");
-                    }
-                }
+            emit updateConnectivityStatus(
+                tr("An error occured while connecting with %1 platform : %2")
+                    .arg(DEST_PLATFORM_PRODUCT_NAME)
+                    .arg(details),
+                ConnectivityIndicator::NOK
             );
+
+            //
+            qDebug("MBeat: Failure !");
+
+        } else {
+            //
+            emit updateConnectivityStatus(
+                tr("Logged as \"%1\"")
+                    .arg(_connectivityInfos.username),
+                ConnectivityIndicator::OK
+            );
+
+            //
+            qDebug("MBeat: Credentials OK !");
         }
-    );
 
-    // configure timer to trigger immediately after loop starts
-    pingTimer.setInterval(0);
-    pingTimer.start();
+        // if credentials are not accepted, no need to loop back again, user needs to update them.
+        if (response.status == 403) break;
 
-    // start loop
-    this->exec();
+        // will retry to confirm
+        qDebug("MBeat: Will retry soon.");
+        std::unique_lock lock { _mutex };
+        _wakeUp.wait_for(lock, HEARTBEAT_INTERVAL, [this] { return _stopping; });
+    }
 
     // loop has exited
     qDebug("MBeat: Shutdown");
 }
 
-QNetworkReply* MBeatThread::_checkCredentials(QNetworkRequest* request, QNetworkAccessManager* manager) {
-    //
-    qDebug("MBeat: Checking credentials...");
-    emit updateConnectivityStatus(
-        tr("Asking for credentials validation..."),
-        ConnectivityIndicator::ONGOING
-    );
+void MBeatThread::quit() {
+    {
+        std::lock_guard lock { _mutex };
+        _stopping = true;
+    }
 
-    //
-    auto postData = this->_createPOSTData(manager);
-
-    // reply will be deleted along QNetworkAccessManager (it is his parent by default)
-    auto reply = manager->post(*request, postData);
-    return reply;
+    _wakeUp.notify_all();
+    _client.cancel();
 }
 
-QNetworkRequest* MBeatThread::_createPOSTRequest() {
+bool MBeatThread::_isStopping() {
+    std::lock_guard lock { _mutex };
+    return _stopping;
+}
+
+net::Request MBeatThread::_createRequest() const {
     //
     QUrl url(this->_connectivityInfos.getSoundHeartbeatUrl() + "/creds");
     auto url_host = url.host();
     const auto wantsUnsecure = url_host == "localhost" || url_host == "127.0.0.1";
     url.setScheme(wantsUnsecure ? "http" : "https");
-    
+
     // build request
-    auto request = new QNetworkRequest(url);
-    request->setTransferTimeout(REQUEST_TIMEOUT_MS); // setup an earlier timeout
-    request->setRawHeader("Accept-Language", QLocale::system().name().toUtf8());
-    request->setRawHeader("X-Client-Id", APP_NAME);
-    request->setRawHeader("X-Client-Version", APP_CURRENT_VERSION);
+    net::Request request { "POST", url.toString().toStdString() };
+    request.timeout = REQUEST_TIMEOUT;  // setup an earlier timeout
+    request.headers = {
+        { "Accept-Language", QLocale::system().name().toStdString() },
+        { "X-Client-Id", APP_NAME },
+        { "X-Client-Version", APP_CURRENT_VERSION },
+    };
+
+    // credentials
+    net::Multipart form;
+    form.addField("username", this->_connectivityInfos.username.toStdString());
+    form.addField("password", this->_connectivityInfos.password.toStdString());
+    form.applyTo(request);
 
     //
     return request;
-}
-
-// note: cannot be reused; will be drained after any request attempt using it
-QHttpMultiPart* MBeatThread::_createPOSTData(QNetworkAccessManager* manager) {
-    //
-    auto postData = new QHttpMultiPart(QHttpMultiPart::ContentType::FormDataType, manager);
-
-        // username...
-        QHttpPart usernamePart;
-        usernamePart.setHeader(QNetworkRequest::ContentDispositionHeader, QVariant("form-data; name=\"username\""));
-        usernamePart.setBody(this->_connectivityInfos.username.toUtf8());
-
-        // password...
-        QHttpPart passwordPart;
-        passwordPart.setHeader(QNetworkRequest::ContentDispositionHeader, QVariant("form-data; name=\"password\""));
-        passwordPart.setBody(this->_connectivityInfos.password.toUtf8());
-
-    postData->append(usernamePart);
-    postData->append(passwordPart);
-
-    return postData;
 }

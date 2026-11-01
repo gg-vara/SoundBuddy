@@ -1,71 +1,62 @@
 #pragma once
 
-#include <QNetworkAccessManager>
-#include <QNetworkRequest>
-#include <QNetworkReply>
-#include <QHttpMultiPart>
-#include <QUrl>
-#include <QFileInfo>
 #include <QLocale>
-#include <QFile>
+#include <QString>
+
+#include <string>
+#include <string_view>
 
 #include "src/helpers/AppSettings.hpp"
+#include "src/net/HttpClient.h"
+#include "src/net/Multipart.h"
 
+// uploads files to the platform, as multipart forms
 class UploadHelper {
  public:
     struct UploadInstructions {
         const AppSettings::ConnectivityInfos &connectivityInfos;
         const AppSettings::UploadInfos &uploadInfos;
-        const QByteArray &dataToUpload;
+        std::string_view dataToUpload;
 
-        const QUrl getUploadUrl() const {
-            return QUrl(connectivityInfos.getPlaformHomeUrl() + uploadInfos.path);
+        const std::string getUploadUrl() const {
+            return (connectivityInfos.getPlaformHomeUrl() + uploadInfos.path).toStdString();
         }
     };
 
-    explicit UploadHelper(QObject* parent = nullptr) : _manager(new QNetworkAccessManager(parent)) {}
-    ~UploadHelper() { _manager->deleteLater(); }
-
-    QNetworkReply* uploadDataToPlatform(const UploadInstructions &instructions, const bool isCompressed) const {
+    // blocking
+    static net::Response uploadDataToPlatform(net::HttpClient &client, const UploadInstructions &instructions, const bool isCompressed) {
         //
-        auto postData = new QHttpMultiPart(QHttpMultiPart::FormDataType);
+        const auto fileName = instructions.uploadInfos.outputFileName.toStdString();
+        const auto fileExtension = AppSettings::getFeedOutputExtension(isCompressed).toStdString();
+        const auto contentType = AppSettings::getFeedOutputContentType(isCompressed).toString().toStdString();
 
-            QHttpPart filePart;
-            filePart.setHeader(QNetworkRequest::ContentTypeHeader, QVariant(AppSettings::getFeedOutputContentType(isCompressed)));
-            filePart.setHeader(QNetworkRequest::ContentDispositionHeader, QVariant(
-                    "form-data;"
-                    " name=\"" + instructions.uploadInfos.outputFileName + "\";"
-                    " filename=\"" + instructions.uploadInfos.outputFileName + AppSettings::getFeedOutputExtension(isCompressed) + "\""
-                )
-            );
-            filePart.setBody(instructions.dataToUpload);
+        net::Multipart form;
+        form.addFile(fileName, fileName + fileExtension, contentType, instructions.dataToUpload);
 
-            // password...
-            QHttpPart passwordPart;
-            passwordPart.setHeader(QNetworkRequest::ContentDispositionHeader, QVariant("form-data; name=\"password\""));
-            passwordPart.setBody(instructions.connectivityInfos.password.toUtf8());
+        // password...
+        form.addField("password", instructions.connectivityInfos.password.toStdString());
 
-            // headless flag
-            QHttpPart headlessPart;
-            headlessPart.setHeader(QNetworkRequest::ContentDispositionHeader, QVariant("form-data; name=\"headless\""));
-            headlessPart.setBody("1");
-
-        postData->append(filePart);
-        postData->append(passwordPart);
-        postData->append(headlessPart);
+        // headless flag
+        form.addField("headless", "1");
 
         // build request
-        QNetworkRequest request;
-        request.setUrl(instructions.getUploadUrl());
-        request.setRawHeader("Accept-Language", QLocale::system().name().toUtf8());
+        net::Request request { "POST", instructions.getUploadUrl() };
+        request.headers.push_back({ "Accept-Language", QLocale::system().name().toStdString() });
+        form.applyTo(request);
 
-        // handle reply and send
-        auto reply = _manager->post(request, postData);
-        postData->setParent(reply);  // delete the multiPart with the reply
-
-        return reply;
+        return client.send(request);
     }
 
- private:
-    QNetworkAccessManager* _manager;
+    // why an upload failed, for logs : transport error or HTTP status, followed by the platform explanations if any
+    static QString describeFailure(const net::Response &response) {
+        auto description = response.error.empty()
+            ? QString("HTTP %1").arg(response.status)
+            : QString::fromStdString(response.error);
+
+        if (!response.body.empty()) {
+            description += " >> " + QString::fromStdString(response.body);
+        }
+
+        return description;
+    }
 };

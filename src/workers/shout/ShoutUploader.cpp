@@ -17,47 +17,47 @@
 // for further details. Resources without explicit references to a
 // different license and copyright still refer to this GPL.
 
+
 #include "ShoutUploader.h"
 
-#include <functional>
-
+#include <QDebug>
 #include <QJsonDocument>
-#include <QJsonObject>
-#include <QNetworkReply>
-#include <QTimer>
-#include <QEventLoop>
 
-ShoutUploader::ShoutUploader(const AppSettings::ConnectivityInfos connectivityInfos) : 
-    _connectivityInfos(connectivityInfos), _uploader(new UploadHelper) {}
+#include <chrono>
+
+#include "src/helpers/UploadHelper.hpp"
+
+#include "version.h"
+
+ShoutUploader::ShoutUploader(const AppSettings::ConnectivityInfos connectivityInfos) :
+    _connectivityInfos(connectivityInfos),
+    _client(APP_NAME "/" APP_CURRENT_VERSION),
+    _worker(&ShoutUploader::_uploadQueuedShouts, this) {}
+
+ShoutUploader::~ShoutUploader() {
+    {
+        std::lock_guard lock { _mutex };
+        _stopping = true;
+    }
+
+    _queueChanged.notify_all();
+    _client.cancel();
+    _worker.join();
+}
 
 //
 void ShoutUploader::waitForDrain(unsigned long timeout) {
+    std::unique_lock lock { _mutex };
 
-    //
-    _drainTriggered = true;
-    if (this->_drain) {
-        this->_drain->deleteLater();
-    }
-    this->_drain = new QEventLoop;
-
-
-    // note: if not setting this as context (`this` as 2cd argument), QTimer will execute whenever ShoutUploader still exists, resulting in segfault
-    QTimer::singleShot(timeout, this, [this]() {
-        if (this->_drain && this->_drain->isRunning()) {
-            qDebug() << "[ShoutUploader] Drain timed out. Force exiting.";
-            this->_drain->exit();
-        }
+    const auto drained = _queueChanged.wait_for(lock, std::chrono::milliseconds { timeout }, [this] {
+        return _queue.empty() && !_uploading;
     });
 
-    //
-    this->_drain->exec();
-
-    //
-    endDrain:
+    if (drained) {
         qDebug() << "[ShoutUploader] Successfully drained.";
-    
-    //
-    _drainTriggered = false;
+    } else {
+        qDebug() << "[ShoutUploader] Drain timed out, remaining:" << _queue.size() + (_uploading ? 1 : 0);
+    }
 }
 
 //
@@ -65,63 +65,53 @@ void ShoutUploader::uploadAsShout(const QJsonObject &parsedShout) {
     //
     qDebug() << "[ShoutUploader] Shout received, uploading...";
 
-    //
-    try {
+    {
+        std::lock_guard lock { _mutex };
+        _queue.push_back(QJsonDocument { parsedShout }.toJson().toStdString());
+    }
+
+    _queueChanged.notify_all();
+}
+
+// runs on the worker thread
+void ShoutUploader::_uploadQueuedShouts() {
+    while (true) {
+        std::string shout;
+
+        {
+            std::unique_lock lock { _mutex };
+            _queueChanged.wait(lock, [this] { return _stopping || !_queue.empty(); });
+            if (_stopping) return;
+
+            shout = std::move(_queue.front());
+            _queue.pop_front();
+            _uploading = true;
+        }
+
         //
-        UploadHelper::UploadInstructions instr {
+        const auto uploadInfos = AppSettings::getShoutUploadInfos();
+        const auto response = UploadHelper::uploadDataToPlatform(_client, {
             _connectivityInfos,
-            AppSettings::getShoutUploadInfos(),
-            QJsonDocument{parsedShout}.toJson()
-        };
+            uploadInfos,
+            shout
+        }, false);
 
-        //
-        this->_pendingUploads++;
-        auto response = _uploader->uploadDataToPlatform(instr, false);
+        if (response.ok()) {
+            qDebug() << "[ShoutUploader] Uploaded with HTTP code " << response.status;
+        } else {
+            emit forwardMessage(
+                tr("An error occured while shouting tracks infos to %1 platform : %2")
+                    .arg(DEST_PLATFORM_PRODUCT_NAME)
+                    .arg(UploadHelper::describeFailure(response)),
+                MessageType::ISSUE
+            );
+        }
 
-        // on error
-        QObject::connect(
-            response, &QNetworkReply::errorOccurred,
-            [this, response](QNetworkReply::NetworkError) {
-                emit forwardMessage(
-                    tr("An error occured while shouting tracks infos to %1 platform : %2")
-                        .arg(DEST_PLATFORM_PRODUCT_NAME)
-                        .arg(IMessenger::prettyPrintErrorNetworkMessage(response)),
-                    MessageType::ISSUE
-                );
-            }
-        );
+        {
+            std::lock_guard lock { _mutex };
+            _uploading = false;
+        }
 
-        // on finished (WITH or WITHOUT error)
-        QObject::connect(
-            response, &QNetworkReply::finished,
-            [this, response]() {
-                //
-                QVariant statusCode = response->attribute(QNetworkRequest::HttpStatusCodeAttribute);
-                if (statusCode.isValid()) {
-                    int code = statusCode.toInt();
-                    qDebug() << "[ShoutUploader] Uploaded with HTTP code " << code;
-                }
-
-                //
-                response->deleteLater();
-                
-                //
-                this->_pendingUploads--;
-
-                //
-                if (_drainTriggered) {
-                    qDebug() << "[ShoutUploader] Drained HTTP request, remaining:" << this->_pendingUploads;
-
-                    //
-                    if (this->_pendingUploads <= 0 && this->_drain && this->_drain->isRunning()) {
-                        qDebug() << "[ShoutUploader] No more requests to drain, exiting.";
-                        this->_drain->exit();
-                    } 
-                }
-            }
-        );
-
-    } catch(const std::exception& e) {
-        emit forwardMessage(e.what(), MessageType::ISSUE);
+        _queueChanged.notify_all();
     }
 }

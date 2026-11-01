@@ -24,6 +24,8 @@ macro(DeployQt target)
                     --no-opengl-sw
                     --no-quick-import
                     --no-system-d3d-compiler
+                    # "generic" plugins (TUIO touch input) would pull Qt Network and its TLS backends
+                    --skip-plugin-types generic
                     --dir ${QT_DEPS_OUTPUT_DIRNAME}
                     --translations fr,en
                     $<TARGET_FILE:${target}>
