@@ -16,10 +16,10 @@
             "label": "1. Generate Project files (Debug)",
             "type": "shell",
             "windows": {
-                "command": "cmake -GNinja -Bbuild_debug -H. -DCMAKE_BUILD_TYPE=Debug -DCMAKE_TOOLCHAIN_FILE=toolchains/msys2.cmake"
+                "command": "cmake --preset windows-debug"
             },
             "osx": {
-                "command": "cmake -GNinja -Bbuild_debug -H. -DCMAKE_BUILD_TYPE=Debug -DCMAKE_TOOLCHAIN_FILE=toolchains/osx.cmake"
+                "command": "cmake --preset macos-debug"
             },
             "problemMatcher": []
         },
@@ -27,10 +27,10 @@
             "label": "1*. Generate Project files (Release)",
             "type": "shell",
             "windows": {
-                "command": "cmake -GNinja -Bbuild_release -H. -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=toolchains/msys2.cmake"
+                "command": "cmake --preset windows-release"
             },
             "osx": {
-                "command": "cmake -GNinja -Bbuild_release -H. -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=toolchains/osx.cmake"
+                "command": "cmake --preset macos-release"
             },
             "problemMatcher": []
         },
@@ -38,29 +38,47 @@
             "label": "2. Build (Debug)",
             "dependsOn": "1. Generate Project files (Debug)",
             "type": "shell",
-            "options": {
-                "cwd": "${workspaceRoot}/build_debug"
+            "windows": {
+                "command": "cmake --build --preset windows-debug"
             },
-            "command": "ninja",
+            "osx": {
+                "command": "cmake --build --preset macos-debug"
+            },
             "problemMatcher": []
         },
         {
             "label": "2*. Build (Release)",
             "dependsOn": "1*. Generate Project files (Release)",
             "type": "shell",
-            "options": {
-                "cwd": "${workspaceRoot}/build_release"
+            "windows": {
+                "command": "cmake --build --preset windows-release"
             },
-            "command": "ninja",
+            "osx": {
+                "command": "cmake --build --preset macos-release"
+            },
             "problemMatcher": []
         },
         {
-            "label": "3. Publish release (Velopack, GitHub)",
+            "label": "3. Package release, without publishing (Velopack)",
             "type": "shell",
-            "options": {
-                "cwd": "${workspaceRoot}"
+            "windows": {
+                "command": "cmake --workflow --preset windows-package"
             },
-            "command": "bash -x ./toolchains/publish_release.sh"
+            "osx": {
+                "command": "cmake --workflow --preset macos-package"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "4. Publish release (Velopack, GitHub)",
+            "type": "shell",
+            "windows": {
+                "command": "cmake --workflow --preset windows-publish"
+            },
+            "osx": {
+                "command": "cmake --workflow --preset macos-publish"
+            },
+            "problemMatcher": []
         },
         {
             "label": "BB. Generate .pfx file for Windows certification",

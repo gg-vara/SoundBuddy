@@ -45,8 +45,13 @@ On Windows, if installer is not signed, Chrome + Windows Defender will ring alar
 
 - First, generate `.pfx` file by running `toolchains/win_generate_pfx.sh`. Script will ask for publisher infos: give required infos if relevant.
   - Make sure that the Organisation Name is the same as the `APP_PUBLISHER_ORG` in `CMakeLists.txt` !
-- Then, build and run the project as usual
-- For local development builds, signing can be skipped with the `-DSOUNDBUDDY_CODESIGN=OFF` CMake option
+- Then, build and run the project as usual (Debug builds are not signed)
+
+### Building from the command line
+
+Builds are described by CMake presets (`CMakePresets.json`), also used by the VS Code tasks. On Windows, run them from the CLANG64 shell :
+- `cmake --preset windows-debug`, then `cmake --build --preset windows-debug`
+- `cmake --list-presets=all` lists the available presets (`macos-*` on macOS)
 
 ## Publishing a release
 
@@ -54,14 +59,15 @@ SoundBuddy is installed and updated through [Velopack](https://velopack.io) : in
 
 Requirements, in addition to the build dependencies :
 - .NET SDK (https://dotnet.microsoft.com/download), to run Velopack's CLI
-- Velopack's CLI, with the same version as `VELOPACK_VERSION` in `CMakeLists.txt` : `dotnet tool install -g vpk --version <VELOPACK_VERSION>`
-- GitHub CLI, logged in : `gh auth login`
+- Velopack's CLI, with the same version as `VELOPACK_VERSION` in `cmake/Velopack.cmake` : `dotnet tool install -g vpk --version <VELOPACK_VERSION>`
+- GitHub CLI, logged in (`gh auth login`), or a `GITHUB_TOKEN` environment variable
 
-Then :
-- Bump the version in `CMakeLists.txt` (`project(... VERSION X.Y.Z`)
-- Run `toolchains/publish_release.sh` (or the `3. Publish release` VS Code task), on Windows from the CLANG64 shell, and on macOS.
+Then, after bumping the version in `CMakeLists.txt` (`project(... VERSION X.Y.Z`) :
+- `cmake --workflow --preset windows-package` builds in Release and packages the app into `build_release_unsigned/releases`, without signing nor publishing anything : useful to check a release locally
+- `cmake --workflow --preset windows-publish` builds, signs, packages, and publishes the `vX.Y.Z` GitHub release. Set the `SOUNDBUDDY_RELEASE_DRAFT` environment variable to create it as a draft instead
+- on macOS, `macos-package` / `macos-publish` add the macOS packages to the same release
 
-The script builds in Release, packages the app with `vpk pack` (including delta updates from the previous release, fetched with `vpk download github`), and publishes it as the `vX.Y.Z` GitHub release with `vpk upload github`. Use `--draft` to review the release before publishing it.
+Packaging fetches the previous release (`vpk download github`) to generate delta updates, then runs `vpk pack`; publishing runs `vpk upload github` (see `cmake/Velopack.cmake`).
 
 ## License
     SoundBuddy

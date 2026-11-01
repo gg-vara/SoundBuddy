@@ -70,6 +70,9 @@ SET(APP_PUBLISHER_ORG_PKG_NORM "lvnwl") # please make sure that publisher has no
 SET(DEST_PLATFORM_PRODUCT_NAME "SoundVitrine")
 SET(APP_PATCHNOTE_URL ${PROJECT_HOMEPAGE_URL}/releases)
 
+# GitHub repository whose releases (published with Velopack, see cmake/Velopack.cmake) feed updates
+SET(APP_UPDATES_REPOSITORY_URL ${PROJECT_HOMEPAGE_URL})
+
 
 ################################
 ## CPP Compiler Configuration ##
@@ -253,52 +256,8 @@ add_dependencies(appExec update_translations)
 # Velopack #
 ############
 
-# installer and auto-updates, through GitHub releases.
-# Prebuilt library with a C ABI, so the MSVC build can be linked from MinGW / clang
-SET(VELOPACK_VERSION 1.2.161)
-
-include(FetchContent)
-FetchContent_Declare(velopack
-    URL https://github.com/velopack/velopack/releases/download/${VELOPACK_VERSION}/velopack_libc_${VELOPACK_VERSION}.zip
-    URL_HASH SHA256=31de8f2cf05a47bd5328a9f98b0c41aec1582156f6075f1058b26941f7f17c20
-    DOWNLOAD_EXTRACT_TIMESTAMP ON
-)
-FetchContent_MakeAvailable(velopack)
-
-add_library(velopack SHARED IMPORTED)
-set_target_properties(velopack PROPERTIES
-    INTERFACE_INCLUDE_DIRECTORIES ${velopack_SOURCE_DIR}/include
-)
-
-if(WIN32)
-    SET(VELOPACK_LIB ${velopack_SOURCE_DIR}/lib/velopack_libc_win_x64_msvc.dll)
-    set_target_properties(velopack PROPERTIES
-        IMPORTED_LOCATION ${VELOPACK_LIB}
-        IMPORTED_IMPLIB ${VELOPACK_LIB}.lib
-    )
-
-    # the import library refers to "velopack_libc.dll"
-    add_custom_command(TARGET appExec POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${VELOPACK_LIB} $<TARGET_FILE_DIR:appExec>/velopack_libc.dll
-    )
-elseif(APPLE)
-    SET(VELOPACK_LIB ${velopack_SOURCE_DIR}/lib/velopack_libc_osx.dylib)
-    set_target_properties(velopack PROPERTIES
-        IMPORTED_LOCATION ${VELOPACK_LIB}
-    )
-
-    # the library id is an absolute path from Velopack's CI : load it from the bundle instead
-    add_custom_command(TARGET appExec POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${VELOPACK_LIB} $<TARGET_FILE_DIR:appExec>/libvelopack_libc.dylib
-        COMMAND install_name_tool -id @executable_path/libvelopack_libc.dylib $<TARGET_FILE_DIR:appExec>/libvelopack_libc.dylib
-        COMMAND install_name_tool -change /Users/runner/_work/velopack/velopack/target/x86_64-apple-darwin/release/deps/libvelopack_libc.dylib
-            @executable_path/libvelopack_libc.dylib $<TARGET_FILE:appExec>
-    )
-endif()
-
-target_link_libraries(appExec PRIVATE
-    velopack
-)
+# installer, auto-updates, and velopack_pack / velopack_publish packaging targets
+include(Velopack)
 
 #######################
 # ITunesLibraryParser #
@@ -376,9 +335,6 @@ endif()
 ###########
 # Version #
 ###########
-
-# GitHub repository whose releases (published with vpk, see toolchains/publish_release.sh) feed updates
-SET(APP_UPDATES_REPOSITORY_URL ${PROJECT_HOMEPAGE_URL})
 
 configure_file(
     ${CMAKE_CURRENT_SOURCE_DIR}/templates/_version.h
