@@ -51,7 +51,7 @@
 
 #include "src/ui/widgets/TraficLight.hpp"
 
-#include "src/helpers/AppSettings.hpp"
+#include "src/helpers/AppSettings.h"
 #include "src/ui/monitor/PreferencesDialog.hpp"
 
 class MainWindow : public QMainWindow {

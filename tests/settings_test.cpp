@@ -8,7 +8,7 @@
 
 #include "Check.h"
 #include "TestData.h"
-#include "src/helpers/AppSettings.hpp"
+#include "src/helpers/AppSettings.h"
 
 namespace {
 

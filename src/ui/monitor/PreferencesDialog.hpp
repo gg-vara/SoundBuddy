@@ -26,7 +26,7 @@
 #include <QGridLayout>
 #include <QCheckBox>
 
-#include "src/helpers/AppSettings.hpp"
+#include "src/helpers/AppSettings.h"
 #include "version.h"
 
 class PreferencesDialog : public QDialog {

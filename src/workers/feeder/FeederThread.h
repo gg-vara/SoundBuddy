@@ -25,7 +25,7 @@
 #include <string>
 #include <thread>
 
-#include "src/helpers/AppSettings.hpp"
+#include "src/helpers/AppSettings.h"
 #include "src/workers/base/Message.h"
 
 // Exports the music library (JSON, compressed), then uploads it to the platform, on its own thread

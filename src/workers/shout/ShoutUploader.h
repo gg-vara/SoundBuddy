@@ -27,7 +27,7 @@
 #include <string>
 #include <thread>
 
-#include "src/helpers/AppSettings.hpp"
+#include "src/helpers/AppSettings.h"
 #include "src/net/HttpClient.h"
 #include "src/workers/base/Message.h"
 
