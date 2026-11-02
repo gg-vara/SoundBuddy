@@ -177,6 +177,15 @@ bool setLaunchingAtStartup(bool enabled) {
         command.c_str(), static_cast<DWORD>((command.size() + 1) * sizeof(wchar_t))) == ERROR_SUCCESS;
 }
 
+bool claimSingleInstance() {
+    // the mutex is released by the system when the process ends; its handle is never closed before
+    static const bool claimed = [] {
+        const auto mutex = CreateMutexW(nullptr, FALSE, L"Local\\" APP_PUBLISHER_ORG "." APP_NAME);
+        return mutex != nullptr && GetLastError() != ERROR_ALREADY_EXISTS;
+    }();
+    return claimed;
+}
+
 std::filesystem::path musicLibraryFile() {
     std::ifstream preferences { iTunesPreferencesFile(), std::ios::binary };
     if (!preferences) {

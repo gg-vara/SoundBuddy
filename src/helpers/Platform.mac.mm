@@ -21,6 +21,9 @@
 
 #import <AppKit/AppKit.h>
 
+#include <fcntl.h>
+#include <sys/file.h>
+
 #include <stdexcept>
 #include <system_error>
 
@@ -110,6 +113,16 @@ bool setLaunchingAtStartup(bool enabled) {
 
         return [agent writeToURL:[NSURL fileURLWithPath:toNSString(file)] error:nil];
     }
+}
+
+bool claimSingleInstance() {
+    // the lock is released by the system when the process ends; the file is never closed before
+    static const bool claimed = [] {
+        const auto file = dataDirectory() / (APP_NAME ".lock");
+        const int descriptor = open(file.c_str(), O_RDWR | O_CREAT | O_CLOEXEC, 0600);
+        return descriptor >= 0 && flock(descriptor, LOCK_EX | LOCK_NB) == 0;
+    }();
+    return claimed;
 }
 
 std::filesystem::path musicLibraryFile() {

@@ -21,7 +21,6 @@
 #include <QApplication>
 #include <QStyleFactory>
 #include <QDir>
-#include <QLockFile>
 #include <QDebug>
 
 #include <Velopack.hpp>
@@ -78,8 +77,7 @@ int main(int argc, char** argv) {
     qInstallMessageHandler(&logQtMessage);
 
     // prevent multiples instances
-    QLockFile lockFile(QDir::tempPath() + QDir::separator() + APP_NAME + ".lock");
-    if (!lockFile.tryLock(100)) {
+    if (!platform::claimSingleInstance()) {
         logs::info("App", "Already running, exiting");
         return 1;
     }

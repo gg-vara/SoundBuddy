@@ -41,6 +41,10 @@ bool isLaunchingAtStartup();
 // makes the session start this executable at login, or not; false on failure
 bool setLaunchingAtStartup(bool enabled);
 
+// whether this process is the only instance of the app running in the user session.
+// The first caller keeps the claim until it exits (or crashes)
+bool claimSingleInstance();
+
 // XML library file shared by iTunes / Music, deduced from its preferences.
 // Throws std::runtime_error, with a translated message, if it cannot be deduced
 std::filesystem::path musicLibraryFile();
