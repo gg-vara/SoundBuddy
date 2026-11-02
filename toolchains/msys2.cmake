@@ -1,17 +1,20 @@
-if(NOT DEFINED ENV{MINGW64_ROOT})
-    message(FATAL_ERROR "Required ENV variable MINGW64_ROOT does not exists. Please check README.md for more details !")
+# MSYS2 installation : MSYS2_ROOT environment variable, else its default location
+if(DEFINED ENV{MSYS2_ROOT})
+    file(TO_CMAKE_PATH "$ENV{MSYS2_ROOT}" MSYS2_ROOT)
 else()
-    SET(MINGW64_ROOT $ENV{MINGW64_ROOT})
+    SET(MSYS2_ROOT "C:/msys64")
 endif()
 
-# the CLANG64 environment of MSYS2, with its toolchain (see prerequisites/msys2/build.txt)
-if(NOT IS_DIRECTORY "${MINGW64_ROOT}")
-    message(FATAL_ERROR "MINGW64_ROOT (${MINGW64_ROOT}) is not a directory : it must point to the CLANG64 environment of MSYS2 (Ex: C:\\msys64\\clang64)")
+# its CLANG64 environment (LLVM Clang, libc++), with the toolchain (see prerequisites/msys2/build.txt)
+SET(MSYS2_CLANG64_ROOT "${MSYS2_ROOT}/clang64")
+
+if(NOT IS_DIRECTORY "${MSYS2_CLANG64_ROOT}")
+    message(FATAL_ERROR "No MSYS2 CLANG64 environment in ${MSYS2_ROOT} : set the MSYS2_ROOT environment variable to the MSYS2 installation (Ex: C:\\msys64)")
 endif()
 
 foreach(tool clang++ ld.lld llvm-ar llvm-rc)
-    if(NOT EXISTS "${MINGW64_ROOT}/bin/${tool}.exe")
-        message(FATAL_ERROR "${tool} not found in ${MINGW64_ROOT}/bin : install the build prerequisites (see prerequisites/msys2/build.txt)")
+    if(NOT EXISTS "${MSYS2_CLANG64_ROOT}/bin/${tool}.exe")
+        message(FATAL_ERROR "${tool} not found in ${MSYS2_CLANG64_ROOT}/bin : install the build prerequisites (see prerequisites/msys2/build.txt)")
     endif()
 endforeach()
 
@@ -23,8 +26,8 @@ set (CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)
 set (CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
 set (CMAKE_FIND_ROOT_PATH_MODE_PACKAGE ONLY)
 
-list(APPEND CMAKE_PREFIX_PATH 
-    ${MINGW64_ROOT} 
+list(APPEND CMAKE_PREFIX_PATH
+    ${MSYS2_CLANG64_ROOT}
 )
 
 SET (CMAKE_CXX_COMPILER         "clang++")

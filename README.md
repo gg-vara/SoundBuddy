@@ -41,7 +41,7 @@ They would look like:
 
 #### Dependencies
 We use MSYS2 build system (https://www.msys2.org) as our build platform, with its CLANG64 environment (LLVM Clang, libc++). Make sure to install it if it is not.
-- Define `MINGW64_ROOT` as environment variable, as the path of the CLANG64 environment installed by MSYS2 (Ex: `C:\msys64\clang64`).
+- Define `MSYS2_ROOT` as environment variable, as the path of the MSYS2 installation (Ex: `C:\msys64`, its default location, assumed by CMake when the variable is not set).
 - From VS Code, use the `Msys2 Shell` terminal (which opens CLANG64) to run the following commands.
 - Run command in terminal to update obsolete packages : `pacman -Syyu`
 - Run command in terminal to fetch depedencies, listed in `prerequisites/msys2/{build,runtime,devex}.txt` : `pacman -S --needed $(sed 's/#.*//' ./prerequisites/msys2/*.txt)` (or only some of the lists, as `./prerequisites/msys2/{build,runtime}.txt`)
@@ -69,7 +69,7 @@ The workspace recommends its extensions (`.vscode/extensions.json`) :
 - CMake Tools, for CMake language support, presets, builds and the tests explorer
 - CodeLLDB and C/C++, for debugging only (C/C++'s own IntelliSense is disabled, as it would compete with clangd)
 
-On Windows, clangd and CMake are taken from `MINGW64_ROOT`. On macOS, set `clangd.path` and `cmake.cmakePath` in your user settings, to Homebrew's ones.
+On Windows, clangd and CMake are taken from the CLANG64 environment of `MSYS2_ROOT`. On macOS, set `clangd.path` and `cmake.cmakePath` in your user settings, to Homebrew's ones.
 
 ### Tests
 

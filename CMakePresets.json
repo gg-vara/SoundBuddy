@@ -18,10 +18,10 @@
             "name": "windows",
             "hidden": true,
             "inherits": "base",
-            "description": "MSYS2 CLANG64, MINGW64_ROOT environment variable must point to its root (see README.md)",
+            "description": "MSYS2 CLANG64, MSYS2_ROOT environment variable must point to the MSYS2 installation (see README.md)",
             "toolchainFile": "${sourceDir}/toolchains/msys2.cmake",
             "environment": {
-                "PATH": "$env{MINGW64_ROOT}/bin;$env{MINGW64_ROOT}/../usr/bin;$penv{PATH}"
+                "PATH": "$env{MSYS2_ROOT}/clang64/bin;$env{MSYS2_ROOT}/usr/bin;$penv{PATH}"
             },
             "condition": {
                 "type": "equals",

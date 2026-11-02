@@ -1,7 +1,7 @@
 {
     "terminal.integrated.profiles.windows": {
         "Msys2 Shell" : {
-            "path" : "${env:MINGW64_ROOT}\\..\\usr\\bin\\bash.exe",
+            "path" : "${env:MSYS2_ROOT}\\usr\\bin\\bash.exe",
             "args": [
                 "--login",
                 "-i"
@@ -22,7 +22,7 @@
 
     // C++ code intelligence : clangd, from build_debug/compile_commands.json (see .clangd).
     // On macOS, set "clangd.path" in your user settings (/opt/homebrew/opt/llvm/bin/clangd)
-    "clangd.path": "${env:MINGW64_ROOT}/bin/clangd.exe",
+    "clangd.path": "${env:MSYS2_ROOT}/clang64/bin/clangd.exe",
     "clangd.arguments": [
         // system headers of the MSYS2 / Homebrew compilers
         "--query-driver=**/clang++*",
@@ -36,7 +36,7 @@
     // On macOS, set "cmake.cmakePath" in your user settings (/opt/homebrew/bin/cmake)
     "cmake.useCMakePresets": "always",
     "cmake.configureOnOpen": false,
-    "cmake.cmakePath": "${env:MINGW64_ROOT}/bin/cmake.exe",
+    "cmake.cmakePath": "${env:MSYS2_ROOT}/clang64/bin/cmake.exe",
 
     // extension-less headers : the C++ standard library, Qt
     "files.associations": {

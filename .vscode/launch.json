@@ -28,7 +28,7 @@
             "program": "${workspaceFolder}/build_debug/out/SoundBuddy",
             "windows": {
                 "MIMode": "gdb",
-                "miDebuggerPath": "${env:MINGW64_ROOT}/bin/gdb.exe",
+                "miDebuggerPath": "${env:MSYS2_ROOT}/clang64/bin/gdb.exe",
             },
             "osx": {
                 "MIMode": "lldb",
