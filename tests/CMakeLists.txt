@@ -16,7 +16,9 @@ add_library(soundbuddy_tested_core STATIC
     ${PROJECT_SOURCE_DIR}/src/i18n/Translations.cpp
     ${PROJECT_SOURCE_DIR}/src/logs/Logs.cpp
     ${PROJECT_SOURCE_DIR}/src/settings/Settings.cpp
+    $<$<PLATFORM_ID:Windows>:${PROJECT_SOURCE_DIR}/src/helpers/Compression.win.cpp>
     $<$<PLATFORM_ID:Windows>:${PROJECT_SOURCE_DIR}/src/helpers/Platform.win.cpp>
+    $<$<PLATFORM_ID:Darwin>:${PROJECT_SOURCE_DIR}/src/helpers/Compression.mac.cpp>
     $<$<PLATFORM_ID:Darwin>:${PROJECT_SOURCE_DIR}/src/helpers/Platform.mac.mm>
 )
 
@@ -30,10 +32,10 @@ target_link_libraries(soundbuddy_tested_core PUBLIC yyjson)
 
 if(WIN32)
     target_compile_definitions(soundbuddy_tested_core PUBLIC UNICODE _UNICODE)
-    target_link_libraries(soundbuddy_tested_core PUBLIC bcrypt shell32 ole32 uuid advapi32)
+    target_link_libraries(soundbuddy_tested_core PUBLIC bcrypt cabinet shell32 ole32 uuid advapi32)
 elseif(APPLE)
     target_compile_options(soundbuddy_tested_core PRIVATE $<$<COMPILE_LANGUAGE:OBJCXX>:-fobjc-arc>)
-    target_link_libraries(soundbuddy_tested_core PUBLIC "-framework Foundation" "-framework AppKit")
+    target_link_libraries(soundbuddy_tested_core PUBLIC "-framework Foundation" "-framework AppKit" z)
 endif()
 
 set_target_properties(soundbuddy_tested_core PROPERTIES AUTOMOC OFF AUTOUIC OFF AUTORCC OFF)
@@ -73,6 +75,7 @@ endfunction()
 
 soundbuddy_test(timestamps)
 soundbuddy_test(hash)
+soundbuddy_test(compression)
 soundbuddy_test(json)
 soundbuddy_test(logs)
 soundbuddy_test(platform)

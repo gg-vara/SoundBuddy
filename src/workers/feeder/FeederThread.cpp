@@ -24,10 +24,9 @@
 #include <system_error>
 #include <utility>
 #include <exception>
+#include <stdexcept>
 
-#include <zlib.h>
-#include <stdlib.h>
-
+#include "src/helpers/Compression.h"
 #include "src/helpers/Platform.h"
 #include "src/i18n/Translations.h"
 #include "src/logs/Logs.h"
@@ -115,29 +114,20 @@ void FeederThread::run() {
         emit forwardMessage(tr("Now we try to compress it..."));
 
             const auto output_json = json.tracksJSON();
-            auto compressedDataSize = compressBound(output_json.size()); // must be at least source len for starters, may be updated by zlib after sucessful compression
-            auto compressedData = (unsigned char *)malloc(compressedDataSize);
-
-            const auto compressionResult = compress(
-                compressedData, 
-                &compressedDataSize, 
-                reinterpret_cast<const unsigned char *>(output_json.data()), 
-                output_json.size()
-            );
-
-            if (compressionResult != Z_OK) {
-                throw std::domain_error("zLib failed");
+            const auto compressedData = compression::compress(output_json);
+            if (compressedData.empty()) {
+                throw std::runtime_error("Library compression failed");
             }
 
             // write into file
             std::ofstream file { AppSettings::getFeedOutputFilePath(true), std::ios::binary | std::ios::trunc };
-            file.write(reinterpret_cast<const char *>(compressedData), static_cast<std::streamsize>(compressedDataSize));
+            file.write(compressedData.data(), static_cast<std::streamsize>(compressedData.size()));
             file.close();
 
         emit forwardMessage(
             tr("Went from %1 to %2")
             .arg(QString::fromStdString(i18n::formatDataSize(output_json.size())))
-            .arg(QString::fromStdString(i18n::formatDataSize(compressedDataSize)))
+            .arg(QString::fromStdString(i18n::formatDataSize(compressedData.size())))
         );
 
         emit forwardMessage(tr("Let's try to send now !"));
@@ -150,7 +140,7 @@ void FeederThread::run() {
             const auto response = UploadHelper::uploadDataToPlatform(client, {
                 this->_connectivityInfos,
                 uploadInfos,
-                std::string_view { reinterpret_cast<const char *>(compressedData), compressedDataSize },
+                compressedData,
             }, true);
 
             //
@@ -174,9 +164,6 @@ void FeederThread::run() {
                     MessageType::WARNING
                 );
             }
-
-        // cleanup compressed data
-        free(compressedData);
 
     //
     } catch (const std::exception& e) {

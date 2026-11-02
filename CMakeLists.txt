@@ -278,16 +278,6 @@ if(SOUNDBUDDY_BUILD_TESTS)
 endif()
 
 ########
-# Zlib #
-########
-
-find_package(ZLIB REQUIRED)
-
-target_link_libraries(appExec PRIVATE
-    ZLIB::ZLIB
-)
-
-########
 # QT 6 #
 ########
 
@@ -307,6 +297,8 @@ if(WIN32)
         winhttp
         # file hashes
         bcrypt
+        # library compression (Compression API, MSZIP)
+        cabinet
     )
 endif()
 
@@ -317,6 +309,8 @@ if(APPLE)
         "-framework Foundation"
         # platform services
         "-framework AppKit"
+        # library compression (libz of the macOS SDK)
+        z
     )
 endif()
 

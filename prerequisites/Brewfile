@@ -11,6 +11,5 @@ cask "dotnet-sdk"   # runs Velopack's CLI (dotnet tool restore)
 
 ## runtime : libraries the app links to and ships with
 brew "qt"           # until the native user interface
-brew "zlib"         # library compression
 
 ## devex : clangd, clang-tidy and lldb come with llvm

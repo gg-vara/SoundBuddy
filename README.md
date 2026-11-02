@@ -16,7 +16,7 @@ Requires a C++20 enabled compiler. We assume you have Git installed on your syst
 
 SoundBuddy have some dependencies that are external and thus need to be installed on your system. They are listed in `prerequisites/`, in 3 parts :
 - build : the toolchain (compiler, linker, CMake, Ninja) and release tooling (GitHub CLI)
-- runtime : the libraries the app links to and ships with (Qt, until the native user interface, and zlib)
+- runtime : the libraries the app links to and ships with (Qt, until the native user interface)
 - devex : development comfort (clangd and clang-tidy, debugger), optional to build
 
 The other libraries are declared in CMake (`FetchContent`, submodules), and Velopack's CLI in the .NET tools manifest (`.config/dotnet-tools.json`). CMake checks the toolchain when configuring, and tells what is missing.
