@@ -183,6 +183,18 @@ if (APPLE)
     )
 endif()
 
+# debug builds : DWARF moves to SoundBuddy.exe.debug, next to the executable, which links to it (.gnu_debuglink) :
+# gdb and lldb find it there. Neither reads split DWARF (.dwo) and PDB both
+if (WIN32 AND CMAKE_BUILD_TYPE STREQUAL "Debug")
+    add_custom_command(TARGET appExec POST_BUILD
+        COMMAND ${CMAKE_OBJCOPY} --only-keep-debug $<TARGET_FILE_NAME:appExec> $<TARGET_FILE_NAME:appExec>.debug
+        COMMAND ${CMAKE_OBJCOPY} --strip-debug --add-gnu-debuglink=$<TARGET_FILE_NAME:appExec>.debug $<TARGET_FILE_NAME:appExec>
+        WORKING_DIRECTORY $<TARGET_FILE_DIR:appExec>
+        COMMENT "Moving debug info to $<TARGET_FILE_NAME:appExec>.debug"
+        VERBATIM
+    )
+endif()
+
 # add executable metadata for Windows .exe
 if (WIN32)
     #

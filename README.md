@@ -70,6 +70,8 @@ The workspace recommends its extensions (`.vscode/extensions.json`) :
 - CMake Tools, for CMake language support, presets, builds and the tests explorer
 - CodeLLDB and C/C++, for debugging only (C/C++'s own IntelliSense is disabled, as it would compete with clangd)
 
+On Windows, Debug builds keep their debug info beside the executable, in `build_debug/out/SoundBuddy.exe.debug` : both debuggers (lldb, gdb) load it from there.
+
 On Windows, clangd and CMake are taken from the CLANG64 environment of `MSYS2_ROOT`. On macOS, set `clangd.path` and `cmake.cmakePath` in your user settings, to Homebrew's ones.
 
 ### Static analysis and layout
