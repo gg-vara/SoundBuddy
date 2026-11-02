@@ -4,10 +4,17 @@
 # - velopack_pack target : packages the built app (installer, full and delta update packages) into ${CMAKE_BINARY_DIR}/releases
 # - velopack_publish target : uploads these packages as the vX.Y.Z GitHub release
 #
-# Packaging targets require Velopack's CLI, with the same version as the library :
-#   dotnet tool install -g vpk --version <VELOPACK_VERSION>
+# Packaging targets require Velopack's CLI, pinned to the same version as the library by the
+# .NET tools manifest (.config/dotnet-tools.json) : install it once with "dotnet tool restore"
 
 SET(VELOPACK_VERSION 1.2.161)
+
+# the CLI and the library must stay on the same version
+file(READ ${CMAKE_SOURCE_DIR}/.config/dotnet-tools.json DOTNET_TOOLS_MANIFEST)
+string(JSON VPK_MANIFEST_VERSION GET ${DOTNET_TOOLS_MANIFEST} tools vpk version)
+if(NOT VPK_MANIFEST_VERSION STREQUAL VELOPACK_VERSION)
+    message(FATAL_ERROR "Velopack versions differ : ${VELOPACK_VERSION} in cmake/Velopack.cmake, ${VPK_MANIFEST_VERSION} in .config/dotnet-tools.json")
+endif()
 
 ###########
 # Library #
@@ -61,13 +68,18 @@ target_link_libraries(appExec PRIVATE
 # Packaging #
 #############
 
-find_program(VPK_EXECUTABLE vpk
-    HINTS "$ENV{USERPROFILE}/.dotnet/tools" "$ENV{HOME}/.dotnet/tools"
+# runs the CLI of the tools manifest
+find_program(DOTNET_EXECUTABLE dotnet
+    # default install locations, when not on PATH (as from MSYS2 shells)
+    HINTS "$ENV{ProgramFiles}/dotnet" "C:/Program Files/dotnet" "/usr/local/share/dotnet" "/opt/homebrew/bin"
 )
+if(NOT DOTNET_EXECUTABLE)
+    message(STATUS ".NET SDK not found : velopack_pack and velopack_publish targets will not work (see README.md)")
+endif()
 
 # arguments of cmake/velopack/vpk.cmake, common to packaging and publishing
 SET(VELOPACK_SCRIPT_ARGS
-    -DVPK=${VPK_EXECUTABLE}
+    -DDOTNET=${DOTNET_EXECUTABLE}
     -DVPK_VERSION=${VELOPACK_VERSION}
     -DRELEASES_DIR=${CMAKE_BINARY_DIR}/releases
     -DREPOSITORY_URL=${APP_UPDATES_REPOSITORY_URL}
@@ -114,6 +126,8 @@ add_custom_target(velopack_pack
         -DPACK_AUTHORS=${APP_PUBLISHER_ORG}
         -P ${CMAKE_SOURCE_DIR}/cmake/velopack/vpk.cmake
     DEPENDS appExec
+    # where .NET finds the tools manifest
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
     COMMENT "Packaging ${PROJECT_NAME} ${PROJECT_VERSION} with Velopack..."
     VERBATIM
 )
@@ -124,6 +138,7 @@ add_custom_target(velopack_publish
         ${VELOPACK_SCRIPT_ARGS}
         -DACTION=publish
         -P ${CMAKE_SOURCE_DIR}/cmake/velopack/vpk.cmake
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
     COMMENT "Publishing ${PROJECT_NAME} v${PROJECT_VERSION} on GitHub..."
     VERBATIM
 )

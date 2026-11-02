@@ -1,0 +1,4 @@
+# runtime : libraries the app links to and ships with
+mingw-w64-clang-x86_64-qt6-base           # until the native user interface; also provides windeployqt
+mingw-w64-clang-x86_64-qt6-translations   # Qt own texts (standard buttons...)
+mingw-w64-clang-x86_64-zlib                # library compression

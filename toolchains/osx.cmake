@@ -4,11 +4,7 @@ list(APPEND CMAKE_MODULE_PATH
     "/opt/homebrew/opt/llvm/lib/cmake"
 )
 
-# mandatory, else OpenSSL wont be found
-SET (OPENSSL_ROOT_DIR /opt/homebrew/opt/openssl@3)
-
-list(APPEND CMAKE_PREFIX_PATH 
-    "/opt/homebrew/opt/openssl@3"
+list(APPEND CMAKE_PREFIX_PATH
     "/opt/homebrew/opt/llvm"
 )
 

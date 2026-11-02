@@ -9,7 +9,10 @@
         {
             "name": "base",
             "hidden": true,
-            "generator": "Ninja"
+            "generator": "Ninja",
+            "cacheVariables": {
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
+            }
         },
         {
             "name": "windows",
@@ -17,6 +20,9 @@
             "inherits": "base",
             "description": "MSYS2 CLANG64, MINGW64_ROOT environment variable must point to its root (see README.md)",
             "toolchainFile": "${sourceDir}/toolchains/msys2.cmake",
+            "environment": {
+                "PATH": "$env{MINGW64_ROOT}/bin;$env{MINGW64_ROOT}/../usr/bin;$penv{PATH}"
+            },
             "condition": {
                 "type": "equals",
                 "lhs": "${hostSystemName}",

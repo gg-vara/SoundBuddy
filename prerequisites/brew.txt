@@ -1,1 +1,0 @@
-ninja cmake llvm openssl@3 qt gh zlib

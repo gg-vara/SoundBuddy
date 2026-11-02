@@ -14,13 +14,21 @@ Requires a C++20 enabled compiler. We assume you have Git installed on your syst
 - In VS Code, use the command palette to run `Tasks : Run Tests Task`, which will configure the build
 - In VS Code, simply run `Launch` in the `Execute and Debug` tab to build the executable 
 
-SoundBuddy have some dependencies that are external and thus need to be installed on your system. Here is how to proceed on each handled platform :
+SoundBuddy have some dependencies that are external and thus need to be installed on your system. They are listed in `prerequisites/`, in 3 parts :
+- build : the toolchain (compiler, linker, CMake, Ninja) and release tooling (GitHub CLI)
+- runtime : the libraries the app links to and ships with (Qt, until the native user interface, and zlib)
+- devex : development comfort (clangd and clang-tidy, debugger), optional to build
+
+The other libraries are declared in CMake (`FetchContent`, submodules), and Velopack's CLI in the .NET tools manifest (`.config/dotnet-tools.json`). CMake checks the toolchain when configuring, and tells what is missing.
+
+Here is how to proceed on each handled platform :
 
 ### MacOS (LLVMClang)
 
 #### Dependencies
 All dependencies are fetched via Homebrew (https://brew.sh), make sure you have it properly installed on your build system.
-- Run command in terminal to fetch depedencies : `brew install $(cat ./prerequisites/brew.txt)`
+- Run command in terminal to fetch depedencies, listed in `prerequisites/Brewfile` : `brew bundle --file prerequisites/Brewfile`
+- `brew bundle check --file prerequisites/Brewfile` tells what is missing
 
 #### Security
 Now from OSX 13.2+, executables have to be signed with a developper identity to be even lauched (for Qt binary depedencies via `macdeployqt`, for the Velopack package...).
@@ -36,7 +44,8 @@ We use MSYS2 build system (https://www.msys2.org) as our build platform, with it
 - Define `MINGW64_ROOT` as environment variable, as the path of the CLANG64 environment installed by MSYS2 (Ex: `C:\msys64\clang64`).
 - From VS Code, use the `Msys2 Shell` terminal (which opens CLANG64) to run the following commands.
 - Run command in terminal to update obsolete packages : `pacman -Syyu`
-- Run command in terminal to fetch depedencies : `pacman -S --needed - < ./prerequisites/msys.txt`
+- Run command in terminal to fetch depedencies, listed in `prerequisites/msys2/{build,runtime,devex}.txt` : `pacman -S --needed $(sed 's/#.*//' ./prerequisites/msys2/*.txt)` (or only some of the lists, as `./prerequisites/msys2/{build,runtime}.txt`)
+- Install the .NET SDK (https://dotnet.microsoft.com/download), which runs Velopack's CLI to package releases
 
 #### Security
 On Windows, if installer is not signed, Chrome + Windows Defender will ring alarms all over the place.
@@ -52,6 +61,15 @@ On Windows, if installer is not signed, Chrome + Windows Defender will ring alar
 Builds are described by CMake presets (`CMakePresets.json`), also used by the VS Code tasks. On Windows, run them from the CLANG64 shell :
 - `cmake --preset windows-debug`, then `cmake --build --preset windows-debug`
 - `cmake --list-presets=all` lists the available presets (`macos-*` on macOS)
+
+### Visual Studio Code
+
+The workspace recommends its extensions (`.vscode/extensions.json`) :
+- clangd, for C++ code intelligence : it reads `build_debug/compile_commands.json`, exported when configuring with the Debug preset. Configure once (task `1. Generate Project files (Debug)`) before opening C++ files, and again when adding source files
+- CMake Tools, for CMake language support, presets, builds and the tests explorer
+- CodeLLDB and C/C++, for debugging only (C/C++'s own IntelliSense is disabled, as it would compete with clangd)
+
+On Windows, clangd and CMake are taken from `MINGW64_ROOT`. On macOS, set `clangd.path` and `cmake.cmakePath` in your user settings, to Homebrew's ones.
 
 ### Tests
 
@@ -74,7 +92,7 @@ SoundBuddy is installed and updated through [Velopack](https://velopack.io) : in
 
 Requirements, in addition to the build dependencies :
 - .NET SDK (https://dotnet.microsoft.com/download), to run Velopack's CLI
-- Velopack's CLI, with the same version as `VELOPACK_VERSION` in `cmake/Velopack.cmake` : `dotnet tool install -g vpk --version <VELOPACK_VERSION>`
+- Velopack's CLI, pinned by `.config/dotnet-tools.json` to the version of the library (`VELOPACK_VERSION` in `cmake/Velopack.cmake`, which checks they match) : run `dotnet tool restore` once from the repository. To upgrade Velopack, change both versions (and the library hash)
 - GitHub CLI, logged in (`gh auth login`), or a `GITHUB_TOKEN` environment variable
 
 Then, after bumping the version in `CMakeLists.txt` (`project(... VERSION X.Y.Z`) :

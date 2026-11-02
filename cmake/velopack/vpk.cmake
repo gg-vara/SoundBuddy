@@ -12,13 +12,16 @@ cmake_minimum_required(VERSION 3.25)
 # checks
 #
 
-if(NOT VPK)
-    message(FATAL_ERROR "Velopack CLI (vpk) not found. Install it with : dotnet tool install -g vpk --version ${VPK_VERSION}")
+if(NOT DOTNET)
+    message(FATAL_ERROR ".NET SDK not found : it runs Velopack's CLI (see README.md)")
 endif()
+
+# CLI of the tools manifest (.config/dotnet-tools.json), found from the working directory
+set(VPK ${DOTNET} tool run vpk --)
 
 execute_process(COMMAND ${VPK} -h OUTPUT_VARIABLE vpk_help ERROR_QUIET)
 if(NOT vpk_help MATCHES "Velopack CLI ${VPK_VERSION}")
-    message(FATAL_ERROR "Velopack CLI version must match the library version (${VPK_VERSION}). Run : dotnet tool update -g vpk --version ${VPK_VERSION}")
+    message(FATAL_ERROR "Velopack CLI ${VPK_VERSION} is not available : run \"dotnet tool restore\" from the repository")
 endif()
 
 set(github_args --repoUrl ${REPOSITORY_URL} --channel ${CHANNEL} --outputDir ${RELEASES_DIR})

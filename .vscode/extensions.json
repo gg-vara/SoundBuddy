@@ -1,7 +1,15 @@
 {
     "recommendations": [
-        "josetr.cmake-language-support-vscode",
-        "ms-vscode.cpptools",
-        "vadimcn.vscode-lldb"
+        // C++ code intelligence (clangd, from prerequisites/*/devex.txt)
+        "llvm-vs-code-extensions.vscode-clangd",
+        // CMake language support, presets, builds and tests
+        "ms-vscode.cmake-tools",
+        // debuggers : CodeLLDB, and the C/C++ extension for gdb ("cppdbg")
+        "vadimcn.vscode-lldb",
+        "ms-vscode.cpptools"
+    ],
+    "unwantedRecommendations": [
+        // replaced by CMake Tools, which needs no Python language server
+        "josetr.cmake-language-support-vscode"
     ]
 }

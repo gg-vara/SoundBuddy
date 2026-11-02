@@ -1,0 +1,3 @@
+# devex : development comfort, optional to build
+mingw-w64-clang-x86_64-clang-tools-extra  # clangd (code intelligence), clang-tidy (lints)
+mingw-w64-clang-x86_64-gdb                # debugger ("cppdbg" launch configuration)

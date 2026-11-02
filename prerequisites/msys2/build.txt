@@ -1,0 +1,7 @@
+# build : toolchain and release tooling, for MSYS2 CLANG64 (see README.md)
+mingw-w64-clang-x86_64-clang        # compiler, with libc++
+mingw-w64-clang-x86_64-lld          # linker
+mingw-w64-clang-x86_64-llvm         # llvm-ar, llvm-rc...
+mingw-w64-clang-x86_64-cmake
+mingw-w64-clang-x86_64-ninja
+mingw-w64-clang-x86_64-github-cli   # publishes releases

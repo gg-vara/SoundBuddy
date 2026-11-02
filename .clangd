@@ -1,0 +1,4 @@
+# clangd : C++ code intelligence in editors, from the compile commands of the Debug build,
+# exported by the CMake presets (configure with the windows-debug / macos-debug preset first)
+CompileFlags:
+  CompilationDatabase: build_debug

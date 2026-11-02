@@ -1,0 +1,16 @@
+# SoundBuddy prerequisites on macOS (Homebrew) :
+#   brew bundle --file prerequisites/Brewfile
+#   brew bundle check --file prerequisites/Brewfile (tells what is missing)
+
+## build : toolchain and release tooling
+brew "llvm"         # clang, lld, llvm-ar, llvm-rc
+brew "cmake"
+brew "ninja"
+brew "gh"           # GitHub CLI : publishes releases
+cask "dotnet-sdk"   # runs Velopack's CLI (dotnet tool restore)
+
+## runtime : libraries the app links to and ships with
+brew "qt"           # until the native user interface
+brew "zlib"         # library compression
+
+## devex : clangd, clang-tidy and lldb come with llvm

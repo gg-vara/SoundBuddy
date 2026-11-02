@@ -59,6 +59,18 @@
             "problemMatcher": []
         },
         {
+            "label": "2+. Run unit tests (Debug)",
+            "type": "shell",
+            "windows": {
+                "command": "cmake --workflow --preset windows-test"
+            },
+            "osx": {
+                "command": "cmake --workflow --preset macos-test"
+            },
+            "group": "test",
+            "problemMatcher": []
+        },
+        {
             "label": "3. Package release, without publishing (Velopack)",
             "type": "shell",
             "windows": {

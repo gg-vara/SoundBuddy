@@ -45,6 +45,9 @@ project(${GITHUB_REPO_NAME} VERSION 0.11.0
     LANGUAGES CXX
 )
 
+# compiler requirements
+include(CheckToolchain)
+
 # https://cmake.org/cmake/help/v3.2/module/CPackBundle.html#variable:CPACK_BUNDLE_APPLE_CERT_APP
 # https://github.com/ziglang/zig/issues/6971
 # Since recent SDK, if not signed, any executable will silently crash
@@ -119,8 +122,6 @@ if (WIN32)
 endif()
 
 if (APPLE)
-    # enforce searching for OpenSSL from explicit Homebrew path
-    find_package(OpenSSL REQUIRED)
     #set bundle type
     SET(BUNDLE_TYPE MACOSX_BUNDLE) 
     #add icons
