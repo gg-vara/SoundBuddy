@@ -17,11 +17,12 @@
 // for further details. Resources without explicit references to a
 // different license and copyright still refer to this GPL.
 
-
 #include "MBeatThread.h"
 
+#include <condition_variable>
 #include <format>
-#include <string>
+#include <mutex>
+#include <utility>
 
 #include "src/i18n/Translations.h"
 #include "src/logs/Logs.h"
@@ -29,46 +30,55 @@
 
 #include "version.h"
 
-MBeatThread::MBeatThread(const AppSettings::ConnectivityInfos &connectivityInfos) :
-    _connectivityInfos(connectivityInfos),
-    _client(APP_NAME "/" APP_CURRENT_VERSION) {}
+namespace mbeat {
 
-void MBeatThread::run() {
-    //
+std::string credentialsUrl(const AppSettings::ConnectivityInfos& connectivityInfos) {
+    const auto url = connectivityInfos.getSoundHeartbeatUrl() + "/creds";
+
+    const auto schemeEnd = url.find("://");
+    const auto address = schemeEnd == std::string::npos ? url : url.substr(schemeEnd + 3);
+    const auto host = address.substr(0, address.find_first_of(":/"));
+
+    const auto wantsUnsecure = host == "localhost" || host == "127.0.0.1";
+    return (wantsUnsecure ? "http://" : "https://") + address;
+}
+
+}  // namespace mbeat
+
+MBeatThread::MBeatThread(AppSettings::ConnectivityInfos connectivityInfos, mbeat::OnStatus onStatus) :
+    _connectivityInfos(std::move(connectivityInfos)),
+    _onStatus(std::move(onStatus)),
+    _client(APP_NAME "/" APP_CURRENT_VERSION),
+    _worker([this](std::stop_token stop) { _run(stop); }) {}
+
+// the worker thread, destroyed first, is asked to stop (which aborts the request in progress) and joined
+MBeatThread::~MBeatThread() = default;
+
+// runs on the worker thread
+void MBeatThread::_run(std::stop_token stop) {
+    const auto notify = [this](std::string text, mbeat::Connectivity connectivity) {
+        if (_onStatus) _onStatus({ std::move(text), connectivity });
+    };
+
     logs::debug("MBeat", "Start");
 
-    //
-    // Check connectivity infos
-    //
-
-    if(!_connectivityInfos.areOK) {
-        //
-        emit updateConnectivityStatus(
-            tr("Waiting for appropriate credentials."),
-            ConnectivityIndicator::NOK
-        );
-
-        //
+    if (!_connectivityInfos.areOK) {
+        notify(std::string { i18n::tr("Waiting for appropriate credentials.") }, mbeat::Connectivity::Refused);
         return;
     }
 
-    //
-    const auto request = this->_createRequest();
+    const auto request = _createRequest();
 
-    while (!this->_isStopping()) {
-        //
+    // only waits for the heartbeat interval, or a stop
+    std::mutex mutex;
+    std::condition_variable_any heartbeat;
+
+    while (!stop.stop_requested()) {
         logs::debug("MBeat", "Checking credentials");
-        emit updateConnectivityStatus(
-            tr("Asking for credentials validation..."),
-            ConnectivityIndicator::ONGOING
-        );
+        notify(std::string { i18n::tr("Asking for credentials validation...") }, mbeat::Connectivity::Checking);
 
-        const auto response = _client.send(request);
-        if (this->_isStopping()) break;
-
-        //
-        // handle status bar update
-        //
+        const auto response = _client.send(request, stop);
+        if (stop.stop_requested()) break;
 
         if (response.status != 200) {
             // body first, as the platform explains why credentials are refused
@@ -79,27 +89,14 @@ void MBeatThread::run() {
                     : response.error;
             }
 
-            //
-            emit updateConnectivityStatus(
-                tr("An error occured while connecting with %1 platform : %2")
-                    .arg(DEST_PLATFORM_PRODUCT_NAME)
-                    .arg(QString::fromStdString(details)),
-                ConnectivityIndicator::NOK
-            );
-
-            //
             logs::warning("MBeat", "Credentials check failed : {}", details);
-
-        } else {
-            //
-            emit updateConnectivityStatus(
-                tr("Logged as \"%1\"")
-                    .arg(QString::fromStdString(_connectivityInfos.username)),
-                ConnectivityIndicator::OK
+            notify(
+                i18n::format(i18n::tr("An error occured while connecting with %1 platform : %2"), { DEST_PLATFORM_PRODUCT_NAME, details }),
+                mbeat::Connectivity::Refused
             );
-
-            //
+        } else {
             logs::info("MBeat", "Logged as \"{}\"", _connectivityInfos.username);
+            notify(i18n::format(i18n::tr("Logged as \"%1\""), { _connectivityInfos.username }), mbeat::Connectivity::Connected);
         }
 
         // if credentials are not accepted, no need to loop back again, user needs to update them.
@@ -107,46 +104,15 @@ void MBeatThread::run() {
 
         // will retry to confirm
         logs::debug("MBeat", "Will retry soon");
-        std::unique_lock lock { _mutex };
-        _wakeUp.wait_for(lock, HEARTBEAT_INTERVAL, [this] { return _stopping; });
+        std::unique_lock lock { mutex };
+        heartbeat.wait_for(lock, stop, HEARTBEAT_INTERVAL, [] { return false; });
     }
 
-    // loop has exited
     logs::debug("MBeat", "Shutdown");
 }
 
-void MBeatThread::quit() {
-    {
-        std::lock_guard lock { _mutex };
-        _stopping = true;
-    }
-
-    _wakeUp.notify_all();
-    _client.cancel();
-}
-
-bool MBeatThread::_isStopping() {
-    std::lock_guard lock { _mutex };
-    return _stopping;
-}
-
-namespace {
-
-// "url" in HTTPS, or in HTTP for a platform running locally
-std::string withPlatformScheme(const std::string& url) {
-    const auto schemeEnd = url.find("://");
-    const auto address = schemeEnd == std::string::npos ? url : url.substr(schemeEnd + 3);
-    const auto host = address.substr(0, address.find_first_of(":/"));
-
-    const auto wantsUnsecure = host == "localhost" || host == "127.0.0.1";
-    return (wantsUnsecure ? "http://" : "https://") + address;
-}
-
-}  // namespace
-
 net::Request MBeatThread::_createRequest() const {
-    // build request
-    net::Request request { "POST", withPlatformScheme(this->_connectivityInfos.getSoundHeartbeatUrl() + "/creds") };
+    net::Request request { "POST", mbeat::credentialsUrl(_connectivityInfos) };
     request.timeout = REQUEST_TIMEOUT;  // setup an earlier timeout
     request.headers = {
         { "Accept-Language", std::string { i18n::languageCode() } },
@@ -156,10 +122,9 @@ net::Request MBeatThread::_createRequest() const {
 
     // credentials
     net::Multipart form;
-    form.addField("username", this->_connectivityInfos.username);
-    form.addField("password", this->_connectivityInfos.password);
+    form.addField("username", _connectivityInfos.username);
+    form.addField("password", _connectivityInfos.password);
     form.applyTo(request);
 
-    //
     return request;
 }

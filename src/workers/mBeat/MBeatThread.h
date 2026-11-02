@@ -17,46 +17,59 @@
 // for further details. Resources without explicit references to a
 // different license and copyright still refer to this GPL.
 
-
 #pragma once
 
-#include <QThread>
-#include <QString>
-
-#include <condition_variable>
-#include <mutex>
+#include <chrono>
+#include <functional>
+#include <stop_token>
+#include <string>
+#include <thread>
 
 #include "src/helpers/AppSettings.hpp"
 #include "src/net/HttpClient.h"
-#include "src/ui/widgets/LightWidget.h"
 
-// Periodically checks the platform credentials, until quit() or the credentials are refused
-class MBeatThread : public QThread {
-    Q_OBJECT
+namespace mbeat {
 
+enum class Connectivity {
+    Refused,   // no credentials, refused ones, or platform unreachable
+    Checking,
+    Connected
+};
+
+struct Status {
+    std::string text;  // UTF-8, translated
+    Connectivity connectivity;
+};
+
+// receives the connectivity status, on the heartbeat's thread
+using OnStatus = std::function<void(const Status&)>;
+
+// URL checking the credentials : in HTTPS, or in HTTP for a platform running locally
+std::string credentialsUrl(const AppSettings::ConnectivityInfos& connectivityInfos);
+
+}  // namespace mbeat
+
+// Periodically checks the platform credentials on its own thread, from construction until
+// destruction, or until the credentials are refused
+class MBeatThread {
  public:
-    explicit MBeatThread(const AppSettings::ConnectivityInfos &connectivityInfos);
-
-    void run() override;
+    MBeatThread(AppSettings::ConnectivityInfos connectivityInfos, mbeat::OnStatus onStatus);
 
     // stops right away, even while waiting for the next heartbeat or a response
-    void quit();
-
- signals:
-    void updateConnectivityStatus(const QString &message, const ConnectivityIndicator &indic);
-
- private:
-    const AppSettings::ConnectivityInfos _connectivityInfos;
-    net::HttpClient _client;
-
-    std::mutex _mutex;
-    std::condition_variable _wakeUp;
-    bool _stopping = false;
-
-    net::Request _createRequest() const;
-    bool _isStopping();
+    ~MBeatThread();
 
     // heartbeats
     static inline const std::chrono::milliseconds HEARTBEAT_INTERVAL { 30000 };
     static inline const std::chrono::milliseconds REQUEST_TIMEOUT { 3000 };
+
+ private:
+    const AppSettings::ConnectivityInfos _connectivityInfos;
+    const mbeat::OnStatus _onStatus;
+    net::HttpClient _client;
+
+    // declared last : started once the members it uses are initialized, stopped and joined first
+    std::jthread _worker;
+
+    void _run(std::stop_token stop);
+    net::Request _createRequest() const;
 };

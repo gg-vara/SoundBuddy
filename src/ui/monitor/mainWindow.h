@@ -125,7 +125,7 @@ class MainWindow : public QMainWindow {
     ShoutWatcher* shoutWorker = nullptr;
     std::unique_ptr<ShoutUploader> shoutUploader;
     FeederThread* feederWorker = nullptr;
-    MBeatThread* mbeatWorker = nullptr;
+    std::unique_ptr<MBeatThread> mbeatWorker;
     UpdateCheckerThread updateCheckerWorker;
 
     void runMBeat();

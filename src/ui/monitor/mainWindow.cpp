@@ -28,6 +28,7 @@
 #include <vector>
 
 #include "src/helpers/Json.hpp"
+#include "src/ui/WorkerBridge.hpp"
 
 MainWindow::MainWindow() {
     // generate the UI
@@ -261,29 +262,19 @@ void MainWindow::updateStatusBar(const QString &message, const ConnectivityIndic
 }
 
 void MainWindow::runMBeat() {
-    //
-    auto &thread = this->mbeatWorker;
+    // the previous heartbeat stops first
+    this->mbeatWorker.reset();
 
-    //
-    if(thread && thread->isRunning()) {
-        thread->quit();
-        thread->wait();
-    }
+    this->mbeatWorker = std::make_unique<MBeatThread>(this->appSettings.getConnectivityInfos(), [this](const mbeat::Status &status) {
+        const auto indicator =
+            status.connectivity == mbeat::Connectivity::Connected ? ConnectivityIndicator::OK :
+            status.connectivity == mbeat::Connectivity::Checking ? ConnectivityIndicator::ONGOING :
+            ConnectivityIndicator::NOK;
 
-    //
-    thread = new MBeatThread(this->appSettings.getConnectivityInfos());
-
-        QObject::connect(
-            thread, &MBeatThread::updateConnectivityStatus,
-            this, &MainWindow::updateStatusBar
-        );
-
-        QObject::connect(
-            thread, &QThread::finished,
-            thread, &QObject::deleteLater
-        );
-
-    thread->start();
+        ui::post(this, [this, text = QString::fromStdString(status.text), indicator] {
+            this->updateStatusBar(text, indicator);
+        });
+    });
 }
 
 void MainWindow::runShouts() {
@@ -611,11 +602,9 @@ void MainWindow::closeEvent(QCloseEvent *event) {
         }
     }
 
-    // if running 
-    if (this->mbeatWorker && this->mbeatWorker->isRunning()) {
-        this->mbeatWorker->quit();
-    }
-    
+    // stops the heartbeat, aborting its request in progress if any
+    this->mbeatWorker.reset();
+
     // hide trayicon on shutdown for Windows, refereshes the UI frames of system tray
     this->trayIcon->hide();
     QApplication::quit();
