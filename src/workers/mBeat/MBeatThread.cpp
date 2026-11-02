@@ -23,6 +23,7 @@
 #include <QLocale>
 #include <QUrl>
 
+#include "src/logs/Logs.h"
 #include "src/net/Multipart.h"
 
 #include "version.h"
@@ -33,7 +34,7 @@ MBeatThread::MBeatThread(const AppSettings::ConnectivityInfos &connectivityInfos
 
 void MBeatThread::run() {
     //
-    qDebug("MBeat: Start");
+    logs::debug("MBeat", "Start");
 
     //
     // Check connectivity infos
@@ -55,7 +56,7 @@ void MBeatThread::run() {
 
     while (!this->_isStopping()) {
         //
-        qDebug("MBeat: Checking credentials...");
+        logs::debug("MBeat", "Checking credentials");
         emit updateConnectivityStatus(
             tr("Asking for credentials validation..."),
             ConnectivityIndicator::ONGOING
@@ -86,7 +87,7 @@ void MBeatThread::run() {
             );
 
             //
-            qDebug("MBeat: Failure !");
+            logs::warning("MBeat", "Credentials check failed : {}", details.toStdString());
 
         } else {
             //
@@ -97,20 +98,20 @@ void MBeatThread::run() {
             );
 
             //
-            qDebug("MBeat: Credentials OK !");
+            logs::info("MBeat", "Logged as \"{}\"",_connectivityInfos.username.toStdString());
         }
 
         // if credentials are not accepted, no need to loop back again, user needs to update them.
         if (response.status == 403) break;
 
         // will retry to confirm
-        qDebug("MBeat: Will retry soon.");
+        logs::debug("MBeat", "Will retry soon");
         std::unique_lock lock { _mutex };
         _wakeUp.wait_for(lock, HEARTBEAT_INTERVAL, [this] { return _stopping; });
     }
 
     // loop has exited
-    qDebug("MBeat: Shutdown");
+    logs::debug("MBeat", "Shutdown");
 }
 
 void MBeatThread::quit() {

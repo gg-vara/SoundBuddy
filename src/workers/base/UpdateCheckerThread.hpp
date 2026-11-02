@@ -28,6 +28,7 @@
 
 #include <Velopack.hpp>
 
+#include "src/logs/Logs.h"
 #include "version.h"
 
 // Checks GitHub releases for a newer version, and downloads it, through Velopack
@@ -71,6 +72,13 @@ class UpdateCheckerThread : public QThread {
             results.result = _manager ? Result::Failed : Result::NotInstalled;
             results.error = QString::fromUtf8(e.what());
             _update.reset();
+        }
+
+        switch (results.result) {
+            case Result::UpdateReady: logs::info("Updates", "Version {} downloaded", results.version.toStdString()); break;
+            case Result::NoUpdate: logs::info("Updates", "Up to date"); break;
+            case Result::NotInstalled: logs::info("Updates", "Not checked, not running from an installation"); break;
+            case Result::Failed: logs::warning("Updates", "Check failed : {}", results.error.toStdString()); break;
         }
 
         emit checked(results);

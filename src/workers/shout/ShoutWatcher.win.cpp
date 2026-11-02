@@ -20,6 +20,7 @@
 #include "ShoutWatcher.h"
 
 #include "src/i18n/trad.hpp"
+#include "src/logs/Logs.h"
 
 #include <windows.h>
 #include <combaseapi.h>
@@ -121,7 +122,8 @@ void ShoutWatcher::_execWatchSession() {
             this->processPayload(toPayload(snapshot));
         });
     } catch (const std::exception& e) {
-        emit forwardMessage(QString(e.what()), MessageType::ISSUE);
+        logs::error("ShoutWatcher", "iTunes session failed : {}", e.what());
+        emit forwardMessage(QString::fromUtf8(e.what()), MessageType::ISSUE);
     }
 
     // uninitialize COM

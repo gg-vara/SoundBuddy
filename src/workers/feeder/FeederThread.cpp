@@ -29,6 +29,7 @@
 #include <stdlib.h>
 
 #include "src/helpers/Platform.h"
+#include "src/logs/Logs.h"
 #include "src/helpers/UploadHelper.hpp"
 #include "src/net/HttpClient.h"
 #include "version.h"
@@ -54,6 +55,7 @@ void FeederThread::run() {
             const auto musicAppLibPath = platform::toUtf8(platform::musicLibraryFile());
             const auto outputPath = platform::toUtf8(AppSettings::getFeedOutputFilePath(false));
             const auto warningPath = platform::toUtf8(AppSettings::getFeedWarningFilePath());
+            logs::info("Feeder", "Reading library {}", musicAppLibPath);
 
         //
         emit forwardMessage(tr("Collecting tracks infos..."));
@@ -64,6 +66,7 @@ void FeederThread::run() {
         emit forwardMessage(tr("Parsing infos into JSON..."));
 
             const JSONLibrary json { library };
+            logs::info("Feeder", "{} tracks, {} left out for missing metadata", json.tracksCount(), json.warningsCount());
 
             // if has missing fields tracks
             if(json.warningsCount()) {
@@ -151,6 +154,7 @@ void FeederThread::run() {
 
             //
             if (!response.ok()) {
+                logs::warning("Feeder", "Upload failed : {}", UploadHelper::describeFailure(response).toStdString());
                 emit forwardMessage(
                     tr("An error occured while sending tracks infos to %1 platform : %2")
                         .arg(DEST_PLATFORM_PRODUCT_NAME)
@@ -158,6 +162,7 @@ void FeederThread::run() {
                     MessageType::ISSUE
                 );
             } else if (!response.body.empty()) {
+                logs::info("Feeder", "Uploaded, HTTP {}", response.status);
                 emit forwardMessage(
                     tr("Server responded: %1")
                         .arg(QString::fromStdString(response.body))
@@ -174,6 +179,8 @@ void FeederThread::run() {
 
     //
     } catch (const std::exception& e) {
+        logs::error("Feeder", "{}", e.what());
+
         // emit error as log
         emit forwardMessage(
             QString::fromUtf8(e.what()),

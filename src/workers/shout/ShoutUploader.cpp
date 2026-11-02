@@ -20,7 +20,7 @@
 
 #include "ShoutUploader.h"
 
-#include <QDebug>
+#include "src/logs/Logs.h"
 
 #include <chrono>
 
@@ -53,16 +53,16 @@ void ShoutUploader::waitForDrain(unsigned long timeout) {
     });
 
     if (drained) {
-        qDebug() << "[ShoutUploader] Successfully drained.";
+        logs::debug("ShoutUploader", "Successfully drained");
     } else {
-        qDebug() << "[ShoutUploader] Drain timed out, remaining:" << _queue.size() + (_uploading ? 1 : 0);
+        logs::warning("ShoutUploader", "Drain timed out, {} shout(s) not uploaded", _queue.size() + (_uploading ? 1 : 0));
     }
 }
 
 //
 void ShoutUploader::uploadAsShout(const std::string &shoutAsJson) {
     //
-    qDebug() << "[ShoutUploader] Shout received, uploading...";
+    logs::debug("ShoutUploader", "Shout received, uploading");
 
     {
         std::lock_guard lock { _mutex };
@@ -96,8 +96,9 @@ void ShoutUploader::_uploadQueuedShouts() {
         }, false);
 
         if (response.ok()) {
-            qDebug() << "[ShoutUploader] Uploaded with HTTP code " << response.status;
+            logs::debug("ShoutUploader", "Uploaded, HTTP {}", response.status);
         } else {
+            logs::warning("ShoutUploader", "Upload failed : {}", UploadHelper::describeFailure(response).toStdString());
             emit forwardMessage(
                 tr("An error occured while shouting tracks infos to %1 platform : %2")
                     .arg(DEST_PLATFORM_PRODUCT_NAME)

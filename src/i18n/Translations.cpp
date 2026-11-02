@@ -21,7 +21,6 @@
 
 #include <atomic>
 #include <cctype>
-#include <cstdio>
 #include <mutex>
 #include <optional>
 #include <set>
@@ -32,6 +31,8 @@
 #elif defined(__APPLE__)
     #include <CoreFoundation/CoreFoundation.h>
 #endif
+
+#include "src/logs/Logs.h"
 
 namespace i18n {
 
@@ -94,7 +95,7 @@ void reportMissing(std::string_view source) {
 
     std::lock_guard lock { mutex };
     if (reported.insert(std::string { source }).second) {
-        std::fprintf(stderr, "[i18n] missing translation : \"%.*s\"\n", static_cast<int>(source.size()), source.data());
+        logs::debug("i18n", "Missing translation : \"{}\"", source);
     }
 }
 #endif

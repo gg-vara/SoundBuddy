@@ -26,6 +26,7 @@
 
 #include "src/i18n/trad.hpp"
 #include "src/helpers/Timestamps.hpp"
+#include "src/logs/Logs.h"
 
 ShoutWatcher::ShoutWatcher() {}
 
@@ -43,14 +44,14 @@ void ShoutWatcher::run() {
             .arg(musicAppName())
     );
 
-    qDebug() << "[ShoutWatcher] Start watching.";
+    logs::info("ShoutWatcher", "Waiting for {} to launch", musicAppName().toStdString());
 
     //
     while(this->_waitForAvailableSession()) {
         //
         auto msg = tr("%1 is ready, watching session starts.").arg(musicAppName());
         emit forwardMessage(msg);
-        qDebug() << "[ShoutWatcher]" << msg;
+        logs::info("ShoutWatcher", "{} is ready, watching session starts", musicAppName().toStdString());
 
         //
         this->_execWatchSession();
@@ -58,7 +59,7 @@ void ShoutWatcher::run() {
         //
         msg = tr("Stopped watching %1, ending session.").arg(musicAppName());
         emit forwardMessage(msg);
-        qDebug() << "[ShoutWatcher]" << msg;
+        logs::info("ShoutWatcher", "Stopped watching {}, ending session", musicAppName().toStdString());
 
         // since session ended, tell that we do not listen to anything anymore
         this->processPayload(ShoutPayload{});
@@ -67,12 +68,12 @@ void ShoutWatcher::run() {
         if(this->_keepWatching) {
             msg = tr("Waiting for %1 to launch again...").arg(musicAppName());
             emit forwardMessage(msg);
-            qDebug() << "[ShoutWatcher]" << msg;
+            logs::info("ShoutWatcher", "Waiting for {} to launch again", musicAppName().toStdString());
         }
     }
 
     //
-    qDebug() << "[ShoutWatcher] Ending watch.";
+    logs::info("ShoutWatcher", "Stopped watching");
 
     //
     this->exec();
@@ -86,16 +87,19 @@ void ShoutWatcher::processPayload(const ShoutPayload &incomingPayload) {
     if (output.hasMeaningfulChange) {
         //
         emit shoutReadyToSend(output.parsingResult.json);
-        qDebug() << "[ShoutWatcher] Forwarding shout to uploader";
-
         //
         if (output.parsingResult.isEmpty) {
+            logs::info("ShoutWatcher", "Shouting : nothing");
+
             //
             emit forwardMessage(
                 tr("%1: Shouting -> Nothing")
                     .arg(QString::fromStdString(timestamps::local()))
             );
         } else {
+            logs::info("ShoutWatcher", "Shouting : {} - {} - {} ({})", incomingPayload.tName.toStdString(),
+                incomingPayload.tAlbum.toStdString(), incomingPayload.tArtist.toStdString(), incomingPayload.iPlayerState ? "playing" : "paused");
+
             // log content
             const auto pState = incomingPayload.iPlayerState ? tr("playing") : tr("paused");
             const auto logMessage =

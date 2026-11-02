@@ -26,7 +26,11 @@
 
 #include <Velopack.hpp>
 
+#include <string_view>
+
+#include "helpers/Platform.h"
 #include "i18n/QtTranslatorBridge.hpp"
+#include "logs/Logs.h"
 #include "ui/monitor/mainWindow.h"
 
 QString getResourcesPath() {
@@ -37,13 +41,46 @@ QString getResourcesPath() {
     #endif
 }
 
+namespace {
+
+logs::Level toLevel(std::string_view velopackLevel) {
+    if (velopackLevel.starts_with("err") || velopackLevel.starts_with("Err")) return logs::Level::Error;
+    if (velopackLevel.starts_with("warn") || velopackLevel.starts_with("Warn")) return logs::Level::Warning;
+    if (velopackLevel.starts_with("info") || velopackLevel.starts_with("Info")) return logs::Level::Info;
+    return logs::Level::Debug;
+}
+
+// installer and updates
+void logVelopackMessage(void *, const char * level, const char * message) {
+    logs::write(toLevel(level ? level : ""), "Velopack", message ? message : "");
+}
+
+// Qt own messages, until the app no longer relies on Qt
+void logQtMessage(QtMsgType type, const QMessageLogContext &, const QString &message) {
+    const auto level =
+        type == QtDebugMsg ? logs::Level::Debug :
+        type == QtInfoMsg ? logs::Level::Info :
+        type == QtWarningMsg ? logs::Level::Warning :
+        logs::Level::Error;
+
+    logs::write(level, "Qt", message.toStdString());
+}
+
+}  // namespace
+
 int main(int argc, char** argv) {
+    logs::start(platform::dataDirectory() / "logs" / "soundbuddy.log");
+
     // must run first : handles install / update / uninstall hooks, and may exit the process right away
-    Velopack::VelopackApp::Build().Run();
+    Velopack::VelopackApp::Build().SetLogger(&logVelopackMessage, nullptr).Run();
+
+    logs::info("App", "{} {} started", APP_NAME, APP_CURRENT_VERSION);
+    qInstallMessageHandler(&logQtMessage);
 
     // prevent multiples instances
     QLockFile lockFile(QDir::tempPath() + QDir::separator() + APP_NAME + ".lock");
     if (!lockFile.tryLock(100)) {
+        logs::info("App", "Already running, exiting");
         return 1;
     }
 
@@ -74,5 +111,7 @@ int main(int argc, char** argv) {
     MainWindow mw;
 
     // wait for the app to close
-    return app.exec();
+    const auto exitCode = app.exec();
+    logs::info("App", "Exiting with code {}", exitCode);
+    return exitCode;
 }
