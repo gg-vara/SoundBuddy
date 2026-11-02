@@ -19,14 +19,14 @@
 
 #include "ShoutWatcher.h"
 
-#include "src/i18n/trad.hpp"
-
-#include <unistd.h>
+#include <QFile>
 #include <QProcess>
 
+#include <chrono>
 #include <string_view>
 
 #include "src/helpers/Json.hpp"
+#include "src/workers/base/Wait.h"
 
 namespace {
 
@@ -37,11 +37,11 @@ std::string toString(yyjson_val * value) {
 }  // namespace
 
 // consider the session always available on OSX since we do not depend on the app beeing ran to request for shout states
-bool ShoutWatcher::_waitForAvailableSession() {
-    return this->_keepWatching;
+bool ShoutWatcher::_waitForAvailableSession(std::stop_token stop) {
+    return !stop.stop_requested();
 }
 
-void ShoutWatcher::_execWatchSession() {
+void ShoutWatcher::_execWatchSession(std::stop_token stop) {
     // define applescript to get shout values
     const auto scriptContent = QFile(":/mac/CurrentlyPlaying.applescript").readAll();
 
@@ -58,18 +58,18 @@ void ShoutWatcher::_execWatchSession() {
     bool processOK;
 
     // loop until user said not to
-    while (this->_keepWatching) {
+    while (!stop.stop_requested()) {
         // get shout results
         p.start();
 
         processOK = p.waitForReadyRead(200);
-        if (!processOK || !this->_keepWatching) {
+        if (!processOK || stop.stop_requested()) {
             goto maybeWait;
         }
 
         result = p.readAll();
         processOK = p.waitForFinished(100);
-        if (!processOK || !this->_keepWatching) {
+        if (!processOK || stop.stop_requested()) {
             goto maybeWait;
         }
 
@@ -102,12 +102,10 @@ void ShoutWatcher::_execWatchSession() {
         }
 
         // compare with old shout, if equivalent, don't reshout
-        this->processPayload(payload);
+        _processPayload(payload);
 
        // maybe wait a bit before looping again
        maybeWait:
-        if(this->_keepWatching) {
-            this->sleep(1);
-        }
+        workers::waitFor(stop, std::chrono::seconds { 1 });
     }
 }

@@ -19,14 +19,13 @@
 
 #include "MBeatThread.h"
 
-#include <condition_variable>
 #include <format>
-#include <mutex>
 #include <utility>
 
 #include "src/i18n/Translations.h"
 #include "src/logs/Logs.h"
 #include "src/net/Multipart.h"
+#include "src/workers/base/Wait.h"
 
 #include "version.h"
 
@@ -69,10 +68,6 @@ void MBeatThread::_run(std::stop_token stop) {
 
     const auto request = _createRequest();
 
-    // only waits for the heartbeat interval, or a stop
-    std::mutex mutex;
-    std::condition_variable_any heartbeat;
-
     while (!stop.stop_requested()) {
         logs::debug("MBeat", "Checking credentials");
         notify(std::string { i18n::tr("Asking for credentials validation...") }, mbeat::Connectivity::Checking);
@@ -104,8 +99,7 @@ void MBeatThread::_run(std::stop_token stop) {
 
         // will retry to confirm
         logs::debug("MBeat", "Will retry soon");
-        std::unique_lock lock { mutex };
-        heartbeat.wait_for(lock, stop, HEARTBEAT_INTERVAL, [] { return false; });
+        workers::waitFor(stop, HEARTBEAT_INTERVAL);
     }
 
     logs::debug("MBeat", "Shutdown");

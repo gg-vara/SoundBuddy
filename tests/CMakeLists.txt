@@ -101,6 +101,19 @@ soundbuddy_test(sse SOURCES ${PROJECT_SOURCE_DIR}/src/net/SseParser.cpp)
 soundbuddy_test(shout_uploader SOURCES ${PROJECT_SOURCE_DIR}/src/workers/shout/ShoutUploader.cpp)
 soundbuddy_test(mbeat SOURCES ${PROJECT_SOURCE_DIR}/src/workers/mBeat/MBeatThread.cpp)
 soundbuddy_test(feeder SOURCES ${PROJECT_SOURCE_DIR}/src/workers/feeder/FeederThread.cpp LIBRARIES itunes-library-parser)
+soundbuddy_test(shout_watcher
+    SOURCES
+        ${PROJECT_SOURCE_DIR}/src/workers/shout/ShoutPayload.cpp
+        ${PROJECT_SOURCE_DIR}/src/workers/shout/ShoutPayloadConsumer.cpp
+        ${PROJECT_SOURCE_DIR}/src/workers/shout/ShoutWatcher.cpp
+        $<$<PLATFORM_ID:Windows>:${PROJECT_SOURCE_DIR}/src/workers/shout/ShoutWatcher.win.cpp>
+        $<$<PLATFORM_ID:Windows>:${PROJECT_SOURCE_DIR}/src/workers/shout/win/iTunesCOMClient.cpp>
+        $<$<PLATFORM_ID:Windows>:${PROJECT_SOURCE_DIR}/src/workers/shout/win/iTunesSession.cpp>
+        $<$<PLATFORM_ID:Darwin>:${PROJECT_SOURCE_DIR}/src/workers/shout/ShoutWatcher.osx.cpp>
+    LIBRARIES
+        $<$<PLATFORM_ID:Windows>:oleaut32>
+        $<$<PLATFORM_ID:Darwin>:Qt6::Core>
+)
 
 # against public test services (httpbin.org, stream.wikimedia.org) : left out of the default test runs
 soundbuddy_test(network

@@ -21,8 +21,8 @@
 
 #pragma once
 
-#include <atomic>
 #include <functional>
+#include <stop_token>
 #include <string>
 
 #include "iTunesCOMClient.h"
@@ -37,8 +37,8 @@ class iTunesSession {
     // throws std::runtime_error if iTunes cannot be reached
     iTunesSession();
 
-    // blocks until iTunes is about to quit, or "keepRunning" becomes false (checked at least every second)
-    void run(const std::atomic<bool>& keepRunning, const OnSnapshot& onSnapshot);
+    // blocks until iTunes is about to quit, or a stop is requested on "stop" (which wakes it up right away)
+    void run(std::stop_token stop, const OnSnapshot& onSnapshot);
 
  private:
     static constexpr const unsigned int _pollingIntervalMS = 1000;

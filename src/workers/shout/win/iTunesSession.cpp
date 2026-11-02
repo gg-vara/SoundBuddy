@@ -32,12 +32,16 @@ iTunesSession::iTunesSession() :
         }
     }) {}
 
-void iTunesSession::run(const std::atomic<bool>& keepRunning, const OnSnapshot& onSnapshot) {
+void iTunesSession::run(std::stop_token stop, const OnSnapshot& onSnapshot) {
+    // a stop wakes the wait for messages up, with an empty message to this thread
+    const auto threadId = GetCurrentThreadId();
+    std::stop_callback wakeUp(stop, [threadId] { PostThreadMessageW(threadId, WM_NULL, 0, 0); });
+
     onSnapshot(_client.snapshot());
 
     auto nextPolling = GetTickCount64() + _pollingIntervalMS;
 
-    while (keepRunning && !_quitting) {
+    while (!stop.stop_requested() && !_quitting) {
         // events may also be delivered while calling iTunes, so they are checked on every iteration
         if (_playerStateChanged) {
             _playerStateChanged = false;

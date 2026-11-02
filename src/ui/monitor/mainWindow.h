@@ -43,6 +43,7 @@
 
 #include "src/workers/feeder/FeederThread.h"
 #include "src/workers/shout/ShoutUploader.h"
+#include "src/workers/shout/ShoutWatcher.h"
 #include "src/ui/tabs/ShoutTab.hpp"
 #include "src/ui/tabs/FeederTab.hpp"
 #include "src/workers/mBeat/MBeatThread.h"
@@ -122,9 +123,9 @@ class MainWindow : public QMainWindow {
     FeederTab* feederTab = nullptr;
     void _initUITabs();
 
-    // workers
-    ShoutWatcher* shoutWorker = nullptr;
+    // workers, stopped on destruction (in reverse order) : the watcher, which hands shouts to the uploader, stops first
     std::unique_ptr<ShoutUploader> shoutUploader;
+    std::unique_ptr<ShoutWatcher> shoutWorker;
     std::unique_ptr<FeederThread> feederWorker;
     std::unique_ptr<MBeatThread> mbeatWorker;
     UpdateCheckerThread updateCheckerWorker;

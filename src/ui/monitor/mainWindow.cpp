@@ -278,55 +278,25 @@ void MainWindow::runMBeat() {
 }
 
 void MainWindow::runShouts() {
-    //
-    auto &thread = this->shoutWorker;
+    // the watcher stops first, as it feeds the uploader
+    this->shoutWorker.reset();
 
-    //
-    // cleanup
-    //
-
-    //
-    if(thread && thread->isRunning()) {
-        thread->quit();
-        thread->wait();
-    }
-
-    //
     if (this->shoutUploader) {
         this->shoutUploader->waitForDrain(std::chrono::seconds { 1 });
         this->shoutUploader.reset();
     }
 
-    //
-    // instantiation and binding
-    //
+    const auto tab = this->shoutTab;
+    tab->workerStarted();
 
-    thread = new ShoutWatcher();
-    this->shoutUploader = std::make_unique<ShoutUploader>(this->appSettings.getConnectivityInfos(), this->shoutTab->messageSink());
+    this->shoutUploader = std::make_unique<ShoutUploader>(this->appSettings.getConnectivityInfos(), tab->messageSink());
 
-    // handed to the uploader from the user interface thread, which owns it
-    QObject::connect(
-        thread, &ShoutWatcher::shoutReadyToSend,
-        this, [this](const std::string &shoutAsJson) {
-            if (this->shoutUploader) this->shoutUploader->upload(shoutAsJson);
-        },
-        Qt::QueuedConnection
-    );
-
-    QObject::connect( 
-        thread, &QThread::finished,
-        thread, &QObject::deleteLater
-    );
-
-    //
-    this->shoutTab->bindWithWorker(thread);
-
-    //
-    // START !
-    //
-
-    thread->start();
-
+    // the watcher always stops before the uploader is destroyed : it hands shouts over directly
+    this->shoutWorker = std::make_unique<ShoutWatcher>(ShoutWatcher::Callbacks {
+        .onMessage = tab->messageSink(),
+        .onShout = [uploader = this->shoutUploader.get()](std::string shoutAsJson) { uploader->upload(std::move(shoutAsJson)); },
+        .onFinished = [tab] { ui::post(tab, [tab] { tab->workerFinished(); }); },
+    });
 }
 
 void MainWindow::runFeeder() {
@@ -578,11 +548,10 @@ void MainWindow::closeEvent(QCloseEvent *event) {
 
         if (msgboxRslt == QMessageBox::Yes) {
             // makes sure to wait for ShoutWatcher to end. Limits COM app retention on Windows
-            this->shoutWorker->quit();
-            this->shoutWorker->wait();
+            this->shoutWorker.reset();
 
-            //
-            shoutUploader->waitForDrain(std::chrono::seconds { 1 });
+            // the last shout ("nothing playing") gets a chance to be uploaded
+            this->shoutUploader->waitForDrain(std::chrono::seconds { 1 });
         } else {
             event->ignore();
             return;

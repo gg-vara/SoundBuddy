@@ -20,8 +20,9 @@
 #include "ShoutWatcher.h"
 
 #include "src/helpers/Platform.h"
-#include "src/i18n/trad.hpp"
+#include "src/i18n/Translations.h"
 #include "src/logs/Logs.h"
+#include "src/workers/base/Wait.h"
 
 #include <windows.h>
 #include <combaseapi.h>
@@ -31,14 +32,17 @@
 #include "win/iTunesSession.h"
 
 //
-bool ShoutWatcher::_waitForAvailableSession() {
-    while (this->_keepWatching) {
+bool ShoutWatcher::_waitForAvailableSession(std::stop_token stop) {
+    using namespace std::chrono_literals;
+    const auto windowName = platform::widen(platform::musicAppName());
+
+    while (!stop.stop_requested()) {
         // search for music app...
-        auto windowHandler = FindWindowA(0, musicAppName().toUtf8());
+        auto windowHandler = FindWindowW(nullptr, windowName.c_str());
 
         // if not found, wait and retry
         if(!windowHandler) {
-            this->sleep(1);
+            workers::waitFor(stop, 1s);
             continue;
         }
 
@@ -48,21 +52,21 @@ bool ShoutWatcher::_waitForAvailableSession() {
         
         // if cannot fetch, wait and retry
         if(!success) {
-            this->sleep(1);
+            workers::waitFor(stop, 1s);
             continue;
         }
 
         // if has already been ran and iTunes is still the same instance, do not proceed, since it means that the window is shutting down right now.
-        if(this->_oldProcessID != NULL && this->_oldProcessID == currentProcessID) {
-            this->sleep(1);
+        if(_previousProcessID != 0 && _previousProcessID == currentProcessID) {
+            workers::waitFor(stop, 1s);
             continue;
         }
 
         // store process ID
-        this->_oldProcessID = currentProcessID;
+        _previousProcessID = currentProcessID;
 
         //
-        return this->_keepWatching;
+        return !stop.stop_requested();
     };
 
     //
@@ -96,35 +100,28 @@ ShoutPayload toPayload(const iTunesCOMClient::Snapshot& snapshot) {
 
 }  // namespace
 
-void ShoutWatcher::_execWatchSession() {
+void ShoutWatcher::_execWatchSession(std::stop_token stop) {
     // log..
-    emit forwardMessage(
-        tr("Connecting to %1 ...")
-            .arg(musicAppName())
-    );
+    _say(i18n::format(i18n::tr("Connecting to %1 ..."), { platform::musicAppName() }));
 
     // initiate COM
     CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
 
     try {
         // log..
-        emit forwardMessage(tr("Initializing communication..."));
+        _say(std::string { i18n::tr("Initializing communication...") });
 
         iTunesSession session;
 
         // log..
-        emit forwardMessage(
-            tr("Listening to %1 !")
-                .arg(musicAppName())
-        );
+        _say(i18n::format(i18n::tr("Listening to %1 !"), { platform::musicAppName() }));
 
         // process events
-        session.run(this->_keepWatching, [this](const iTunesCOMClient::Snapshot& snapshot) {
-            this->processPayload(toPayload(snapshot));
+        session.run(stop, [this](const iTunesCOMClient::Snapshot& snapshot) {
+            _processPayload(toPayload(snapshot));
         });
     } catch (const std::exception& e) {
-        logs::error("ShoutWatcher", "iTunes session failed : {}", e.what());
-        emit forwardMessage(QString::fromUtf8(e.what()), MessageType::ISSUE);
+        _say(e.what(), workers::MessageKind::Issue);
     }
 
     // uninitialize COM
