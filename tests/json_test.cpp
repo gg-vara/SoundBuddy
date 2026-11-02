@@ -1,5 +1,7 @@
 // src/helpers/Json.hpp
 
+#include <yyjson.h>
+
 #include "Check.h"
 #include "src/helpers/Json.hpp"
 

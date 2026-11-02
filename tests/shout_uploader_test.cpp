@@ -1,10 +1,12 @@
 // ShoutUploader : failures reported, stopped quickly even during an upload
 
 #include <chrono>
+#include <cstdio>
 #include <mutex>
 #include <vector>
 
 #include "Check.h"
+#include "src/workers/base/Message.h"
 #include "src/workers/shout/ShoutUploader.h"
 
 using namespace std::chrono_literals;

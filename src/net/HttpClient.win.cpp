@@ -17,6 +17,11 @@
 // for further details. Resources without explicit references to a
 // different license and copyright still refer to this GPL.
 
+#include <cstddef>
+#include <memory>
+#include <stop_token>
+#include <string_view>
+#include <vector>
 #ifdef _WIN32
 
 #include "HttpClient.h"
@@ -26,7 +31,6 @@
 
 #include <mutex>
 #include <string>
-#include <utility>
 
 namespace net {
 

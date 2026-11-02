@@ -19,10 +19,15 @@
 
 #include "Logs.h"
 
+#include <cstdint>
 #include <cstdio>
+#include <filesystem>
+#include <format>
 #include <fstream>
+#include <ios>
 #include <mutex>
 #include <string>
+#include <string_view>
 #include <system_error>
 
 #ifdef _WIN32

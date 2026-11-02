@@ -3,6 +3,7 @@
 
 #include <array>
 #include <cstdio>
+#include <filesystem>
 #include <stdexcept>
 #include <string>
 
@@ -13,6 +14,7 @@
 #include "Check.h"
 #include "TestData.h"
 #include "src/helpers/Platform.h"
+#include "version.h"
 
 namespace {
 

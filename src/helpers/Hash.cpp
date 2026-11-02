@@ -20,8 +20,13 @@
 #include "Hash.h"
 
 #include <array>
+#include <cstddef>
+#include <filesystem>
 #include <fstream>
+#include <ios>
 #include <optional>
+#include <string>
+#include <string_view>
 #include <vector>
 
 #ifdef _WIN32

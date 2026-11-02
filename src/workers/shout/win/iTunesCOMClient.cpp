@@ -17,6 +17,9 @@
 // for further details. Resources without explicit references to a
 // different license and copyright still refer to this GPL.
 
+#include <wrl/client.h>
+#include <cwchar>
+#include <functional>
 #ifdef _WIN32
 
 #include "iTunesCOMClient.h"
@@ -221,6 +224,7 @@ iTunesCOMClient::iTunesCOMClient(std::function<void(Event)> onEvent) {
     if (SUCCEEDED(hr)) hr = typeLib->GetTypeInfoOfGuid(DIID__IiTunesEvents, &eventsInfo);
     if (FAILED(hr)) throw comError("Cannot read iTunes events description", hr);
 
+    // NOLINTNEXTLINE(cppcoreguidelines-owning-memory) : COM reference counting, the ComPtr owns it
     _sink.Attach(new EventSink(std::move(onEvent), eventsInfo.Get()));
 
     // subscribe

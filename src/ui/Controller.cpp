@@ -19,10 +19,18 @@
 
 #include "Controller.h"
 
+#include <yyjson.h>
+
 #include <chrono>
+#include <cstddef>
+#include <cstdint>
 #include <filesystem>
 #include <fstream>
+#include <ios>
 #include <iterator>
+#include <memory>
+#include <string>
+#include <string_view>
 #include <system_error>
 #include <utility>
 
@@ -30,7 +38,11 @@
 #include "src/helpers/Platform.h"
 #include "src/i18n/Translations.h"
 #include "src/logs/Logs.h"
+#include "src/settings/Settings.h"
 #include "src/ui/Post.h"
+#include "src/workers/base/Message.h"
+#include "src/workers/feeder/FeederThread.h"
+#include "src/workers/mBeat/MBeatThread.h"
 #include "version.h"
 
 namespace ui {

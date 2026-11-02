@@ -19,6 +19,11 @@
 
 #include "AppSettings.h"
 
+#include <utility>
+
+#include "src/helpers/Platform.h"
+#include "src/settings/Settings.h"
+
 AppSettings::AppSettings() :
     _file(platform::dataDirectory() / "settings.json") {
     if (auto stored = settings::load(_file)) {

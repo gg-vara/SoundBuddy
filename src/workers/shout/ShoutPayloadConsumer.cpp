@@ -1,4 +1,5 @@
 #include "ShoutPayloadConsumer.h"
+#include "src/workers/shout/ShoutPayload.h"
 
 ShoutConsumeResult ShoutPayloadConsumer::consume(const ShoutPayload& incomingPayload) {
     auto output = ShoutConsumeResult {};

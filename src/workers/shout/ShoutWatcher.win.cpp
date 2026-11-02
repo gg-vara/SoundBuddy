@@ -21,15 +21,18 @@
 
 #include "src/helpers/Platform.h"
 #include "src/i18n/Translations.h"
-#include "src/logs/Logs.h"
+#include "src/workers/base/Message.h"
 #include "src/workers/base/Wait.h"
 
+#include <chrono>
 #include <windows.h>
 #include <combaseapi.h>
 
 #include <exception>
-#include <utility>
+#include <stop_token>
 
+#include "src/workers/shout/ShoutPayload.h"
+#include "src/workers/shout/win/iTunesCOMClient.h"
 #include "win/iTunesSession.h"
 
 //

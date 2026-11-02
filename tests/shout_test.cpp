@@ -1,10 +1,14 @@
 // ShoutPayload and ShoutPayloadConsumer
 
+#include <yyjson.h>
+
 #include <fstream>
+#include <ios>
 
 #include "Check.h"
 #include "TestData.h"
 #include "src/helpers/Json.hpp"
+#include "src/helpers/Platform.h"
 #include "src/workers/shout/ShoutPayload.h"
 #include "src/workers/shout/ShoutPayloadConsumer.h"
 

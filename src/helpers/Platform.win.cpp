@@ -17,6 +17,11 @@
 // for further details. Resources without explicit references to a
 // different license and copyright still refer to this GPL.
 
+#include <cstddef>
+#include <filesystem>
+#include <ios>
+#include <string>
+#include <string_view>
 #ifdef _WIN32
 
 #include "Platform.h"

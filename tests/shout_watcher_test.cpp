@@ -2,8 +2,11 @@
 // not to connect to the user's session
 
 #include <chrono>
+#include <cstdio>
 #include <mutex>
+#include <string>
 #include <thread>
+#include <utility>
 #include <vector>
 
 #ifdef _WIN32
@@ -11,6 +14,7 @@
 #endif
 
 #include "Check.h"
+#include "src/workers/base/Message.h"
 #include "src/workers/shout/ShoutWatcher.h"
 
 using namespace std::chrono_literals;

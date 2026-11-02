@@ -1,7 +1,9 @@
 // AppSettings connectivity and upload infos, UploadHelper
 
 #include "Check.h"
+#include "src/helpers/AppSettings.h"
 #include "src/helpers/UploadHelper.hpp"
+#include "src/net/HttpClient.h"
 
 int main() {
     const AppSettings::ConnectivityInfos infos {

@@ -1,6 +1,7 @@
 // src/helpers/Hash.h
 
 #include <fstream>
+#include <ios>
 
 #include "Check.h"
 #include "TestData.h"

@@ -1,7 +1,10 @@
 // src/settings, and AppSettings : settings file, import of the QSettings values of previous versions
 
+#include <filesystem>
 #include <fstream>
+#include <ios>
 #include <iterator>
+#include <optional>
 #include <string>
 
 #ifdef _WIN32
@@ -13,6 +16,9 @@
 #include "Check.h"
 #include "TestData.h"
 #include "src/helpers/AppSettings.h"
+#include "src/helpers/Platform.h"
+#include "src/settings/Settings.h"
+#include "version.h"
 
 namespace {
 

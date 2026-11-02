@@ -23,7 +23,12 @@
 
 #include <windows.h>
 
+#include <optional>
 #include <string>
+
+#include "src/helpers/Platform.h"
+#include "src/settings/Settings.h"
+#include "version.h"
 
 namespace {
 

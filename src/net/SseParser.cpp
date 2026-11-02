@@ -20,6 +20,9 @@
 #include "SseParser.h"
 
 #include <algorithm>
+#include <string>
+#include <string_view>
+#include <utility>
 
 namespace net {
 

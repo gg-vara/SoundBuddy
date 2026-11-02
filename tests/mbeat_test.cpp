@@ -1,6 +1,7 @@
 // MBeatThread : credentials URL, statuses, stopped quickly while waiting or requesting
 
 #include <chrono>
+#include <cstddef>
 #include <mutex>
 #include <thread>
 #include <vector>

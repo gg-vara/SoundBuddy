@@ -17,6 +17,7 @@
 // for further details. Resources without explicit references to a
 // different license and copyright still refer to this GPL.
 
+#include <stop_token>
 #ifdef _WIN32
 
 #include "iTunesSession.h"

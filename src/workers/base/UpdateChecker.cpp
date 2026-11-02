@@ -20,6 +20,7 @@
 #include "UpdateChecker.h"
 
 #include <exception>
+#include <memory>
 #include <mutex>
 #include <optional>
 #include <thread>

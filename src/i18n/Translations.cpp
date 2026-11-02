@@ -23,10 +23,16 @@
 #include <array>
 #include <atomic>
 #include <cctype>
+#include <cstddef>
+#include <cstdint>
 #include <format>
+#include <functional>
+#include <initializer_list>
 #include <mutex>
 #include <optional>
 #include <set>
+#include <string>
+#include <string_view>
 #include <unordered_map>
 
 #ifdef _WIN32

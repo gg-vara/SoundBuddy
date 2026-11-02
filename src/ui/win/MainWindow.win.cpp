@@ -30,13 +30,17 @@
 #include <algorithm>
 #include <deque>
 #include <functional>
+#include <memory>
 #include <mutex>
+#include <stdexcept>
+#include <string>
 #include <utility>
 
 #include "page.h"
 #include "src/helpers/Platform.h"
 #include "src/i18n/Translations.h"
 #include "src/logs/Logs.h"
+#include "src/ui/Controller.h"
 #include "src/ui/Post.h"
 #include "src/ui/Run.h"
 #include "version.h"

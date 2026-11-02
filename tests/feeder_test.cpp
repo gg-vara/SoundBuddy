@@ -2,13 +2,19 @@
 // Reads the local iTunes / Music library when there is one; writes only to the tests data directory
 
 #include <chrono>
+#include <cstdio>
+#include <exception>
+#include <filesystem>
 #include <mutex>
 #include <thread>
 #include <vector>
 
 #include "Check.h"
 #include "TestData.h"
+#include "src/helpers/AppSettings.h"
+#include "src/helpers/Platform.h"
 #include "src/i18n/Translations.h"
+#include "src/workers/base/Message.h"
 #include "src/workers/feeder/FeederThread.h"
 
 using namespace std::chrono_literals;

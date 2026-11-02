@@ -19,8 +19,14 @@
 
 #include "Settings.h"
 
+#include <yyjson.h>
+
+#include <filesystem>
 #include <fstream>
+#include <ios>
 #include <iterator>
+#include <optional>
+#include <string>
 #include <system_error>
 
 #include "src/helpers/Json.hpp"

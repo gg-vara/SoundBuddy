@@ -1,4 +1,10 @@
 #include "ShoutPayload.h"
+
+#include <yyjson.h>
+
+#include <string>
+#include <utility>
+
 #include "src/helpers/Hash.h"
 #include "src/helpers/Json.hpp"
 #include "src/helpers/Platform.h"

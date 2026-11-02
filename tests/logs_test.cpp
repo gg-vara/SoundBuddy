@@ -1,6 +1,10 @@
 // src/logs : format, concurrent writes, rotation, restart
 
+#include <cstddef>
+#include <cstdint>
+#include <filesystem>
 #include <fstream>
+#include <ios>
 #include <regex>
 #include <string>
 #include <thread>

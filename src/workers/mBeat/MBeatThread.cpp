@@ -20,10 +20,14 @@
 #include "MBeatThread.h"
 
 #include <format>
+#include <stop_token>
+#include <string>
 #include <utility>
 
+#include "src/helpers/AppSettings.h"
 #include "src/i18n/Translations.h"
 #include "src/logs/Logs.h"
+#include "src/net/HttpClient.h"
 #include "src/net/Multipart.h"
 #include "src/workers/base/Wait.h"
 

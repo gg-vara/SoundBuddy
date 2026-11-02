@@ -19,12 +19,18 @@
 
 #include "ShoutUploader.h"
 
+#include <chrono>
+#include <mutex>
+#include <stop_token>
+#include <string>
 #include <utility>
 
+#include "src/helpers/AppSettings.h"
 #include "src/helpers/UploadHelper.hpp"
 #include "src/i18n/Translations.h"
 #include "src/logs/Logs.h"
 
+#include "src/workers/base/Message.h"
 #include "version.h"
 
 ShoutUploader::ShoutUploader(AppSettings::ConnectivityInfos connectivityInfos, workers::MessageSink onMessage) :

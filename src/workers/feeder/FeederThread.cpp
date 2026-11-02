@@ -20,19 +20,26 @@
 #include "FeederThread.h"
 
 #include <exception>
+#include <filesystem>
 #include <fstream>
+#include <ios>
 #include <stdexcept>
+#include <stop_token>
+#include <string>
 #include <system_error>
 #include <utility>
 
-#include <ITunesLibraryParser.hpp>
+#include <ITunesXMLLibrary.hpp>
+#include <JSONLibrary.hpp>
 
+#include "src/helpers/AppSettings.h"
 #include "src/helpers/Compression.h"
 #include "src/helpers/Platform.h"
 #include "src/helpers/UploadHelper.hpp"
 #include "src/i18n/Translations.h"
 #include "src/logs/Logs.h"
 #include "src/net/HttpClient.h"
+#include "src/workers/base/Message.h"
 #include "version.h"
 
 FeederThread::FeederThread(AppSettings::ConnectivityInfos connectivityInfos, Callbacks callbacks) :

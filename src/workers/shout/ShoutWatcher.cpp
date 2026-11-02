@@ -19,12 +19,16 @@
 
 #include "ShoutWatcher.h"
 
+#include <stop_token>
+#include <string>
 #include <utility>
 
 #include "src/helpers/Platform.h"
 #include "src/helpers/Timestamps.hpp"
 #include "src/i18n/Translations.h"
 #include "src/logs/Logs.h"
+#include "src/workers/base/Message.h"
+#include "src/workers/shout/ShoutPayload.h"
 
 ShoutWatcher::ShoutWatcher(Callbacks callbacks) :
     _callbacks(std::move(callbacks)),

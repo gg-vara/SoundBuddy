@@ -28,10 +28,7 @@ Checks: >
   -cppcoreguidelines-pro-type-vararg,
 
   -cppcoreguidelines-avoid-c-arrays,
-  -cppcoreguidelines-non-private-member-variables-in-classes,
-
-  -cppcoreguidelines-owning-memory,
-  -misc-include-cleaner
+  -cppcoreguidelines-non-private-member-variables-in-classes
 
 # Disabled above :
 # - matters of taste : trailing return types, [[nodiscard]] everywhere, short names, magic numbers, enum sizes
@@ -39,9 +36,8 @@ Checks: >
 #   const data members (intended, as in AppSettings::ConnectivityInfos)
 # - low-level code (Win32, COM, WinHTTP) : pointer arithmetic, casts, unions and varargs of C APIs
 # - duplicates of enabled checks : C arrays (modernize-avoid-c-arrays), public members (misc-non-private-member-variables-in-classes)
-# - the Qt user interface of macOS : widgets owned by Qt parents, Qt umbrella headers
 
-# our own headers only (not Qt, nor fetched dependencies)
+# our own headers only (not fetched dependencies)
 HeaderFilterRegex: '.*[/\\](src|tests)[/\\].*'
 ExcludeHeaderFilterRegex: '.*([/\\]_?deps[/\\]|iTunesCOMInterface).*'
 
@@ -53,6 +49,8 @@ CheckOptions:
   # "if (done) return;" stays on one line
   readability-braces-around-statements.ShortStatementLines: 1
   readability-implicit-bool-conversion.AllowPointerConditions: true
+  # umbrella headers whose symbols come from internal headers : C APIs (windows.h, WebView2.h...), and libc++ (<chrono> literals)
+  misc-include-cleaner.IgnoreHeaders: 'include/[A-Za-z0-9_]+.h;__[a-z_]+/[a-z0-9_]+.h'
   # plain structs
   misc-non-private-member-variables-in-classes.IgnoreClassesWithAllMemberVariablesBeingPublic: true
   cppcoreguidelines-special-member-functions.AllowSoleDefaultDtor: true

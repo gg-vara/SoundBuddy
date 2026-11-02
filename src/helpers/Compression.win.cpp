@@ -17,6 +17,8 @@
 // for further details. Resources without explicit references to a
 // different license and copyright still refer to this GPL.
 
+#include <string>
+#include <string_view>
 #ifdef _WIN32
 
 #include "Compression.h"

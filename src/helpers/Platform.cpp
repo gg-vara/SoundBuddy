@@ -19,6 +19,10 @@
 
 #include "Platform.h"
 
+#include <filesystem>
+#include <string>
+#include <string_view>
+
 namespace platform {
 
 std::string toUtf8(const std::filesystem::path& path) {

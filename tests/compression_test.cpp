@@ -1,5 +1,7 @@
 // src/helpers/Compression.h : compressed by the system, decompressed by the system again
 
+#include <cstddef>
+#include <cstdio>
 #include <format>
 #include <string>
 
