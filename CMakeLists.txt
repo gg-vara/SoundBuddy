@@ -320,6 +320,7 @@ if(WIN32)
     target_link_libraries(appExec PRIVATE
         # window, webview host
         dwmapi
+        comctl32
         shlwapi
         # iTunes COM API
         ole32

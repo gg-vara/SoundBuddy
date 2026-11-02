@@ -77,6 +77,7 @@ class MainWindow final : public Shell {
     void _configureView();
 
     void _addTrayIcon();
+    void _updateTrayIcon();
     void _showTrayMenu();
     void _onMenuCommand(UINT command);
 

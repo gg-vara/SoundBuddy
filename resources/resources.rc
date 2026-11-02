@@ -1,6 +1,7 @@
-// executable icon (the first icon group, in names order), window and tray icons
-APP_TRAY                ICON    "icons/app_reverse.ico"
-APP_WINDOW              ICON    "icons/app.ico"
+// executable icon (the first icon group, in names order), window and tray icons : generated from icons/svg (see icons/generate.ts)
+APP                     ICON    "icons/app.ico"
+TRAY_DARK               ICON    "icons/tray_dark.ico"
+TRAY_LIGHT              ICON    "icons/tray_light.ico"
 
 // visual styles of the dialogs, DPI awareness
 1                       24      "soundbuddy.manifest"

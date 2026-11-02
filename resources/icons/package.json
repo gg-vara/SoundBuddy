@@ -1,0 +1,13 @@
+{
+  "name": "soundbuddy-icons",
+  "description": "Icons of SoundBuddy, generated from svg/ : bun run icons",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "icons": "bun generate.ts"
+  },
+  "devDependencies": {
+    "@resvg/resvg-js": "^2.6.2",
+    "@types/bun": "^1.4.4"
+  }
+}

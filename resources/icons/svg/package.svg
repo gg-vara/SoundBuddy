@@ -1,0 +1,31 @@
+<!-- installer icon : a drive holding the note -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
+  <defs>
+    <linearGradient id="body" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#a7a7b3" />
+      <stop offset="1" stop-color="#76768a" />
+    </linearGradient>
+    <linearGradient id="base" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#6b6b7d" />
+      <stop offset="1" stop-color="#55556a" />
+    </linearGradient>
+    <radialGradient id="disc" cx="0.5" cy="0.4" r="0.6">
+      <stop offset="0" stop-color="#ffffff" />
+      <stop offset="1" stop-color="#e4e4ea" />
+    </radialGradient>
+  </defs>
+  <!-- body, then its base with the light -->
+  <rect x="20" y="16" width="216" height="224" rx="20" fill="url(#body)" />
+  <path d="M20 184 H236 V220 Q236 240 216 240 H40 Q20 240 20 220 Z" fill="url(#base)" />
+  <rect x="20" y="182" width="216" height="3" fill="#000" opacity=".18" />
+  <circle cx="52" cy="212" r="8" fill="#f1e62a" />
+  <!-- the note, in a disc -->
+  <circle cx="128" cy="98" r="72" fill="url(#disc)" />
+  <g fill="#6c6c80" transform="translate(91.5 60) scale(0.66)">
+    <path d="M44 26 Q44 21 49 19.7 L102 6.2 Q108 4.8 108 11 L108 27 L44 43 Z" />
+    <rect x="44" y="30" width="10" height="72" rx="1" />
+    <rect x="98" y="14" width="10" height="72" rx="1" />
+    <ellipse cx="34" cy="103" rx="20.5" ry="15.5" transform="rotate(-22 34 103)" />
+    <ellipse cx="88" cy="87" rx="20.5" ry="15.5" transform="rotate(-22 88 87)" />
+  </g>
+</svg>

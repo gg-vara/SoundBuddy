@@ -23,6 +23,7 @@
 
 #include <webview/webview.h>
 
+#include <commctrl.h>
 #include <dwmapi.h>
 #include <windowsx.h>
 
@@ -100,22 +101,35 @@ void runPostedTasks() {
     for (auto& task : tasks) task();
 }
 
-bool isDarkTheme() {
+// "setting" of the personalization : AppsUseLightTheme for windows, SystemUsesLightTheme for the taskbar
+bool isDark(const wchar_t* setting) {
     DWORD lightTheme = 1;
     DWORD size = sizeof(lightTheme);
     RegGetValueW(
-        HKEY_CURRENT_USER, LR"(Software\Microsoft\Windows\CurrentVersion\Themes\Personalize)", L"AppsUseLightTheme", RRF_RT_REG_DWORD,
-        nullptr, &lightTheme, &size
+        HKEY_CURRENT_USER, LR"(Software\Microsoft\Windows\CurrentVersion\Themes\Personalize)", setting, RRF_RT_REG_DWORD, nullptr,
+        &lightTheme, &size
     );
     return lightTheme == 0;
+}
+
+bool isDarkTheme() {
+    return isDark(L"AppsUseLightTheme");
 }
 
 int scaled(int pixels, HWND window) {
     return MulDiv(pixels, static_cast<int>(GetDpiForWindow(window)), USER_DEFAULT_SCREEN_DPI);
 }
 
-HICON loadIcon(const wchar_t* name, int size) {
-    return static_cast<HICON>(LoadImageW(GetModuleHandleW(nullptr), name, IMAGE_ICON, size, size, LR_DEFAULTCOLOR));
+// icon resource "name", in the size the system uses at its scaling : the closest image of the icon, scaled down if needed
+HICON loadIcon(const wchar_t* name, int metric) {
+    HICON icon = nullptr;
+    LoadIconMetric(GetModuleHandleW(nullptr), name, metric, &icon);
+    return icon;
+}
+
+// on the taskbar's theme
+const wchar_t* trayIconName() {
+    return isDark(L"SystemUsesLightTheme") ? L"TRAY_DARK" : L"TRAY_LIGHT";
 }
 
 // pointer carried by a message parameter, or a window data
@@ -149,10 +163,10 @@ MainWindow::MainWindow() {
         .cbSize = sizeof(WNDCLASSEXW),
         .lpfnWndProc = &MainWindow::_windowProc,
         .hInstance = instance,
-        .hIcon = loadIcon(L"APP_WINDOW", GetSystemMetrics(SM_CXICON)),
+        .hIcon = loadIcon(L"APP", LIM_LARGE),
         .hCursor = LoadCursorW(nullptr, MAKEINTRESOURCEW(32512)),  // IDC_ARROW
         .lpszClassName = windowClass,
-        .hIconSm = loadIcon(L"APP_WINDOW", GetSystemMetrics(SM_CXSMICON)),
+        .hIconSm = loadIcon(L"APP", LIM_SMALL),
     };
     RegisterClassExW(&windowClassInfos);
 
@@ -330,7 +344,10 @@ LRESULT MainWindow::_handle(UINT message, WPARAM wParam, LPARAM lParam) {
         }
 
         case WM_SETTINGCHANGE:
-            if (lParam != 0 && lstrcmpW(pointerOf<const wchar_t>(lParam), L"ImmersiveColorSet") == 0) _applyTheme();
+            if (lParam != 0 && lstrcmpW(pointerOf<const wchar_t>(lParam), L"ImmersiveColorSet") == 0) {
+                _applyTheme();
+                _updateTrayIcon();
+            }
             break;
 
         case WM_ERASEBKGND: {
@@ -512,7 +529,7 @@ void MainWindow::_addTrayIcon() {
             .uID = 1,
             .uFlags = NIF_ICON | NIF_MESSAGE | NIF_TIP | NIF_SHOWTIP,
             .uCallbackMessage = trayIconMessage,
-            .hIcon = loadIcon(L"APP_TRAY", GetSystemMetrics(SM_CXSMICON)),
+            .hIcon = loadIcon(trayIconName(), LIM_SMALL),
         };
         const auto tip = platform::widen(windowTitle);
         std::copy_n(tip.c_str(), std::min(tip.size() + 1, std::size(_trayIcon.szTip) - 1), std::begin(_trayIcon.szTip));
@@ -521,6 +538,14 @@ void MainWindow::_addTrayIcon() {
 
     Shell_NotifyIconW(NIM_ADD, &_trayIcon);
     Shell_NotifyIconW(NIM_SETVERSION, &_trayIcon);
+}
+
+// the taskbar's theme changed
+void MainWindow::_updateTrayIcon() {
+    auto* const previous = _trayIcon.hIcon;
+    _trayIcon.hIcon = loadIcon(trayIconName(), LIM_SMALL);
+    Shell_NotifyIconW(NIM_MODIFY, &_trayIcon);
+    if (previous) DestroyIcon(previous);
 }
 
 void MainWindow::_showTrayMenu() {

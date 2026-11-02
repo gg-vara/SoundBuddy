@@ -100,6 +100,10 @@ On Windows, the user interface is a web page shown in the system webview (WebVie
 
 Its dependencies are locked in `src/ui/page/bun.lock`; CMake installs them and builds the page with the app.
 
+## Icons
+
+Icons are drawn in SVG (`resources/icons/svg`) : `bun run icons` (from `resources/icons`) renders each size from the drawings into the Windows (`.ico`) and macOS (`.icns`) icons, committed with them. Windows picks the image fitting its scaling, and the tray icon follows the taskbar theme.
+
 ## Translations
 
 Texts are written in English in the code (`i18n::tr()`, or `t()` in the page, and `tr()` in the Qt classes of macOS). Their translations are compiled into the app from `src/i18n/*.inc` tables (`{ "English text", "translation" },`), and the language follows the system's user interface one.
