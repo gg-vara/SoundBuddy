@@ -84,6 +84,11 @@ if(ACTION STREQUAL "pack")
         list(APPEND pack_args --signAppIdentity ${SIGN_APP_IDENTITY})
     endif()
 
+    # runtimes the installer installs when missing
+    if(FRAMEWORK)
+        list(APPEND pack_args --framework ${FRAMEWORK})
+    endif()
+
     execute_process(COMMAND ${VPK} pack ${pack_args} COMMAND_ERROR_IS_FATAL ANY)
 
     message(STATUS "Packages ready in ${RELEASES_DIR}")

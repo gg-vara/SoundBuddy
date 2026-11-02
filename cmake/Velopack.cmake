@@ -93,6 +93,8 @@ if(WIN32)
         -DRUNTIME=win-x64
         -DPACK_DIR=$<TARGET_FILE_DIR:appExec>
         -DICON=${CMAKE_SOURCE_DIR}/resources/icons/package.ico
+        # the user interface is a page in WebView2, part of Windows 10 and 11 : installed if missing
+        -DFRAMEWORK=webview2
     )
 
     # installer and updater are signed with the same certificate as the executable
