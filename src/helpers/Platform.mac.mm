@@ -115,6 +115,10 @@ bool setLaunchingAtStartup(bool enabled) {
     }
 }
 
+std::string_view musicAppName() {
+    return i18n::tr("Music");
+}
+
 bool claimSingleInstance() {
     // the lock is released by the system when the process ends; the file is never closed before
     static const bool claimed = [] {
@@ -132,7 +136,7 @@ std::filesystem::path musicLibraryFile() {
         NSString * root = CFBridgingRelease(value);
 
         if (![root isKindOfClass:NSString.class] || root.length == 0) {
-            throw std::runtime_error(i18n::format(i18n::tr("%1 XML library location could not be deduced."), { i18n::tr("Music") }));
+            throw std::runtime_error(i18n::format(i18n::tr("%1 XML library location could not be deduced."), { musicAppName() }));
         }
 
         return toPath(root.stringByExpandingTildeInPath.stringByDeletingLastPathComponent) / "iTunes Music Library.xml";

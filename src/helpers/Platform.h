@@ -45,6 +45,9 @@ bool setLaunchingAtStartup(bool enabled);
 // The first caller keeps the claim until it exits (or crashes)
 bool claimSingleInstance();
 
+// name of the music app SoundBuddy works with : iTunes on Windows, Music on macOS (translated, UTF-8)
+std::string_view musicAppName();
+
 // XML library file shared by iTunes / Music, deduced from its preferences.
 // Throws std::runtime_error, with a translated message, if it cannot be deduced
 std::filesystem::path musicLibraryFile();

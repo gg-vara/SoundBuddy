@@ -23,11 +23,10 @@
 #include <QObject>
 
 #include "version.h"
+#include "src/helpers/Platform.h"
 
-static const QString musicAppName() {
-    #ifdef __APPLE__
-        return QObject::tr("Music");
-    #else
-        return "iTunes";
-    #endif
+// for the Qt user interface : see platform::musicAppName()
+inline QString musicAppName() {
+    const auto name = platform::musicAppName();
+    return QString::fromUtf8(name.data(), static_cast<qsizetype>(name.size()));
 }

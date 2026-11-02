@@ -19,26 +19,42 @@
 
 #pragma once
 
-#include <QString>
+#include <atomic>
+#include <functional>
+#include <stop_token>
+#include <string>
+#include <thread>
 
-#include "src/workers/base/MessengerThread.hpp"
 #include "src/helpers/AppSettings.hpp"
+#include "src/workers/base/Message.h"
 
-class FeederThread : public MessengerThread {
-  Q_OBJECT
-
+// Exports the music library (JSON, compressed), then uploads it to the platform, on its own thread
+class FeederThread {
  public:
-    FeederThread(const AppSettings::ConnectivityInfos connectivityInfos);
+    // called on the feeder's thread
+    struct Callbacks {
+        workers::MessageSink onMessage;
+        std::function<void()> onFilesGenerated;  // library export and warnings written
+        std::function<void()> onFinished;
+    };
 
-    void run() override;
+    // starts right away
+    FeederThread(AppSettings::ConnectivityInfos connectivityInfos, Callbacks callbacks);
+
+    // stops : an upload in progress is aborted, a library export in progress finishes first
+    ~FeederThread();
+
+    bool isRunning() const;
 
  private:
-   const AppSettings::ConnectivityInfos _connectivityInfos;
+    const AppSettings::ConnectivityInfos _connectivityInfos;
+    const Callbacks _callbacks;
+    std::atomic<bool> _running { true };
 
-    // log...
-    void _tracksEmitHelper();
-    void _tracksUnmolding(const char* filename);
+    // declared last : started once the members it uses are initialized, stopped and joined first
+    std::jthread _worker;
 
- signals:
-      void filesGenerated();
+    void _run(std::stop_token stop);
+    void _feed(std::stop_token stop);
+    void _say(std::string text, workers::MessageKind kind = workers::MessageKind::Standard);
 };

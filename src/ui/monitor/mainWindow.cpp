@@ -330,30 +330,17 @@ void MainWindow::runShouts() {
 }
 
 void MainWindow::runFeeder() {
-    //
-    auto &thread = this->feederWorker;
+    // the previous run stops first
+    this->feederWorker.reset();
 
-    //
-    if(thread && thread->isRunning()) {
-        thread->quit();
-        thread->wait();
-    }
+    const auto tab = this->feederTab;
+    tab->workerStarted();
 
-    thread = new FeederThread(this->appSettings.getConnectivityInfos());
-
-        QObject::connect(
-            thread, &FeederThread::filesGenerated,
-            this, &MainWindow::updateWarningsMenuItem
-        );
-
-        this->feederTab->bindWithWorker(thread);
-
-        QObject::connect(
-            thread, &QThread::finished,
-            thread, &QObject::deleteLater
-        );
-
-    thread->start();
+    this->feederWorker = std::make_unique<FeederThread>(this->appSettings.getConnectivityInfos(), FeederThread::Callbacks {
+        .onMessage = tab->messageSink(),
+        .onFilesGenerated = [this] { ui::post(this, [this] { this->updateWarningsMenuItem(); }); },
+        .onFinished = [tab] { ui::post(tab, [tab] { tab->workerFinished(); }); },
+    });
 }
 
 //

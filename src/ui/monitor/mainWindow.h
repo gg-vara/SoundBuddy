@@ -41,6 +41,7 @@
 
 #include "src/helpers/Platform.h"
 
+#include "src/workers/feeder/FeederThread.h"
 #include "src/workers/shout/ShoutUploader.h"
 #include "src/ui/tabs/ShoutTab.hpp"
 #include "src/ui/tabs/FeederTab.hpp"
@@ -124,7 +125,7 @@ class MainWindow : public QMainWindow {
     // workers
     ShoutWatcher* shoutWorker = nullptr;
     std::unique_ptr<ShoutUploader> shoutUploader;
-    FeederThread* feederWorker = nullptr;
+    std::unique_ptr<FeederThread> feederWorker;
     std::unique_ptr<MBeatThread> mbeatWorker;
     UpdateCheckerThread updateCheckerWorker;
 

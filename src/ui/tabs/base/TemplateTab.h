@@ -45,6 +45,10 @@ class TemplateTab : public QWidget {
     // prints the messages of a worker in this tab's log, from any thread
     workers::MessageSink messageSink();
 
+    // the tab's worker started (new log, button disabled) or finished (button enabled)
+    void workerStarted();
+    void workerFinished();
+
  protected:
     MessengerThread* bThread = nullptr;
     LogScrollView* lsv = nullptr;

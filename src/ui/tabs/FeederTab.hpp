@@ -22,13 +22,12 @@
 #include <QString>
 
 #include "base/TemplateTab.h"
-#include "src/workers/feeder/FeederThread.h"
 
 class FeederTab : public TemplateTab {
     Q_OBJECT
 
  public:
-    explicit FeederTab(QWidget* parent = nullptr, FeederThread* worker = nullptr) : TemplateTab(parent) {
+    explicit FeederTab(QWidget* parent = nullptr) : TemplateTab(parent) {
         this->tButton->setText(tr("Generate Digest and Upload"));
 
         this->layout()->addWidget(this->scrollArea);

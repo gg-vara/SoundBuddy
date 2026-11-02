@@ -100,6 +100,7 @@ soundbuddy_test(sse SOURCES ${PROJECT_SOURCE_DIR}/src/net/SseParser.cpp)
 # workers, against unreachable platforms : local closed port, unroutable address
 soundbuddy_test(shout_uploader SOURCES ${PROJECT_SOURCE_DIR}/src/workers/shout/ShoutUploader.cpp)
 soundbuddy_test(mbeat SOURCES ${PROJECT_SOURCE_DIR}/src/workers/mBeat/MBeatThread.cpp)
+soundbuddy_test(feeder SOURCES ${PROJECT_SOURCE_DIR}/src/workers/feeder/FeederThread.cpp LIBRARIES itunes-library-parser)
 
 # against public test services (httpbin.org, stream.wikimedia.org) : left out of the default test runs
 soundbuddy_test(network

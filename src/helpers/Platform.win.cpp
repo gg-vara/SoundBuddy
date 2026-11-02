@@ -42,7 +42,6 @@ namespace {
 constexpr const wchar_t * RUN_KEY = LR"(Software\Microsoft\Windows\CurrentVersion\Run)";
 constexpr const wchar_t * RUN_VALUE = L"" APP_NAME;
 
-constexpr const char * MUSIC_APP_NAME = "iTunes";
 
 std::filesystem::path knownFolder(REFKNOWNFOLDERID id) {
     PWSTR path = nullptr;
@@ -185,6 +184,10 @@ bool setLaunchingAtStartup(bool enabled) {
         command.c_str(), static_cast<DWORD>((command.size() + 1) * sizeof(wchar_t))) == ERROR_SUCCESS;
 }
 
+std::string_view musicAppName() {
+    return "iTunes";
+}
+
 bool claimSingleInstance() {
     // the mutex is released by the system when the process ends; its handle is never closed before
     static const bool claimed = [] {
@@ -197,7 +200,7 @@ bool claimSingleInstance() {
 std::filesystem::path musicLibraryFile() {
     std::ifstream preferences { iTunesPreferencesFile(), std::ios::binary };
     if (!preferences) {
-        throw std::runtime_error(i18n::format(i18n::tr("Could not open %1 preferences file."), { MUSIC_APP_NAME }));
+        throw std::runtime_error(i18n::format(i18n::tr("Could not open %1 preferences file."), { musicAppName() }));
     }
 
     const std::string content { std::istreambuf_iterator<char>(preferences), std::istreambuf_iterator<char>() };
@@ -220,7 +223,7 @@ std::filesystem::path musicLibraryFile() {
         }
     }
 
-    throw std::runtime_error(i18n::format(i18n::tr("%1 XML library location could not be deduced."), { MUSIC_APP_NAME }));
+    throw std::runtime_error(i18n::format(i18n::tr("%1 XML library location could not be deduced."), { musicAppName() }));
 }
 
 }  // namespace platform

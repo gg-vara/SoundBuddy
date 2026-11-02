@@ -40,6 +40,14 @@ void TemplateTab::createNewLog() {
     this->scrollArea->setWidget(this->lsv);
 }
 
+void TemplateTab::workerStarted() {
+    this->onThreadStart();
+}
+
+void TemplateTab::workerFinished() {
+    this->onThreadEnd();
+}
+
 workers::MessageSink TemplateTab::messageSink() {
     return [this](const workers::Message& message) {
         const auto type =
