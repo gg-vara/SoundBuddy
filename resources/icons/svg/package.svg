@@ -1,31 +1,27 @@
-<!-- installer icon : a drive holding the note -->
+<!-- installer icon : the application icon, with a download badge -->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
   <defs>
-    <linearGradient id="body" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#a7a7b3" />
-      <stop offset="1" stop-color="#76768a" />
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#e0563b" />
+      <stop offset="1" stop-color="#f0a04b" />
     </linearGradient>
-    <linearGradient id="base" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#6b6b7d" />
-      <stop offset="1" stop-color="#55556a" />
+    <linearGradient id="sheen" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fff" stop-opacity=".22" />
+      <stop offset=".55" stop-color="#fff" stop-opacity="0" />
     </linearGradient>
-    <radialGradient id="disc" cx="0.5" cy="0.4" r="0.6">
-      <stop offset="0" stop-color="#ffffff" />
-      <stop offset="1" stop-color="#e4e4ea" />
-    </radialGradient>
   </defs>
-  <!-- body, then its base with the light -->
-  <rect x="20" y="16" width="216" height="224" rx="20" fill="url(#body)" />
-  <path d="M20 184 H236 V220 Q236 240 216 240 H40 Q20 240 20 220 Z" fill="url(#base)" />
-  <rect x="20" y="182" width="216" height="3" fill="#000" opacity=".18" />
-  <circle cx="52" cy="212" r="8" fill="#f1e62a" />
-  <!-- the note, in a disc -->
-  <circle cx="128" cy="98" r="72" fill="url(#disc)" />
-  <g fill="#6c6c80" transform="translate(91.5 60) scale(0.66)">
+  <rect x="12" y="12" width="232" height="232" rx="56" fill="url(#accent)" />
+  <rect x="12" y="12" width="232" height="232" rx="56" fill="url(#sheen)" />
+  <!-- note.svg, a bit up and left, for the badge -->
+  <g fill="#fff" transform="translate(42 40) scale(1.08)">
     <path d="M44 26 Q44 21 49 19.7 L102 6.2 Q108 4.8 108 11 L108 27 L44 43 Z" />
     <rect x="44" y="30" width="10" height="72" rx="1" />
     <rect x="98" y="14" width="10" height="72" rx="1" />
     <ellipse cx="34" cy="103" rx="20.5" ry="15.5" transform="rotate(-22 34 103)" />
     <ellipse cx="88" cy="87" rx="20.5" ry="15.5" transform="rotate(-22 88 87)" />
   </g>
+  <!-- download badge -->
+  <circle cx="190" cy="190" r="52" fill="#1f1e1c" />
+  <circle cx="190" cy="190" r="52" fill="none" stroke="#fff" stroke-width="6" />
+  <path d="M190 162 V208 M170 190 L190 210 L210 190" fill="none" stroke="#fff" stroke-width="11" stroke-linecap="round" stroke-linejoin="round" />
 </svg>

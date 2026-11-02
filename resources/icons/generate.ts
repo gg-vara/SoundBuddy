@@ -80,7 +80,7 @@ const outputs: Record<string, () => Promise<Buffer>> = {
   'tray_light.ico': () => icoOf('note.svg', traySizes, '#000'),
   'package.ico': () => icoOf('package.svg', appSizes),
   // macOS : the bundle, the installer, the menu bar item (a template image)
-  'app.icns': () => icns('app.svg'),
+  'app.icns': () => icns('app-macos.svg'),
   'package.icns': () => icns('package.svg'),
   'app_reverse.png': () => render('note.svg', 512),
 };
