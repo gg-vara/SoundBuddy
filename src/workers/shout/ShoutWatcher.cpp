@@ -80,12 +80,12 @@ void ShoutWatcher::_processPayload(const ShoutPayload &incomingPayload) {
         return;
     }
 
-    const auto playerState = incomingPayload.iPlayerState ? i18n::tr("playing") : i18n::tr("paused");
+    const auto playerState = incomingPayload.playing ? i18n::tr("playing") : i18n::tr("paused");
     _say(i18n::format(i18n::tr("%1: Shouting -> %2 - %3 - %4 (%5)"), {
         timestamps::local(),
-        incomingPayload.tName,
-        incomingPayload.tAlbum,
-        incomingPayload.tArtist,
+        incomingPayload.name,
+        incomingPayload.album,
+        incomingPayload.artist,
         playerState
     }));
 }

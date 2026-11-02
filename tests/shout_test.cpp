@@ -37,7 +37,7 @@ int main() {
     CHECK(!consumer.consume(payload).hasMeaningfulChange, "same shout : no change");
 
     auto paused = payload;
-    paused.iPlayerState = false;
+    paused.playing = false;
     CHECK(consumer.consume(paused).hasMeaningfulChange, "paused : change");
 
     testdata::removeScratchDirectories();

@@ -35,48 +35,48 @@ MainWindow::MainWindow() {
     this->_initUI();
 
     //
-    this->onAppSettingsChanged();
-    this->updateWarningsMenuItem();
-    this->setupAutoUpdate();
+    this->_onAppSettingsChanged();
+    this->_updateWarningsMenuItem();
+    this->_setupAutoUpdate();
 
     // autostart shout thread ?
-    if (this->appSettings.values().autoRunShout) {
-        this->shoutTab->tButton->click();
+    if (this->_appSettings.values().autoRunShout) {
+        this->_shoutTab->tButton->click();
     }
 }
 
 void MainWindow::informWarningPresence() {
-    this->updateWarningsMenuItem();
+    this->_updateWarningsMenuItem();
 }
 
 // updates the menu depending on the config values filled or not
-void MainWindow::onAppSettingsChanged() {
+void MainWindow::_onAppSettingsChanged() {
     //
-    bool shouldActivateLink = !this->appSettings.getConnectivityInfos().getPlaformHomeUrl().empty();
-    this->myPlatformAction->setEnabled(shouldActivateLink);
+    bool shouldActivateLink = !this->_appSettings.getConnectivityInfos().getPlaformHomeUrl().empty();
+    this->_myPlatformAction->setEnabled(shouldActivateLink);
 
     // restart threads ?
-    runMBeat();
-    if(this->shoutWorker && this->shoutWorker->isRunning()) {
-        runShouts();
+    _runMBeat();
+    if(this->_shoutWorker && this->_shoutWorker->isRunning()) {
+        _runShouts();
     }
-    if(this->feederWorker && this->feederWorker->isRunning()) {
-        runFeeder();
+    if(this->_feederWorker && this->_feederWorker->isRunning()) {
+        _runFeeder();
     }
 }
 
-void MainWindow::updateWarningsMenuItem() {
+void MainWindow::_updateWarningsMenuItem() {
     std::error_code error;
     bool hasFeederWarnings = std::filesystem::exists(AppSettings::getFeedWarningFilePath(), error);
-    this->openWarningsAction->setEnabled(hasFeederWarnings);
+    this->_openWarningsAction->setEnabled(hasFeederWarnings);
 }
 
 ///
 /// Functionnalities helpers calls
 ///
 
-void MainWindow::accessPlatform() {
-    const auto platformHomeUrl = this->appSettings.getConnectivityInfos().getPlaformHomeUrl();
+void MainWindow::_accessPlatform() {
+    const auto platformHomeUrl = this->_appSettings.getConnectivityInfos().getPlaformHomeUrl();
 
     //
     if(platformHomeUrl.empty()) {
@@ -91,13 +91,13 @@ void MainWindow::accessPlatform() {
     platform::openUrl(platformHomeUrl);
 }
 
-void MainWindow::accessPreferences() {
-    PreferencesDialog(&this->appSettings, this).exec();
-    this->onAppSettingsChanged();
+void MainWindow::_accessPreferences() {
+    PreferencesDialog(&this->_appSettings, this).exec();
+    this->_onAppSettingsChanged();
 }
 
 // open the warnings file on the OS
-void MainWindow::openWarnings() {
+void MainWindow::_openWarnings() {
     //
     std::ifstream warnings { AppSettings::getFeedWarningFilePath(), std::ios::binary };
     const std::string content { std::istreambuf_iterator<char>(warnings), std::istreambuf_iterator<char>() };
@@ -177,19 +177,19 @@ void MainWindow::openWarnings() {
     display.exec();
 }
 
-void MainWindow::setupAutoUpdate() {
+void MainWindow::_setupAutoUpdate() {
     // start the update check
-    this->checkForAppUpdates();
+    this->_checkForAppUpdates();
 }
 
-void MainWindow::onUpdateChecked(const UpdateChecker::CheckResults &checkResults) {
+void MainWindow::_onUpdateChecked(const UpdateChecker::CheckResults &checkResults) {
     // if the user asks directly to check updates
-    const bool userAsked = this->userNotificationOnUpdateCheck;
+    const bool userAsked = this->_userNotificationOnUpdateCheck;
 
     // next check will go un-notified
-    this->userNotificationOnUpdateCheck = false;
+    this->_userNotificationOnUpdateCheck = false;
 
-    this->UpdateSearch_switchUI(false);
+    this->_updateSearchSwitchUi(false);
 
     switch (checkResults.result) {
         case UpdateChecker::Result::UpdateReady:
@@ -236,77 +236,77 @@ void MainWindow::onUpdateChecked(const UpdateChecker::CheckResults &checkResults
         QMessageBox::Yes);
 
     if (msgboxRslt == QMessageBox::Yes) {
-        this->updateChecker.applyUpdateOnExit();
-        this->forcedClose();
+        this->_updateChecker.applyUpdateOnExit();
+        this->_forcedClose();
     }
 }
 
-void MainWindow::requireUpdateCheckFromUser() {
-    this->userNotificationOnUpdateCheck = true;
-    this->checkForAppUpdates();
+void MainWindow::_requireUpdateCheckFromUser() {
+    this->_userNotificationOnUpdateCheck = true;
+    this->_checkForAppUpdates();
 }
 
-void MainWindow::checkForAppUpdates() {
-    this->UpdateSearch_switchUI(true);
+void MainWindow::_checkForAppUpdates() {
+    this->_updateSearchSwitchUi(true);
     // a check already in progress will end the search the same way
-    this->updateChecker.check([this](const UpdateChecker::CheckResults &results) {
-        ui::post(this, [this, results] { this->onUpdateChecked(results); });
+    this->_updateChecker.check([this](const UpdateChecker::CheckResults &results) {
+        ui::post(this, [this, results] { this->_onUpdateChecked(results); });
     });
 }
 
-void MainWindow::updateStatusBar(const QString &message, const ConnectivityIndicator &indic) {
-    this->statusLabel->setText(message);
-    this->statusLight->setCurrentIndex(static_cast<int>(indic));
+void MainWindow::_updateStatusBar(const QString &message, const ConnectivityIndicator &indic) {
+    this->_statusLabel->setText(message);
+    this->_statusLight->setCurrentIndex(static_cast<int>(indic));
 }
 
-void MainWindow::runMBeat() {
+void MainWindow::_runMBeat() {
     // the previous heartbeat stops first
-    this->mbeatWorker.reset();
+    this->_mbeatWorker.reset();
 
-    this->mbeatWorker = std::make_unique<MBeatThread>(this->appSettings.getConnectivityInfos(), [this](const mbeat::Status &status) {
+    this->_mbeatWorker = std::make_unique<MBeatThread>(this->_appSettings.getConnectivityInfos(), [this](const mbeat::Status &status) {
         const auto indicator =
             status.connectivity == mbeat::Connectivity::Connected ? ConnectivityIndicator::OK :
             status.connectivity == mbeat::Connectivity::Checking ? ConnectivityIndicator::ONGOING :
             ConnectivityIndicator::NOK;
 
         ui::post(this, [this, text = QString::fromStdString(status.text), indicator] {
-            this->updateStatusBar(text, indicator);
+            this->_updateStatusBar(text, indicator);
         });
     });
 }
 
-void MainWindow::runShouts() {
+void MainWindow::_runShouts() {
     // the watcher stops first, as it feeds the uploader
-    this->shoutWorker.reset();
+    this->_shoutWorker.reset();
 
-    if (this->shoutUploader) {
-        this->shoutUploader->waitForDrain(std::chrono::seconds { 1 });
-        this->shoutUploader.reset();
+    if (this->_shoutUploader) {
+        this->_shoutUploader->waitForDrain(std::chrono::seconds { 1 });
+        this->_shoutUploader.reset();
     }
 
-    const auto tab = this->shoutTab;
+    const auto tab = this->_shoutTab;
     const auto run = tab->workerStarted();
 
-    this->shoutUploader = std::make_unique<ShoutUploader>(this->appSettings.getConnectivityInfos(), tab->messageSink());
+    this->_shoutUploader = std::make_unique<ShoutUploader>(this->_appSettings.getConnectivityInfos(), tab->messageSink());
 
     // the watcher always stops before the uploader is destroyed : it hands shouts over directly
-    this->shoutWorker = std::make_unique<ShoutWatcher>(ShoutWatcher::Callbacks {
+    this->_shoutWorker = std::make_unique<ShoutWatcher>(ShoutWatcher::Callbacks {
         .onMessage = tab->messageSink(),
-        .onShout = [uploader = this->shoutUploader.get()](std::string shoutAsJson) { uploader->upload(std::move(shoutAsJson)); },
+        .onShout = [uploader = this->_shoutUploader.get()](std::string shoutAsJson) { uploader->upload(std::move(shoutAsJson)); },
         .onFinished = [tab, run] { ui::post(tab, [tab, run] { tab->workerFinished(run); }); },
     });
 }
 
-void MainWindow::runFeeder() {
+void MainWindow::_runFeeder() {
     // the previous run stops first
-    this->feederWorker.reset();
+    this->_feederWorker.reset();
 
-    const auto tab = this->feederTab;
+    const auto tab = this->_feederTab;
     const auto run = tab->workerStarted();
 
-    this->feederWorker = std::make_unique<FeederThread>(this->appSettings.getConnectivityInfos(), FeederThread::Callbacks {
+    this->_feederWorker = std::make_unique<FeederThread>(this->_appSettings.getConnectivityInfos(), FeederThread::Callbacks {
         .onMessage = tab->messageSink(),
-        .onFilesGenerated = [this] { ui::post(this, [this] { this->updateWarningsMenuItem(); }); },
+        .onFilesGenerated = [this] { ui::post(this, [this] { this->_updateWarningsMenuItem(); }); },
         .onFinished = [tab, run] { ui::post(tab, [tab, run] { tab->workerFinished(run); }); },
     });
 }
@@ -335,7 +335,7 @@ void MainWindow::_initUI() {
     this->_initStatusBar();
 
     #ifdef _DEBUG
-        this->trueShow();
+        this->_trueShow();
     #endif
 }
 
@@ -346,13 +346,13 @@ void MainWindow::_initUI() {
 
 void MainWindow::_initUITray() {
     auto trayIcon = new QSystemTrayIcon;
-    this->trayIcon = trayIcon;
+    this->_trayIcon = trayIcon;
     trayIcon->setIcon(QIcon(":/icons/app_reverse.png"));
     trayIcon->setToolTip(this->windowTitle());
 
     QObject::connect(
-        this->trayIcon, &QSystemTrayIcon::activated,
-        this, &MainWindow::iconActivated
+        this->_trayIcon, &QSystemTrayIcon::activated,
+        this, &MainWindow::_iconActivated
     );
 
     QMenu* cMenu;
@@ -367,7 +367,7 @@ void MainWindow::_initUITray() {
         cMenu->addMenu(this->_getOptionsMenu());
     #endif
 
-    this->trayIcon->setContextMenu(cMenu);
+    this->_trayIcon->setContextMenu(cMenu);
 
     trayIcon->show();
 }
@@ -376,15 +376,15 @@ void MainWindow::_initStatusBar() {
     //
     auto statusBar = new QStatusBar;
 
-    auto sb_widget = new QWidget;
-    this->statusLight = new TrafficLightWidget;
-    this->statusLabel = new QLabel;
+    auto sbWidget = new QWidget;
+    this->_statusLight = new TrafficLightWidget;
+    this->_statusLabel = new QLabel;
 
     // add connectivity infos to bar
-    sb_widget->setLayout(new QHBoxLayout);
-    sb_widget->layout()->addWidget(this->statusLight);
-    sb_widget->layout()->addWidget(this->statusLabel);
-    statusBar->addWidget(sb_widget);
+    sbWidget->setLayout(new QHBoxLayout);
+    sbWidget->layout()->addWidget(this->_statusLight);
+    sbWidget->layout()->addWidget(this->_statusLabel);
+    statusBar->addWidget(sbWidget);
 
     //
     this->setStatusBar(statusBar);
@@ -392,21 +392,21 @@ void MainWindow::_initStatusBar() {
 
 void MainWindow::_initUITabs() {
     auto tabs = new QTabWidget(this);
-    this->shoutTab = new ShoutTab(this, &this->appSettings);
-    this->feederTab = new FeederTab(this);
+    this->_shoutTab = new ShoutTab(this, &this->_appSettings);
+    this->_feederTab = new FeederTab(this);
 
     QObject::connect(
-        this->shoutTab->tButton, &QPushButton::clicked,
-        this, &MainWindow::runShouts
+        this->_shoutTab->tButton, &QPushButton::clicked,
+        this, &MainWindow::_runShouts
     );
 
     QObject::connect(
-        this->feederTab->tButton, &QPushButton::clicked,
-        this, &MainWindow::runFeeder
+        this->_feederTab->tButton, &QPushButton::clicked,
+        this, &MainWindow::_runFeeder
     );
 
-    tabs->addTab(this->shoutTab, "Shout!");
-    tabs->addTab(this->feederTab, "Feeder");
+    tabs->addTab(this->_shoutTab, "Shout!");
+    tabs->addTab(this->_feederTab, "Feeder");
     this->setCentralWidget(tabs);
 }
 
@@ -429,32 +429,32 @@ QMenu* MainWindow::_getOptionsMenu() {
     QMenu *optionsMenuItem = new QMenu(tr("Options"));
 
     // for checking available updates
-    this->cfugAction = new QAction(tr("Check for updates"), optionsMenuItem);
+    this->_cfugAction = new QAction(tr("Check for updates"), optionsMenuItem);
         QObject::connect(
-        this->cfugAction, &QAction::triggered,
-        this, &MainWindow::requireUpdateCheckFromUser
+        this->_cfugAction, &QAction::triggered,
+        this, &MainWindow::_requireUpdateCheckFromUser
     );
 
-    this->versionAction = new QAction(APP_FULL_DENOM, optionsMenuItem);
-    this->versionAction->setEnabled(false);
+    this->_versionAction = new QAction(APP_FULL_DENOM, optionsMenuItem);
+    this->_versionAction->setEnabled(false);
 
-    optionsMenuItem->addAction(this->cfugAction);
+    optionsMenuItem->addAction(this->_cfugAction);
     optionsMenuItem->addSeparator();
-    optionsMenuItem->addAction(this->versionAction);
+    optionsMenuItem->addAction(this->_versionAction);
 
     return optionsMenuItem;
 }
 
-void MainWindow::UpdateSearch_switchUI(bool isSearching) {
+void MainWindow::_updateSearchSwitchUi(bool isSearching) {
     //
-    this->cfugAction->setEnabled(!isSearching);
+    this->_cfugAction->setEnabled(!isSearching);
 
     //
     QString descr = APP_FULL_DENOM;
     if (isSearching) descr += " - " + tr("Searching for updates...");
 
     //
-    this->versionAction->setText(descr);
+    this->_versionAction->setText(descr);
 }
 
 QMenu* MainWindow::_getFileMenu(bool withMonitor) {
@@ -462,26 +462,26 @@ QMenu* MainWindow::_getFileMenu(bool withMonitor) {
     auto fileMenuItem = new QMenu(tr("File"));
 
     // myPlatformAction
-    this->myPlatformAction = new QAction(tr("My %1").arg(DEST_PLATFORM_PRODUCT_NAME), fileMenuItem);
-    myPlatformAction->setEnabled(false);
+    this->_myPlatformAction = new QAction(tr("My %1").arg(DEST_PLATFORM_PRODUCT_NAME), fileMenuItem);
+    _myPlatformAction->setEnabled(false);
     QObject::connect(
-        myPlatformAction, &QAction::triggered,
-        this, &MainWindow::accessPlatform
+        _myPlatformAction, &QAction::triggered,
+        this, &MainWindow::_accessPlatform
     );
 
     // accessPreferencesAction
     auto accessPreferencesAction = new QAction(tr("Preferences"), fileMenuItem);
     QObject::connect(
         accessPreferencesAction, &QAction::triggered,
-        this, &MainWindow::accessPreferences
+        this, &MainWindow::_accessPreferences
     );
 
     // openWarningsAction
-    this->openWarningsAction = new QAction(tr("Read latest upload warnings report"), fileMenuItem);
-    this->openWarningsAction->setEnabled(false);
+    this->_openWarningsAction = new QAction(tr("Read latest upload warnings report"), fileMenuItem);
+    this->_openWarningsAction->setEnabled(false);
     QObject::connect(
-        this->openWarningsAction, &QAction::triggered,
-        this, &MainWindow::openWarnings
+        this->_openWarningsAction, &QAction::triggered,
+        this, &MainWindow::_openWarnings
     );
 
     // openData
@@ -494,7 +494,7 @@ QMenu* MainWindow::_getFileMenu(bool withMonitor) {
     auto quitAction = new QAction(tr("Quit"), fileMenuItem);
     QObject::connect(
         quitAction, &QAction::triggered,
-        this, &MainWindow::forcedClose
+        this, &MainWindow::_forcedClose
     );
 
     if(withMonitor) {
@@ -502,7 +502,7 @@ QMenu* MainWindow::_getFileMenu(bool withMonitor) {
         auto monitorAction = new QAction(tr("Open monitor..."), fileMenuItem);
         QObject::connect(
             monitorAction, &QAction::triggered,
-            this, &MainWindow::trueShow
+            this, &MainWindow::_trueShow
         );
 
         fileMenuItem->addAction(monitorAction);
@@ -510,9 +510,9 @@ QMenu* MainWindow::_getFileMenu(bool withMonitor) {
     }
 
     fileMenuItem->addAction(accessPreferencesAction);
-    fileMenuItem->addAction(myPlatformAction);
+    fileMenuItem->addAction(_myPlatformAction);
     fileMenuItem->addSeparator();
-    fileMenuItem->addAction(openWarningsAction);
+    fileMenuItem->addAction(_openWarningsAction);
     fileMenuItem->addAction(openDataFolder);
     fileMenuItem->addSeparator();
     fileMenuItem->addAction(quitAction);
@@ -531,13 +531,13 @@ QMenu* MainWindow::_getFileMenu(bool withMonitor) {
 void MainWindow::closeEvent(QCloseEvent *event) {
     // apple specific behaviour, prevent closing
     #ifdef __APPLE__
-        if (!this->forceQuitOnMacOS) {
-            return this->trueHide(event);
+        if (!this->_forceQuitOnMacOS) {
+            return this->_trueHide(event);
         }
     #endif
 
     // if running shout thread
-    if (this->shoutWorker && this->shoutWorker->isRunning()) {
+    if (this->_shoutWorker && this->_shoutWorker->isRunning()) {
         auto msgboxRslt = QMessageBox::warning(this,
             tr("Shout worker running !"),
             tr("Shout worker is actually running : Are you sure you want to exit ?"),
@@ -546,10 +546,10 @@ void MainWindow::closeEvent(QCloseEvent *event) {
 
         if (msgboxRslt == QMessageBox::Yes) {
             // makes sure to wait for ShoutWatcher to end. Limits COM app retention on Windows
-            this->shoutWorker.reset();
+            this->_shoutWorker.reset();
 
             // the last shout ("nothing playing") gets a chance to be uploaded
-            this->shoutUploader->waitForDrain(std::chrono::seconds { 1 });
+            this->_shoutUploader->waitForDrain(std::chrono::seconds { 1 });
         } else {
             event->ignore();
             return;
@@ -557,14 +557,14 @@ void MainWindow::closeEvent(QCloseEvent *event) {
     }
 
     // stops the heartbeat, aborting its request in progress if any
-    this->mbeatWorker.reset();
+    this->_mbeatWorker.reset();
 
     // hide trayicon on shutdown for Windows, refereshes the UI frames of system tray
-    this->trayIcon->hide();
+    this->_trayIcon->hide();
     QApplication::quit();
 }
 
-void MainWindow::trueShow() {
+void MainWindow::_trueShow() {
     this->showNormal();
     this->activateWindow();
     this->raise();
@@ -572,24 +572,24 @@ void MainWindow::trueShow() {
 
 // hide window on minimize, only triggered on windows
 void MainWindow::hideEvent(QHideEvent *event) {
-    this->trueHide(event);
+    this->_trueHide(event);
 }
 
-void MainWindow::trueHide(QEvent* event) {
+void MainWindow::_trueHide(QEvent* event) {
     event->ignore();
     this->hide();
 }
 
-void MainWindow::forcedClose() {
-    this->forceQuitOnMacOS = true;
+void MainWindow::_forcedClose() {
+    this->_forceQuitOnMacOs = true;
     this->close();
 }
 
 // tray click handling
-void MainWindow::iconActivated(QSystemTrayIcon::ActivationReason reason) {
+void MainWindow::_iconActivated(QSystemTrayIcon::ActivationReason reason) {
     switch (reason) {
     case QSystemTrayIcon::DoubleClick:
-        this->trueShow();
+        this->_trueShow();
         break;
     default:
         break;

@@ -23,26 +23,26 @@
 
 TemplateTab::TemplateTab(QWidget* parent) : QWidget(parent),
     tButton(new QPushButton(this)),
-    scrollArea(new QScrollArea(this)) {
+    _scrollArea(new QScrollArea(this)) {
         //
         QObject::connect(
-            this->scrollArea->verticalScrollBar(), &QScrollBar::rangeChanged,
-            this, &TemplateTab::scrollUpdate
+            this->_scrollArea->verticalScrollBar(), &QScrollBar::rangeChanged,
+            this, &TemplateTab::_scrollUpdate
         );
 
         this->setLayout(new QBoxLayout(QBoxLayout::TopToBottom, this));
-        this->scrollArea->setWidgetResizable(true);
+        this->_scrollArea->setWidgetResizable(true);
 }
 
 // the scroll area deletes the previous log
-void TemplateTab::createNewLog() {
-    this->lsv = new LogScrollView(nullptr);
-    this->scrollArea->setWidget(this->lsv);
+void TemplateTab::_createNewLog() {
+    this->_lsv = new LogScrollView(nullptr);
+    this->_scrollArea->setWidget(this->_lsv);
 }
 
 int TemplateTab::workerStarted() {
     this->tButton->setEnabled(false);
-    this->createNewLog();
+    this->_createNewLog();
     return ++this->_run;
 }
 
@@ -55,24 +55,24 @@ void TemplateTab::workerFinished(int run) {
 workers::MessageSink TemplateTab::messageSink() {
     return [this](const workers::Message& message) {
         ui::post(this, [this, text = QString::fromStdString(message.text), kind = message.kind, line = message.line] {
-            this->printLog(text, kind, line);
+            this->_printLog(text, kind, line);
         });
     };
 }
 
-void TemplateTab::printLog(const QString &text, workers::MessageKind kind, workers::LineMode line) {
+void TemplateTab::_printLog(const QString &text, workers::MessageKind kind, workers::LineMode line) {
     // no log until a worker started
-    if (!this->lsv) return;
+    if (!this->_lsv) return;
 
     if (line == workers::LineMode::ReplaceLast) {
-        this->lsv->updateLatestMessage(text, kind);
+        this->_lsv->updateLatestMessage(text, kind);
     } else {
-        this->lsv->addMessage(text, kind);
+        this->_lsv->addMessage(text, kind);
     }
 }
 
-void TemplateTab::scrollUpdate(int min, int max) {
+void TemplateTab::_scrollUpdate(int min, int max) {
     // to perform heavy CPU consuming action
-    auto tabScrollBar = this->scrollArea->verticalScrollBar();
+    auto tabScrollBar = this->_scrollArea->verticalScrollBar();
     tabScrollBar->setValue(tabScrollBar->maximum());
 }

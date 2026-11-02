@@ -46,23 +46,23 @@ class PreferencesDialog : public QDialog {
         auto connectivityGroup = new QGroupBox(tr("%1 connectivity").arg(DEST_PLATFORM_PRODUCT_NAME), this);
         connectivityGroup->setLayout(new QVBoxLayout);
 
-            this->_PlatformURLEdit = new QLineEdit(this);
-            this->_PlatformUsernameEdit = new QLineEdit(this);
-            this->_PlatformPasswordEdit = new QLineEdit(this);
-            this->_PlatformPasswordEdit->setEchoMode(QLineEdit::Password);
+            this->_platformUrlEdit = new QLineEdit(this);
+            this->_platformUsernameEdit = new QLineEdit(this);
+            this->_platformPasswordEdit = new QLineEdit(this);
+            this->_platformPasswordEdit->setEchoMode(QLineEdit::Password);
 
-            this->_PlatformURLEdit->setPlaceholderText(tr("Host URL"));
-            this->_PlatformUsernameEdit->setPlaceholderText(tr("Username"));
-            this->_PlatformPasswordEdit->setPlaceholderText(tr("Password"));
+            this->_platformUrlEdit->setPlaceholderText(tr("Host URL"));
+            this->_platformUsernameEdit->setPlaceholderText(tr("Username"));
+            this->_platformPasswordEdit->setPlaceholderText(tr("Password"));
 
             const auto& values = this->_appSettings->values();
-            this->_PlatformURLEdit->setText(QString::fromStdString(values.platformHostUrl));
-            this->_PlatformUsernameEdit->setText(QString::fromStdString(values.platformUsername));
-            this->_PlatformPasswordEdit->setText(QString::fromStdString(values.platformPassword));
+            this->_platformUrlEdit->setText(QString::fromStdString(values.platformHostUrl));
+            this->_platformUsernameEdit->setText(QString::fromStdString(values.platformUsername));
+            this->_platformPasswordEdit->setText(QString::fromStdString(values.platformPassword));
 
-            connectivityGroup->layout()->addWidget(this->_PlatformURLEdit);
-            connectivityGroup->layout()->addWidget(this->_PlatformUsernameEdit);
-            connectivityGroup->layout()->addWidget(this->_PlatformPasswordEdit);
+            connectivityGroup->layout()->addWidget(this->_platformUrlEdit);
+            connectivityGroup->layout()->addWidget(this->_platformUsernameEdit);
+            connectivityGroup->layout()->addWidget(this->_platformPasswordEdit);
 
         layout->addWidget(connectivityGroup);
 
@@ -95,9 +95,9 @@ class PreferencesDialog : public QDialog {
  private:
     AppSettings* _appSettings;
 
-    QLineEdit* _PlatformURLEdit;
-    QLineEdit* _PlatformUsernameEdit;
-    QLineEdit* _PlatformPasswordEdit;
+    QLineEdit* _platformUrlEdit;
+    QLineEdit* _platformUsernameEdit;
+    QLineEdit* _platformPasswordEdit;
 
     QCheckBox* _launchAppAtStartupChk;
 
@@ -110,9 +110,9 @@ class PreferencesDialog : public QDialog {
     void closeEvent(QCloseEvent *event) override {
         //
         auto& values = this->_appSettings->values();
-        values.platformHostUrl = this->_PlatformURLEdit->text().toStdString();
-        values.platformUsername = this->_PlatformUsernameEdit->text().toStdString();
-        values.platformPassword = this->_PlatformPasswordEdit->text().toStdString();
+        values.platformHostUrl = this->_platformUrlEdit->text().toStdString();
+        values.platformUsername = this->_platformUsernameEdit->text().toStdString();
+        values.platformPassword = this->_platformPasswordEdit->text().toStdString();
 
         //
         this->_appSettings->save();

@@ -117,7 +117,7 @@ soundbuddy_test(shout_watcher
         $<$<PLATFORM_ID:Windows>:${PROJECT_SOURCE_DIR}/src/workers/shout/ShoutWatcher.win.cpp>
         $<$<PLATFORM_ID:Windows>:${PROJECT_SOURCE_DIR}/src/workers/shout/win/iTunesCOMClient.cpp>
         $<$<PLATFORM_ID:Windows>:${PROJECT_SOURCE_DIR}/src/workers/shout/win/iTunesSession.cpp>
-        $<$<PLATFORM_ID:Darwin>:${PROJECT_SOURCE_DIR}/src/workers/shout/ShoutWatcher.osx.cpp>
+        $<$<PLATFORM_ID:Darwin>:${PROJECT_SOURCE_DIR}/src/workers/shout/ShoutWatcher.mac.cpp>
     LIBRARIES
         $<$<PLATFORM_ID:Windows>:oleaut32>
         $<$<PLATFORM_ID:Darwin>:Qt6::Core>

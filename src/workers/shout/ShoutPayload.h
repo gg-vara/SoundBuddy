@@ -29,17 +29,17 @@ struct ShoutJSONParsingResult {
 
 /** Shape of a Shout; texts are UTF-8 */
 struct ShoutPayload {
-    bool iPlayerState;
-    int iPlayerPosMS;
-    int iDuration;
-    int tYear;
-    std::string tFileLocation;
-    std::string tName;
-    std::string tAlbum;
-    std::string tArtist;
-    std::string tGenre;
-    std::string tDateSkipped;
-    std::string tDatePlayed;
+    bool playing;
+    int positionMs;
+    int duration;
+    int year;
+    std::string fileLocation;
+    std::string name;
+    std::string album;
+    std::string artist;
+    std::string genre;
+    std::string skippedDate;
+    std::string playedDate;
 
     /** generates shout data footprint, used to compare shout payloads for changes */
     std::string hasChangedHash() const;

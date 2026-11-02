@@ -39,7 +39,7 @@ void iTunesSession::run(std::stop_token stop, const OnSnapshot& onSnapshot) {
 
     onSnapshot(_client.snapshot());
 
-    auto nextPolling = GetTickCount64() + _pollingIntervalMS;
+    auto nextPolling = GetTickCount64() + pollingIntervalMs;
 
     while (!stop.stop_requested() && !_quitting) {
         // events may also be delivered while calling iTunes, so they are checked on every iteration
@@ -58,7 +58,7 @@ void iTunesSession::run(std::stop_token stop, const OnSnapshot& onSnapshot) {
             continue;
         }
 
-        nextPolling = GetTickCount64() + _pollingIntervalMS;
+        nextPolling = GetTickCount64() + pollingIntervalMs;
 
         if (_hasJumped()) {
             onSnapshot(_client.snapshot());
@@ -77,7 +77,7 @@ bool iTunesSession::_hasJumped() {
         return false;
     }
 
-    const auto jumped = std::abs(_lastPositionMS - position.positionMS) > _jumpThresholdMS;
+    const auto jumped = std::abs(_lastPositionMS - position.positionMS) > jumpThresholdMs;
     _lastPositionMS = position.positionMS;
 
     return jumped;

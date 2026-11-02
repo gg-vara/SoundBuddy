@@ -35,7 +35,7 @@ namespace logs {
 
 namespace {
 
-constexpr std::uintmax_t MAX_FILE_SIZE = 1024 * 1024;
+constexpr std::uintmax_t maxFileSize = 1024 * 1024;
 
 std::mutex mutex;
 std::filesystem::path currentFile;
@@ -119,7 +119,7 @@ void write(Level level, std::string_view source, std::string_view message) {
     writeToDebugOutputs(line);
 
     if (!stream.is_open()) return;
-    if (currentSize > 0 && currentSize + line.size() > MAX_FILE_SIZE) rotate();
+    if (currentSize > 0 && currentSize + line.size() > maxFileSize) rotate();
 
     // flushed right away, so that nothing is lost on crash
     stream.write(line.data(), static_cast<std::streamsize>(line.size()));

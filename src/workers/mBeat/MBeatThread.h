@@ -59,8 +59,8 @@ class MBeatThread {
     ~MBeatThread();
 
     // heartbeats
-    static inline const std::chrono::milliseconds HEARTBEAT_INTERVAL { 30000 };
-    static inline const std::chrono::milliseconds REQUEST_TIMEOUT { 3000 };
+    static inline const std::chrono::milliseconds heartbeatInterval { 30000 };
+    static inline const std::chrono::milliseconds requestTimeout { 3000 };
 
  private:
     const AppSettings::ConnectivityInfos _connectivityInfos;

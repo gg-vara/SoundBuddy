@@ -91,9 +91,9 @@ int main(int argc, char** argv) {
             : QLocale(QLocale::English);
 
         // Qt own texts (standard buttons...)
-        auto _qtTranslator = new QTranslator(&app);
-        if (_qtTranslator->load(locale, "qt", "_", getResourcesPath() + "translations")) {
-            app.installTranslator(_qtTranslator);
+        auto qtTranslator = new QTranslator(&app);
+        if (qtTranslator->load(locale, "qt", "_", getResourcesPath() + "translations")) {
+            app.installTranslator(qtTranslator);
         }
 
         // app

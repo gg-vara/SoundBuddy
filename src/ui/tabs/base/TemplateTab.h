@@ -48,14 +48,14 @@ class TemplateTab : public QWidget {
     void workerFinished(int run);
 
  protected:
-    LogScrollView* lsv = nullptr;
+    LogScrollView* _lsv = nullptr;
     int _run = 0;
-    QScrollArea* scrollArea = nullptr;
+    QScrollArea* _scrollArea = nullptr;
 
-    void scrollUpdate(int min, int max);
+    void _scrollUpdate(int min, int max);
 
-    void createNewLog();
+    void _createNewLog();
 
     // on the user interface thread
-    void printLog(const QString &text, workers::MessageKind kind, workers::LineMode line);
+    void _printLog(const QString &text, workers::MessageKind kind, workers::LineMode line);
 };

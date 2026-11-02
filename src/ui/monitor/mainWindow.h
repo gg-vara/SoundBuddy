@@ -62,18 +62,18 @@ class MainWindow : public QMainWindow {
     void informWarningPresence();
 
  private:
-    bool forceQuitOnMacOS = false;
-    bool userNotificationOnUpdateCheck = false;
-    QSystemTrayIcon* trayIcon;
-    QAction* myPlatformAction;
-    QAction* openWarningsAction;
-    AppSettings appSettings;
+    bool _forceQuitOnMacOs = false;
+    bool _userNotificationOnUpdateCheck = false;
+    QSystemTrayIcon* _trayIcon;
+    QAction* _myPlatformAction;
+    QAction* _openWarningsAction;
+    AppSettings _appSettings;
 
     // statusbar
     void _initStatusBar();
-    void updateStatusBar(const QString &message, const ConnectivityIndicator &indic);
-    QLabel* statusLabel;
-    TrafficLightWidget* statusLight;
+    void _updateStatusBar(const QString &message, const ConnectivityIndicator &indic);
+    QLabel* _statusLabel;
+    TrafficLightWidget* _statusLight;
 
     ///
     /// UI instantiation 
@@ -86,16 +86,16 @@ class MainWindow : public QMainWindow {
     QMenu* _getFileMenu(bool withMonitor);
     QMenu* _getOptionsMenu();
 
-    void onAppSettingsChanged();
-    void updateWarningsMenuItem();
+    void _onAppSettingsChanged();
+    void _updateWarningsMenuItem();
 
     ///
     /// Functionnalities helpers calls
     ///
 
-    void accessPlatform();
-    void accessPreferences();
-    void openWarnings();
+    void _accessPlatform();
+    void _accessPreferences();
+    void _openWarnings();
 
     ///
     /// Events handling
@@ -104,33 +104,33 @@ class MainWindow : public QMainWindow {
     // visibility
     void hideEvent(QHideEvent *event);
     void closeEvent(QCloseEvent *event);
-    void trueShow();
-    void trueHide(QEvent* event);
-    void forcedClose();
-    void iconActivated(QSystemTrayIcon::ActivationReason reason);
+    void _trueShow();
+    void _trueHide(QEvent* event);
+    void _forcedClose();
+    void _iconActivated(QSystemTrayIcon::ActivationReason reason);
 
     // update handling
-    QAction *versionAction = nullptr;
-    QAction *cfugAction = nullptr;
-    void setupAutoUpdate();
-    void onUpdateChecked(const UpdateChecker::CheckResults &checkResults);
-    void requireUpdateCheckFromUser();
-    void checkForAppUpdates();
-    void UpdateSearch_switchUI(bool isSearching);
+    QAction *_versionAction = nullptr;
+    QAction *_cfugAction = nullptr;
+    void _setupAutoUpdate();
+    void _onUpdateChecked(const UpdateChecker::CheckResults &checkResults);
+    void _requireUpdateCheckFromUser();
+    void _checkForAppUpdates();
+    void _updateSearchSwitchUi(bool isSearching);
 
     // tabs
-    ShoutTab* shoutTab = nullptr;
-    FeederTab* feederTab = nullptr;
+    ShoutTab* _shoutTab = nullptr;
+    FeederTab* _feederTab = nullptr;
     void _initUITabs();
 
     // workers, stopped on destruction (in reverse order) : the watcher, which hands shouts to the uploader, stops first
-    std::unique_ptr<ShoutUploader> shoutUploader;
-    std::unique_ptr<ShoutWatcher> shoutWorker;
-    std::unique_ptr<FeederThread> feederWorker;
-    std::unique_ptr<MBeatThread> mbeatWorker;
-    UpdateChecker updateChecker;
+    std::unique_ptr<ShoutUploader> _shoutUploader;
+    std::unique_ptr<ShoutWatcher> _shoutWorker;
+    std::unique_ptr<FeederThread> _feederWorker;
+    std::unique_ptr<MBeatThread> _mbeatWorker;
+    UpdateChecker _updateChecker;
 
-    void runMBeat();
-    void runShouts();
-    void runFeeder();
+    void _runMBeat();
+    void _runShouts();
+    void _runFeeder();
 };

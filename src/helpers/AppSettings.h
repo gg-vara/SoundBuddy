@@ -75,15 +75,15 @@ class AppSettings {
     }
 
     static std::filesystem::path getFeedWarningFilePath() {
-        return platform::dataDirectory() / _FeedWarningFileName;
+        return platform::dataDirectory() / feedWarningFileName;
     }
 
     static std::filesystem::path getFeedOutputFilePath(bool isCompressed) {
-        return platform::dataDirectory() / (std::string(_FeedOutputBaseFileName) + (isCompressed ? _ZippedFeedOutputExtension : _BasicFeedOutputExtension));
+        return platform::dataDirectory() / (std::string(feedOutputBaseFileName) + (isCompressed ? zippedFeedOutputExtension : basicFeedOutputExtension));
     }
 
     static std::string_view getFeedOutputExtension(bool isCompressed) {
-        return isCompressed ? _ZippedFeedOutputExtension : _BasicFeedOutputExtension;
+        return isCompressed ? zippedFeedOutputExtension : basicFeedOutputExtension;
     }
 
     static std::string_view getFeedOutputContentType(bool isCompressed) {
@@ -97,9 +97,9 @@ class AppSettings {
     // previous versions stored their settings with QSettings (registry on Windows, plist on macOS) : read once, to create the settings file
     static std::optional<settings::Settings> _readLegacySettings();
 
-    static inline const char * _FeedWarningFileName = "warnings.json";
+    static inline const char * feedWarningFileName = "warnings.json";
 
-    static inline const char * _FeedOutputBaseFileName = "output";
-    static inline const char * _ZippedFeedOutputExtension = ".zmlib";
-    static inline const char * _BasicFeedOutputExtension = ".json";
+    static inline const char * feedOutputBaseFileName = "output";
+    static inline const char * zippedFeedOutputExtension = ".zmlib";
+    static inline const char * basicFeedOutputExtension = ".json";
 };

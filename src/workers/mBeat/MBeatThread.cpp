@@ -99,7 +99,7 @@ void MBeatThread::_run(std::stop_token stop) {
 
         // will retry to confirm
         logs::debug("MBeat", "Will retry soon");
-        workers::waitFor(stop, HEARTBEAT_INTERVAL);
+        workers::waitFor(stop, heartbeatInterval);
     }
 
     logs::debug("MBeat", "Shutdown");
@@ -107,7 +107,7 @@ void MBeatThread::_run(std::stop_token stop) {
 
 net::Request MBeatThread::_createRequest() const {
     net::Request request { "POST", mbeat::credentialsUrl(_connectivityInfos) };
-    request.timeout = REQUEST_TIMEOUT;  // setup an earlier timeout
+    request.timeout = requestTimeout;  // setup an earlier timeout
     request.headers = {
         { "Accept-Language", std::string { i18n::languageCode() } },
         { "X-Client-Id", APP_NAME },

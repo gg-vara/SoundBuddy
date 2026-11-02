@@ -83,17 +83,17 @@ ShoutPayload toPayload(const iTunesCOMClient::Snapshot& snapshot) {
     if (!track.exists) return ShoutPayload{};
 
     ShoutPayload payload{};
-    payload.tName = platform::narrow(track.name);
-    payload.tAlbum = platform::narrow(track.album);
-    payload.tArtist = platform::narrow(track.artist);
-    payload.tGenre = platform::narrow(track.genre);
-    payload.iDuration = track.duration;
-    payload.tDatePlayed = platform::narrow(track.playedDate);
-    payload.tDateSkipped = platform::narrow(track.skippedDate);
-    payload.tYear = track.year;
-    payload.tFileLocation = platform::narrow(track.location);
-    payload.iPlayerPosMS = snapshot.positionMS;
-    payload.iPlayerState = snapshot.playing;
+    payload.name = platform::narrow(track.name);
+    payload.album = platform::narrow(track.album);
+    payload.artist = platform::narrow(track.artist);
+    payload.genre = platform::narrow(track.genre);
+    payload.duration = track.duration;
+    payload.playedDate = platform::narrow(track.playedDate);
+    payload.skippedDate = platform::narrow(track.skippedDate);
+    payload.year = track.year;
+    payload.fileLocation = platform::narrow(track.location);
+    payload.positionMs = snapshot.positionMS;
+    payload.playing = snapshot.playing;
 
     return payload;
 }

@@ -13,22 +13,22 @@ void addString(yyjson_mut_doc * doc, yyjson_mut_val * object, const char * key, 
 }  // namespace
 
 std::string ShoutPayload::hasChangedHash() const {
-    return std::to_string(iPlayerState) +
-        tName +
-        tAlbum +
-        tArtist +
-        std::to_string(iPlayerPosMS) +
-        (tDatePlayed >= tDateSkipped ? tDatePlayed : tDateSkipped);
+    return std::to_string(playing) +
+        name +
+        album +
+        artist +
+        std::to_string(positionMs) +
+        (playedDate >= skippedDate ? playedDate : skippedDate);
 }
 
 std::string ShoutPayload::getFileHash() const {
     //
-    if (tFileLocation.empty()) {
+    if (fileLocation.empty()) {
         return {};
     }
 
     //
-    return hash::md5File(platform::fromUtf8(tFileLocation));
+    return hash::md5File(platform::fromUtf8(fileLocation));
 }
 
 ShoutJSONParsingResult ShoutPayload::toJSON() const
@@ -45,14 +45,14 @@ ShoutJSONParsingResult ShoutPayload::toJSON() const
     yyjson_mut_obj_add_strncpy(doc.get(), obj, "date", date.data(), date.size());
 
     if (!isEmptyShout) {
-        addString(doc.get(), obj, "name", tName);
-        addString(doc.get(), obj, "album", tAlbum);
-        addString(doc.get(), obj, "artist", tArtist);
-        addString(doc.get(), obj, "genre", tGenre);
-        yyjson_mut_obj_add_int(doc.get(), obj, "duration", iDuration);
-        yyjson_mut_obj_add_int(doc.get(), obj, "playerPositionMS", iPlayerPosMS);
-        yyjson_mut_obj_add_bool(doc.get(), obj, "playerState", iPlayerState);
-        yyjson_mut_obj_add_int(doc.get(), obj, "year", tYear);
+        addString(doc.get(), obj, "name", name);
+        addString(doc.get(), obj, "album", album);
+        addString(doc.get(), obj, "artist", artist);
+        addString(doc.get(), obj, "genre", genre);
+        yyjson_mut_obj_add_int(doc.get(), obj, "duration", duration);
+        yyjson_mut_obj_add_int(doc.get(), obj, "playerPositionMS", positionMs);
+        yyjson_mut_obj_add_bool(doc.get(), obj, "playerState", playing);
+        yyjson_mut_obj_add_int(doc.get(), obj, "year", year);
         addString(doc.get(), obj, "md5", audioFileHash);
     }
 

@@ -147,7 +147,7 @@ if (APPLE)
     )
 elseif (WIN32)
     list(REMOVE_ITEM APP_CPP_FILES
-        ${CMAKE_CURRENT_SOURCE_DIR}/src/workers/shout/ShoutWatcher.osx.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/workers/shout/ShoutWatcher.mac.cpp
     )
 endif()
 

@@ -41,10 +41,10 @@ class iTunesSession {
     void run(std::stop_token stop, const OnSnapshot& onSnapshot);
 
  private:
-    static constexpr const unsigned int _pollingIntervalMS = 1000;
+    static constexpr const unsigned int pollingIntervalMs = 1000;
 
     // position difference between 2 pollings beyond which the user jumped within the track
-    static constexpr const int _jumpThresholdMS = 2000;
+    static constexpr const int jumpThresholdMs = 2000;
 
     // flagged by events, handled outside of their callback to avoid reentrant calls into iTunes
     bool _playerStateChanged = false;

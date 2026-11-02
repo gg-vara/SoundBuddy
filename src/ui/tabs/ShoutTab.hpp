@@ -32,28 +32,28 @@ class ShoutTab : public TemplateTab {
 
  public:
     ShoutTab(QWidget* parent, AppSettings* appSettings) : TemplateTab(parent), _appSettings(appSettings) {
-        this->checkAutoLaunch = new QCheckBox(tr("Start shouting at app launch"));
+        this->_checkAutoLaunch = new QCheckBox(tr("Start shouting at app launch"));
         this->tButton->setText(tr("Connect to %1").arg(musicAppName()));
 
         QObject::connect(
-            this->checkAutoLaunch, &QCheckBox::checkStateChanged,
-            this, &ShoutTab::changeAutoLaunch
+            this->_checkAutoLaunch, &QCheckBox::checkStateChanged,
+            this, &ShoutTab::_changeAutoLaunch
         );
 
-        this->layout()->addWidget(this->scrollArea);
+        this->layout()->addWidget(this->_scrollArea);
         this->layout()->addWidget(this->tButton);
-        this->layout()->addWidget(this->checkAutoLaunch);
+        this->layout()->addWidget(this->_checkAutoLaunch);
 
         if (_appSettings->values().autoRunShout) {
-            this->checkAutoLaunch->setCheckState(Qt::CheckState::Checked);
+            this->_checkAutoLaunch->setCheckState(Qt::CheckState::Checked);
         }
     }
 
  private:
     AppSettings* _appSettings;
-    QCheckBox* checkAutoLaunch = nullptr;
+    QCheckBox* _checkAutoLaunch = nullptr;
 
-    void changeAutoLaunch(Qt::CheckState checkState) {
+    void _changeAutoLaunch(Qt::CheckState checkState) {
         _appSettings->values().autoRunShout = checkState == Qt::CheckState::Checked;
         _appSettings->save();
     }

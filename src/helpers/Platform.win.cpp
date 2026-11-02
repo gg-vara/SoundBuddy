@@ -39,8 +39,8 @@ namespace platform {
 namespace {
 
 // programs started at login, for the current user
-constexpr const wchar_t * RUN_KEY = LR"(Software\Microsoft\Windows\CurrentVersion\Run)";
-constexpr const wchar_t * RUN_VALUE = L"" APP_NAME;
+constexpr const wchar_t * runKey = LR"(Software\Microsoft\Windows\CurrentVersion\Run)";
+constexpr const wchar_t * runValue = L"" APP_NAME;
 
 
 std::filesystem::path knownFolder(REFKNOWNFOLDERID id) {
@@ -72,10 +72,10 @@ bool shellOpen(const std::wstring& target) {
 // command registered to start the app at login, or nothing
 std::wstring registeredStartupCommand() {
     DWORD size = 0;
-    if (RegGetValueW(HKEY_CURRENT_USER, RUN_KEY, RUN_VALUE, RRF_RT_REG_SZ, nullptr, nullptr, &size) != ERROR_SUCCESS) return {};
+    if (RegGetValueW(HKEY_CURRENT_USER, runKey, runValue, RRF_RT_REG_SZ, nullptr, nullptr, &size) != ERROR_SUCCESS) return {};
 
     std::wstring command(size / sizeof(wchar_t), L'\0');
-    if (RegGetValueW(HKEY_CURRENT_USER, RUN_KEY, RUN_VALUE, RRF_RT_REG_SZ, nullptr, command.data(), &size) != ERROR_SUCCESS) return {};
+    if (RegGetValueW(HKEY_CURRENT_USER, runKey, runValue, RRF_RT_REG_SZ, nullptr, command.data(), &size) != ERROR_SUCCESS) return {};
 
     command.resize(wcsnlen(command.c_str(), command.size()));
     return command;
@@ -175,12 +175,12 @@ bool isLaunchingAtStartup() {
 
 bool setLaunchingAtStartup(bool enabled) {
     if (!enabled) {
-        const auto result = RegDeleteKeyValueW(HKEY_CURRENT_USER, RUN_KEY, RUN_VALUE);
+        const auto result = RegDeleteKeyValueW(HKEY_CURRENT_USER, runKey, runValue);
         return result == ERROR_SUCCESS || result == ERROR_FILE_NOT_FOUND;
     }
 
     const auto command = startupCommand();
-    return RegSetKeyValueW(HKEY_CURRENT_USER, RUN_KEY, RUN_VALUE, REG_SZ,
+    return RegSetKeyValueW(HKEY_CURRENT_USER, runKey, runValue, REG_SZ,
         command.c_str(), static_cast<DWORD>((command.size() + 1) * sizeof(wchar_t))) == ERROR_SUCCESS;
 }
 

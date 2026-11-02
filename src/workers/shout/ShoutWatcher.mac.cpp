@@ -88,17 +88,17 @@ void ShoutWatcher::_execWatchSession(std::stop_token stop) {
             const auto at = [trackData](std::size_t index) { return yyjson_arr_get(trackData, index); };
 
             // get values for shout
-            payload.tFileLocation = toString(at(0));
-            payload.tName = toString(at(1));
-            payload.tAlbum = toString(at(2));
-            payload.tArtist = toString(at(3));
-            payload.tGenre = toString(at(4));
-            payload.iDuration = static_cast<int>(json::integer(at(5)));
-            payload.tYear = static_cast<int>(json::integer(at(6)));
-            payload.iPlayerPosMS = static_cast<int>(json::integer(at(7)) * 1000); // TODO get the real thing instead of emulating the millisecond track state
-            payload.iPlayerState = json::string(at(8)) == "paused" ? 0 : 1;
-            payload.tDateSkipped = toString(at(9));
-            payload.tDatePlayed = toString(at(10));
+            payload.fileLocation = toString(at(0));
+            payload.name = toString(at(1));
+            payload.album = toString(at(2));
+            payload.artist = toString(at(3));
+            payload.genre = toString(at(4));
+            payload.duration = static_cast<int>(json::integer(at(5)));
+            payload.year = static_cast<int>(json::integer(at(6)));
+            payload.positionMs = static_cast<int>(json::integer(at(7)) * 1000); // TODO get the real thing instead of emulating the millisecond track state
+            payload.playing = json::string(at(8)) == "paused" ? 0 : 1;
+            payload.skippedDate = toString(at(9));
+            payload.playedDate = toString(at(10));
         }
 
         // compare with old shout, if equivalent, don't reshout

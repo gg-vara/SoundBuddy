@@ -29,11 +29,11 @@ namespace settings {
 
 namespace {
 
-constexpr const char * PLATFORM_HOST_URL = "platformHostUrl";
-constexpr const char * PLATFORM_USERNAME = "platformUsername";
-constexpr const char * PLATFORM_PASSWORD = "platformPassword";
-constexpr const char * AUTO_RUN_SHOUT = "autoRunShout";
-constexpr const char * RUN_AT_STARTUP = "runAtStartup";
+constexpr const char * platformHostUrl = "platformHostUrl";
+constexpr const char * platformUsername = "platformUsername";
+constexpr const char * platformPassword = "platformPassword";
+constexpr const char * autoRunShout = "autoRunShout";
+constexpr const char * runAtStartup = "runAtStartup";
 
 std::string readString(yyjson_val * object, const char * key, const std::string& fallback) {
     return std::string { json::string(yyjson_obj_get(object, key), fallback) };
@@ -60,11 +60,11 @@ std::optional<Settings> load(const std::filesystem::path& file) {
 
     const Settings defaults;
     return Settings {
-        .platformHostUrl = readString(root, PLATFORM_HOST_URL, defaults.platformHostUrl),
-        .platformUsername = readString(root, PLATFORM_USERNAME, defaults.platformUsername),
-        .platformPassword = readString(root, PLATFORM_PASSWORD, defaults.platformPassword),
-        .autoRunShout = readBool(root, AUTO_RUN_SHOUT, defaults.autoRunShout),
-        .runAtStartup = readBool(root, RUN_AT_STARTUP, defaults.runAtStartup),
+        .platformHostUrl = readString(root, platformHostUrl, defaults.platformHostUrl),
+        .platformUsername = readString(root, platformUsername, defaults.platformUsername),
+        .platformPassword = readString(root, platformPassword, defaults.platformPassword),
+        .autoRunShout = readBool(root, autoRunShout, defaults.autoRunShout),
+        .runAtStartup = readBool(root, runAtStartup, defaults.runAtStartup),
     };
 }
 
@@ -75,11 +75,11 @@ bool save(const std::filesystem::path& file, const Settings& settings) {
     const auto root = yyjson_mut_obj(doc.get());
     yyjson_mut_doc_set_root(doc.get(), root);
 
-    addString(doc.get(), root, PLATFORM_HOST_URL, settings.platformHostUrl);
-    addString(doc.get(), root, PLATFORM_USERNAME, settings.platformUsername);
-    addString(doc.get(), root, PLATFORM_PASSWORD, settings.platformPassword);
-    yyjson_mut_obj_add_bool(doc.get(), root, AUTO_RUN_SHOUT, settings.autoRunShout);
-    yyjson_mut_obj_add_bool(doc.get(), root, RUN_AT_STARTUP, settings.runAtStartup);
+    addString(doc.get(), root, platformHostUrl, settings.platformHostUrl);
+    addString(doc.get(), root, platformUsername, settings.platformUsername);
+    addString(doc.get(), root, platformPassword, settings.platformPassword);
+    yyjson_mut_obj_add_bool(doc.get(), root, autoRunShout, settings.autoRunShout);
+    yyjson_mut_obj_add_bool(doc.get(), root, runAtStartup, settings.runAtStartup);
 
     const auto text = json::write(doc, YYJSON_WRITE_PRETTY_TWO_SPACES | YYJSON_WRITE_NEWLINE_AT_END);
     if (text.empty()) return false;

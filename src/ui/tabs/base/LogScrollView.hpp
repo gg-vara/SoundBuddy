@@ -27,10 +27,10 @@
 
 class LogScrollView : public QWidget {
  private:
-    static const int _maxLogMessages = 100;
+    static const int maxLogMessages = 100;
 
-    void limitLogSize() {
-        if(this->layout()->count() > this->_maxLogMessages) {
+    void _limitLogSize() {
+        if(this->layout()->count() > this->maxLogMessages) {
             auto qli = this->layout()->takeAt(0);
             auto ltr = reinterpret_cast<QLabel*>(qli->widget());
             ltr->setParent(nullptr);
@@ -77,7 +77,7 @@ class LogScrollView : public QWidget {
         label->setPalette(palette);
 
         //
-        this->limitLogSize();
+        this->_limitLogSize();
 
         //
         this->layout()->addWidget(label);

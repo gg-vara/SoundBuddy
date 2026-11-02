@@ -121,8 +121,8 @@ void FeederThread::_feed(std::stop_token stop) {
 
     _say(tr("Now we try to compress it..."));
 
-        const auto output_json = json.tracksJSON();
-        const auto compressedData = compression::compress(output_json);
+        const auto outputJson = json.tracksJSON();
+        const auto compressedData = compression::compress(outputJson);
         if (compressedData.empty()) {
             throw std::runtime_error("Library compression failed");
         }
@@ -132,7 +132,7 @@ void FeederThread::_feed(std::stop_token stop) {
         file.write(compressedData.data(), static_cast<std::streamsize>(compressedData.size()));
         file.close();
 
-    _say(i18n::format(i18n::tr("Went from %1 to %2"), { i18n::formatDataSize(output_json.size()), i18n::formatDataSize(compressedData.size()) }));
+    _say(i18n::format(i18n::tr("Went from %1 to %2"), { i18n::formatDataSize(outputJson.size()), i18n::formatDataSize(compressedData.size()) }));
     if (stop.stop_requested()) return;
 
     _say(tr("Let's try to send now !"));
