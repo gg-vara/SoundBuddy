@@ -264,6 +264,18 @@ target_link_libraries(appExec PRIVATE
     itunes-library-parser
 )
 
+#########
+# Tests #
+#########
+
+# unit tests, run by ctest (see tests/CMakeLists.txt)
+option(SOUNDBUDDY_BUILD_TESTS "Build the unit tests" OFF)
+
+if(SOUNDBUDDY_BUILD_TESTS)
+    enable_testing()
+    add_subdirectory(tests)
+endif()
+
 ########
 # Zlib #
 ########

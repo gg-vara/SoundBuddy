@@ -39,6 +39,9 @@ enum class Level {
 // Past 1 MB, the file is renamed with a ".1" suffix (replacing the previous one), and a new one begins
 void start(const std::filesystem::path& file);
 
+// closes the log file : lines then only go to the debugger output
+void stop();
+
 // writes a line, "source" naming the part of the app it comes from
 void write(Level level, std::string_view source, std::string_view message);
 

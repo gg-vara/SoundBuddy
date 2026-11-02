@@ -111,5 +111,6 @@ int main(int argc, char** argv) {
     // wait for the app to close
     const auto exitCode = app.exec();
     logs::info("App", "Exiting with code {}", exitCode);
+    logs::stop();
     return exitCode;
 }

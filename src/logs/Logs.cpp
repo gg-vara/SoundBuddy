@@ -102,6 +102,11 @@ void start(const std::filesystem::path& file) {
     openCurrentFile();
 }
 
+void stop() {
+    std::lock_guard lock { mutex };
+    stream.close();
+}
+
 void write(Level level, std::string_view source, std::string_view message) {
 #ifndef _DEBUG
     if (level == Level::Debug) return;

@@ -53,6 +53,15 @@ Builds are described by CMake presets (`CMakePresets.json`), also used by the VS
 - `cmake --preset windows-debug`, then `cmake --build --preset windows-debug`
 - `cmake --list-presets=all` lists the available presets (`macos-*` on macOS)
 
+### Tests
+
+Unit tests lie in `tests/`, one program per tested part, and are built with the Debug presets.
+- `cmake --workflow --preset windows-test` (or `macos-test`) builds in Debug and runs them
+- from an existing Debug build : `ctest --preset windows-debug`
+- tests against public services (httpbin.org, stream.wikimedia.org) are left out by default : `ctest --test-dir build_debug -L network`
+
+Tests run under their own identity (`tests/support/version.h`) : they never touch the app's data directory, settings or startup registration.
+
 ## Translations
 
 Texts are written in English in the code (`tr()`, or `i18n::tr()` outside of Qt classes). Their translations are compiled into the app from `src/i18n/*.inc` tables (`{ "English text", "translation" },`), and the language follows the system's user interface one.

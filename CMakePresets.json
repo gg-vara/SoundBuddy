@@ -42,7 +42,8 @@
             "binaryDir": "${sourceDir}/build_debug",
             "cacheVariables": {
                 "CMAKE_BUILD_TYPE": "Debug",
-                "SOUNDBUDDY_CODESIGN": "OFF"
+                "SOUNDBUDDY_CODESIGN": "OFF",
+                "SOUNDBUDDY_BUILD_TESTS": "ON"
             }
         },
         {
@@ -71,7 +72,8 @@
             "inherits": "macos",
             "binaryDir": "${sourceDir}/build_debug",
             "cacheVariables": {
-                "CMAKE_BUILD_TYPE": "Debug"
+                "CMAKE_BUILD_TYPE": "Debug",
+                "SOUNDBUDDY_BUILD_TESTS": "ON"
             }
         },
         {
@@ -96,7 +98,36 @@
         { "name": "macos-release-pack", "configurePreset": "macos-release", "targets": [ "velopack_pack" ] },
         { "name": "macos-release-publish", "configurePreset": "macos-release", "targets": [ "velopack_publish" ] }
     ],
+    "testPresets": [
+        {
+            "name": "base",
+            "hidden": true,
+            "output": { "outputOnFailure": true },
+            "execution": { "noTestsAction": "error" },
+            "filter": { "exclude": { "label": "network" } }
+        },
+        { "name": "windows-debug", "displayName": "Windows - unit tests", "inherits": "base", "configurePreset": "windows-debug" },
+        { "name": "macos-debug", "displayName": "macOS - unit tests", "inherits": "base", "configurePreset": "macos-debug" }
+    ],
     "workflowPresets": [
+        {
+            "name": "windows-test",
+            "displayName": "Windows - build in Debug and run the unit tests",
+            "steps": [
+                { "type": "configure", "name": "windows-debug" },
+                { "type": "build", "name": "windows-debug" },
+                { "type": "test", "name": "windows-debug" }
+            ]
+        },
+        {
+            "name": "macos-test",
+            "displayName": "macOS - build in Debug and run the unit tests",
+            "steps": [
+                { "type": "configure", "name": "macos-debug" },
+                { "type": "build", "name": "macos-debug" },
+                { "type": "test", "name": "macos-debug" }
+            ]
+        },
         {
             "name": "windows-package",
             "displayName": "Windows - build and package, unsigned (local check, nothing is published)",
