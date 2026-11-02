@@ -28,7 +28,6 @@
 #include <QStyle>
 
 #include "src/workers/base/Message.h"
-#include "src/workers/base/MessengerThread.hpp"
 
 #include "LogScrollView.hpp"
 
@@ -39,27 +38,24 @@ class TemplateTab : public QWidget {
     explicit TemplateTab(QWidget* parent = nullptr);
     QPushButton* tButton = nullptr;
 
-    void bindWithWorker(MessengerThread *bThread);
-    void bindWithMessenger(IMessenger *bMessenger);
-
     // prints the messages of a worker in this tab's log, from any thread
     workers::MessageSink messageSink();
 
-    // the tab's worker started (new log, button disabled) or finished (button enabled)
-    void workerStarted();
-    void workerFinished();
+    // the tab's worker started (new log, button disabled) : returns the run number, to pass to workerFinished()
+    int workerStarted();
+
+    // the tab's worker finished (button enabled), unless another run started meanwhile
+    void workerFinished(int run);
 
  protected:
-    MessengerThread* bThread = nullptr;
     LogScrollView* lsv = nullptr;
+    int _run = 0;
     QScrollArea* scrollArea = nullptr;
 
     void scrollUpdate(int min, int max);
 
     void createNewLog();
 
- protected slots:
-    void printLog(const QString &message, const MessageType &msgType, const bool replacePreviousLine);
-    void onThreadEnd();
-    void onThreadStart();
+    // on the user interface thread
+    void printLog(const QString &text, workers::MessageKind kind, workers::LineMode line);
 };

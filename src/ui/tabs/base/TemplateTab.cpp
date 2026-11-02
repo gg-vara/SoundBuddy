@@ -34,39 +34,40 @@ TemplateTab::TemplateTab(QWidget* parent) : QWidget(parent),
         this->scrollArea->setWidgetResizable(true);
 }
 
+// the scroll area deletes the previous log
 void TemplateTab::createNewLog() {
-    if(!this->lsv) delete this->lsv;
     this->lsv = new LogScrollView(nullptr);
     this->scrollArea->setWidget(this->lsv);
 }
 
-void TemplateTab::workerStarted() {
-    this->onThreadStart();
+int TemplateTab::workerStarted() {
+    this->tButton->setEnabled(false);
+    this->createNewLog();
+    return ++this->_run;
 }
 
-void TemplateTab::workerFinished() {
-    this->onThreadEnd();
+void TemplateTab::workerFinished(int run) {
+    // a stopped run finishes after its replacement started
+    if (run != this->_run) return;
+    this->tButton->setEnabled(true);
 }
 
 workers::MessageSink TemplateTab::messageSink() {
     return [this](const workers::Message& message) {
-        const auto type =
-            message.kind == workers::MessageKind::Issue ? MessageType::ISSUE :
-            message.kind == workers::MessageKind::Warning ? MessageType::WARNING :
-            MessageType::STANDARD;
-
-        ui::post(this, [this, text = QString::fromStdString(message.text), type, replace = message.line == workers::LineMode::ReplaceLast] {
-            this->printLog(text, type, replace);
+        ui::post(this, [this, text = QString::fromStdString(message.text), kind = message.kind, line = message.line] {
+            this->printLog(text, kind, line);
         });
     };
 }
 
-void TemplateTab::printLog(const QString &message, const MessageType &msgType, const bool replacePreviousLine) {
-    //
-    if(replacePreviousLine) {
-        this->lsv->updateLatestMessage(message, msgType);
+void TemplateTab::printLog(const QString &text, workers::MessageKind kind, workers::LineMode line) {
+    // no log until a worker started
+    if (!this->lsv) return;
+
+    if (line == workers::LineMode::ReplaceLast) {
+        this->lsv->updateLatestMessage(text, kind);
     } else {
-        this->lsv->addMessage(message, msgType);
+        this->lsv->addMessage(text, kind);
     }
 }
 
@@ -74,38 +75,4 @@ void TemplateTab::scrollUpdate(int min, int max) {
     // to perform heavy CPU consuming action
     auto tabScrollBar = this->scrollArea->verticalScrollBar();
     tabScrollBar->setValue(tabScrollBar->maximum());
-}
-
-void TemplateTab::onThreadEnd() {
-    this->tButton->setEnabled(true);
-}
-
-void TemplateTab::onThreadStart() {
-    this->tButton->setEnabled(false);
-    this->createNewLog();
-}
-
-void TemplateTab::bindWithWorker(MessengerThread *bThread) {
-    //
-    this->bindWithMessenger(bThread);
-
-    QObject::connect(
-        bThread, &QThread::started,
-        this, &TemplateTab::onThreadStart,
-        Qt::UniqueConnection
-    );
-
-    QObject::connect(
-        bThread, &QThread::finished,
-        this, &TemplateTab::onThreadEnd,
-        Qt::UniqueConnection
-    );
-}
-
-void TemplateTab::bindWithMessenger(IMessenger *bMessenger) {
-    QObject::connect(
-        dynamic_cast<QObject*>(bMessenger), SIGNAL(forwardMessage(const QString &, const MessageType &, const bool)),
-        this, SLOT(printLog(const QString &, const MessageType &, const bool)),
-        Qt::UniqueConnection
-    );
 }

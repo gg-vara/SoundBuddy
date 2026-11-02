@@ -23,6 +23,8 @@
 #include <QVBoxLayout>
 #include <QList>
 
+#include "src/workers/base/Message.h"
+
 class LogScrollView : public QWidget {
  private:
     static const int _maxLogMessages = 100;
@@ -48,7 +50,7 @@ class LogScrollView : public QWidget {
         this->setPalette(palette);
     }
 
-    void addMessage(const QString &newMessage, const MessageType &msgType) {
+    void addMessage(const QString &newMessage, workers::MessageKind msgType) {
         //
         auto label = new QLabel(newMessage);
         label->setWordWrap(true);
@@ -56,11 +58,11 @@ class LogScrollView : public QWidget {
         //
         Qt::GlobalColor color;
         switch(msgType) {
-            case MessageType::ISSUE:
+            case workers::MessageKind::Issue:
                 color = Qt::red;
             break;
 
-            case MessageType::WARNING:
+            case workers::MessageKind::Warning:
                 color = Qt::darkYellow;
             break;
 
@@ -81,7 +83,7 @@ class LogScrollView : public QWidget {
         this->layout()->addWidget(label);
     }
 
-    void updateLatestMessage(const QString &newMessage, const MessageType &msgType) {
+    void updateLatestMessage(const QString &newMessage, workers::MessageKind msgType) {
         //
         auto latestLabelIndex = this->layout()->count() - 1;
 

@@ -285,7 +285,7 @@ void MainWindow::runShouts() {
     }
 
     const auto tab = this->shoutTab;
-    tab->workerStarted();
+    const auto run = tab->workerStarted();
 
     this->shoutUploader = std::make_unique<ShoutUploader>(this->appSettings.getConnectivityInfos(), tab->messageSink());
 
@@ -293,7 +293,7 @@ void MainWindow::runShouts() {
     this->shoutWorker = std::make_unique<ShoutWatcher>(ShoutWatcher::Callbacks {
         .onMessage = tab->messageSink(),
         .onShout = [uploader = this->shoutUploader.get()](std::string shoutAsJson) { uploader->upload(std::move(shoutAsJson)); },
-        .onFinished = [tab] { ui::post(tab, [tab] { tab->workerFinished(); }); },
+        .onFinished = [tab, run] { ui::post(tab, [tab, run] { tab->workerFinished(run); }); },
     });
 }
 
@@ -302,12 +302,12 @@ void MainWindow::runFeeder() {
     this->feederWorker.reset();
 
     const auto tab = this->feederTab;
-    tab->workerStarted();
+    const auto run = tab->workerStarted();
 
     this->feederWorker = std::make_unique<FeederThread>(this->appSettings.getConnectivityInfos(), FeederThread::Callbacks {
         .onMessage = tab->messageSink(),
         .onFilesGenerated = [this] { ui::post(this, [this] { this->updateWarningsMenuItem(); }); },
-        .onFinished = [tab] { ui::post(tab, [tab] { tab->workerFinished(); }); },
+        .onFinished = [tab, run] { ui::post(tab, [tab, run] { tab->workerFinished(run); }); },
     });
 }
 
