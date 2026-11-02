@@ -73,6 +73,6 @@ void TemplateTab::_printLog(const QString &text, workers::MessageKind kind, work
 
 void TemplateTab::_scrollUpdate(int /*min*/, int /*max*/) {
     // to perform heavy CPU consuming action
-    auto tabScrollBar = this->_logArea->verticalScrollBar();
+    auto* tabScrollBar = this->_logArea->verticalScrollBar();
     tabScrollBar->setValue(tabScrollBar->maximum());
 }

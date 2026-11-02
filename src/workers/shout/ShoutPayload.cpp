@@ -13,12 +13,12 @@ void addString(yyjson_mut_doc * doc, yyjson_mut_val * object, const char * key, 
 }  // namespace
 
 std::string ShoutPayload::hasChangedHash() const {
-    return std::to_string(playing) +
-        name +
-        album +
-        artist +
-        std::to_string(positionMs) +
-        (playedDate >= skippedDate ? playedDate : skippedDate);
+    return std::to_string(static_cast<int>(playing)) +
+           name +
+           album +
+           artist +
+           std::to_string(positionMs) +
+           (playedDate >= skippedDate ? playedDate : skippedDate);
 }
 
 std::string ShoutPayload::getFileHash() const {
@@ -37,7 +37,7 @@ ShoutJSONParsingResult ShoutPayload::toJSON() const
     const auto isEmptyShout = audioFileHash.empty();
 
     const auto doc = json::create();
-    const auto obj = yyjson_mut_obj(doc.get());
+    auto* const obj = yyjson_mut_obj(doc.get());
     yyjson_mut_doc_set_root(doc.get(), obj);
 
     // Important ! we should not use local time, only UTC+0 !

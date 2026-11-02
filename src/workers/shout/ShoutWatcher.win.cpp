@@ -39,7 +39,7 @@ bool ShoutWatcher::_waitForAvailableSession(const std::stop_token& stop) {
 
     while (!stop.stop_requested()) {
         // search for music app...
-        auto windowHandler = FindWindowW(nullptr, windowName.c_str());
+        auto* windowHandler = FindWindowW(nullptr, windowName.c_str());
 
         // if not found, wait and retry
         if(!windowHandler) {
@@ -52,7 +52,7 @@ bool ShoutWatcher::_waitForAvailableSession(const std::stop_token& stop) {
         auto success = GetWindowThreadProcessId(windowHandler, &currentProcessID);
         
         // if cannot fetch, wait and retry
-        if(!success) {
+        if (success == 0) {
             workers::waitFor(stop, 1s);
             continue;
         }

@@ -99,7 +99,7 @@ class iTunesCOMClient {
     mutable PropertyIds _trackIds;  // properties common to all kinds of tracks
 
     Microsoft::WRL::ComPtr<IDispatch> _currentTrack() const;
-    std::wstring _trackLocation(IDispatch * track) const;
+    static std::wstring _trackLocation(IDispatch* track);
     int _positionMS() const;
 };
 

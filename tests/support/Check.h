@@ -19,7 +19,7 @@ inline void report(bool ok, const char * what, const char * file, int line) {
 
 // to return from main()
 inline int summary() {
-    std::printf("\n%s (%d failure(s))\n", failures ? "FAILED" : "ALL PASSED", failures);
+    std::printf("\n%s (%d failure(s))\n", (failures != 0) ? "FAILED" : "ALL PASSED", failures);
     std::fflush(stdout);
     return failures;
 }

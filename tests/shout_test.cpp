@@ -22,7 +22,7 @@ int main() {
     const ShoutPayload payload { .playing = true, .positionMs = 12000, .duration = 215, .year = 1999, .fileLocation = platform::toUtf8(file), .name = "Caf\xC3\xA9 \"Live\"", .album = "Album", .artist = "Artist", .genre = "Genre", .skippedDate = "2026-01-01", .playedDate = "2026-02-01" };
     const auto result = payload.toJSON();
     const auto doc = json::parse(result.json);
-    const auto root = json::root(doc);
+    auto* const root = json::root(doc);
 
     CHECK(!result.isEmpty && result.audioFileHash == "900150983cd24fb0d6963f7d28e17f72", "md5 of the audio file");
     CHECK(json::string(yyjson_obj_get(root, "name")) == "Caf\xC3\xA9 \"Live\"", "name : UTF-8, quotes");

@@ -30,9 +30,9 @@ class LogScrollView : public QWidget {
     static const int maxLogMessages = 100;
 
     void _limitLogSize() {
-        if(this->layout()->count() > this->maxLogMessages) {
-            auto qli = this->layout()->takeAt(0);
-            auto ltr = reinterpret_cast<QLabel*>(qli->widget());
+        if (this->layout()->count() > LogScrollView::maxLogMessages) {
+            auto* qli = this->layout()->takeAt(0);
+            auto* ltr = reinterpret_cast<QLabel*>(qli->widget());
             ltr->setParent(nullptr);
             delete ltr;
             delete qli;
@@ -52,14 +52,16 @@ class LogScrollView : public QWidget {
 
     void addMessage(const QString &newMessage, workers::MessageKind msgType) {
         //
-        auto label = new QLabel(newMessage);
+        auto* label = new QLabel(newMessage);
         label->setWordWrap(true);
 
         //
-        const auto color =
-            msgType == workers::MessageKind::Issue ? Qt::red :
-            msgType == workers::MessageKind::Warning ? Qt::darkYellow :
-            Qt::black;
+        auto color = Qt::black;
+        switch (msgType) {
+            case workers::MessageKind::Issue: color = Qt::red; break;
+            case workers::MessageKind::Warning: color = Qt::darkYellow; break;
+            case workers::MessageKind::Standard: break;
+        }
 
         //
         QPalette palette = label->palette();
@@ -79,11 +81,12 @@ class LogScrollView : public QWidget {
 
         // if no message, add message
         if(latestLabelIndex < 0) {
-            return this->addMessage(newMessage, msgType);
+            this->addMessage(newMessage, msgType);
+            return;
         }
 
         // get label
-        auto lbl = reinterpret_cast<QLabel*>(
+        auto* lbl = reinterpret_cast<QLabel*>(
             this->layout()->itemAt(latestLabelIndex)->widget()
         );
 

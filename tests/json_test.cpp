@@ -8,7 +8,7 @@ int main() {
     CHECK(json::root(json::parse("{ nope")) == nullptr, "root of a null document");
 
     const auto doc = json::parse(R"(["aé", 3, 2.9, true, null])");
-    const auto root = json::root(doc);
+    auto* const root = json::root(doc);
     CHECK(json::string(yyjson_arr_get(root, 0)) == "a\xC3\xA9", "string, unicode escape");
     CHECK(json::string(yyjson_arr_get(root, 1), "fallback") == "fallback", "string fallback");
     CHECK(json::integer(yyjson_arr_get(root, 1)) == 3 && json::integer(yyjson_arr_get(root, 2)) == 2, "integer, decimals truncated");
@@ -16,7 +16,7 @@ int main() {
     CHECK(json::boolean(yyjson_arr_get(root, 3)) && !json::boolean(yyjson_arr_get(root, 4)), "boolean");
 
     const auto created = json::create();
-    const auto object = yyjson_mut_obj(created.get());
+    auto* const object = yyjson_mut_obj(created.get());
     yyjson_mut_doc_set_root(created.get(), object);
     yyjson_mut_obj_add_str(created.get(), object, "name", "\xC3\xA9t\xC3\xA9 \"live\"");
     yyjson_mut_obj_add_int(created.get(), object, "year", 1999);

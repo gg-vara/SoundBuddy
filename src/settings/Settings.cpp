@@ -55,7 +55,7 @@ std::optional<Settings> load(const std::filesystem::path& file) {
     const std::string content { std::istreambuf_iterator<char>(stream), std::istreambuf_iterator<char>() };
 
     const auto doc = json::parse(content);
-    const auto root = json::root(doc);
+    auto* const root = json::root(doc);
     if (!yyjson_is_obj(root)) return std::nullopt;
 
     const Settings defaults;
@@ -72,7 +72,7 @@ bool save(const std::filesystem::path& file, const Settings& settings) {
     const auto doc = json::create();
     if (!doc) return false;
 
-    const auto root = yyjson_mut_obj(doc.get());
+    auto* const root = yyjson_mut_obj(doc.get());
     yyjson_mut_doc_set_root(doc.get(), root);
 
     addString(doc.get(), root, platformHostUrl, settings.platformHostUrl);

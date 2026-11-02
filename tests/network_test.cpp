@@ -91,7 +91,7 @@ int main() {
         });
 
         int lines = 0;
-        for (const char c : all) lines += c == '\n';
+        for (const char c : all) lines += static_cast<int>(c == '\n');
         CHECK(response.ok() && response.body.empty() && lines == 5, "5 JSON lines streamed, body not buffered");
     }
 

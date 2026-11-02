@@ -90,7 +90,7 @@ void FeederThread::_feed(const std::stop_token& stop) {
         logs::info("Feeder", "{} tracks, {} left out for missing metadata", json.tracksCount(), json.warningsCount());
 
         // if has missing fields tracks
-        if (json.warningsCount()) {
+        if (json.warningsCount() != 0U) {
             _say(i18n::format(
                 i18n::tr("WARNING ! %1 files in your library are missing important "
                     "metadata and consequently were removed from the output file ! "
@@ -106,7 +106,7 @@ void FeederThread::_feed(const std::stop_token& stop) {
         }
 
         //
-        if (!json.tracksCount() && !json.warningsCount()) {
+        if (json.tracksCount() == 0 && json.warningsCount() == 0) {
             _say(i18n::format(i18n::tr("No music found in your %1 library. Please feed it some."), { musicApp }), workers::MessageKind::Issue);
             return;
         }

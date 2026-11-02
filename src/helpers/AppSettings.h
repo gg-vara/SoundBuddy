@@ -55,8 +55,9 @@ class AppSettings {
     };
 
     ConnectivityInfos getConnectivityInfos() const {
-        if(_values.platformUsername.empty() || _values.platformHostUrl.empty() || _values.platformPassword.empty())
+        if (_values.platformUsername.empty() || _values.platformHostUrl.empty() || _values.platformPassword.empty()) {
             return {};
+        }
 
         return {
             .platformHostUrl = _values.platformHostUrl,

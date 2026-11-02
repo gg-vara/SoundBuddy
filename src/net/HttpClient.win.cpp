@@ -133,7 +133,7 @@ class HttpClient::Impl {
         parts.dwUrlPathLength = static_cast<DWORD>(-1);
         parts.dwExtraInfoLength = static_cast<DWORD>(-1);
 
-        if (!WinHttpCrackUrl(url.c_str(), 0, 0, &parts)) {
+        if (WinHttpCrackUrl(url.c_str(), 0, 0, &parts) == 0) {
             response.error = lastError("Invalid URL");
             return response;
         }
@@ -144,13 +144,13 @@ class HttpClient::Impl {
         if (pathAndQuery.empty()) pathAndQuery = L"/";
 
         // connection and request handles
-        const auto connection = WinHttpConnect(_session, host.c_str(), parts.nPort, 0);
+        auto* const connection = WinHttpConnect(_session, host.c_str(), parts.nPort, 0);
         if (!connection) {
             response.error = lastError("Cannot connect");
             return response;
         }
 
-        const auto handle = WinHttpOpenRequest(connection, widen(request.method).c_str(), pathAndQuery.c_str(),
+        auto* const handle = WinHttpOpenRequest(connection, widen(request.method).c_str(), pathAndQuery.c_str(),
             nullptr, WINHTTP_NO_REFERER, WINHTTP_DEFAULT_ACCEPT_TYPES,
             parts.nScheme == INTERNET_SCHEME_HTTPS ? WINHTTP_FLAG_SECURE : 0);
 
@@ -180,7 +180,9 @@ class HttpClient::Impl {
         }
 
         WinHttpCloseHandle(connection);
-        return response;
+
+        // false positive : the stop callback deregisters from the token when destroyed
+        return response;  // NOLINT(clang-analyzer-core.StackAddressEscape)
     }
 
     void cancel() {
@@ -225,10 +227,16 @@ class HttpClient::Impl {
         const auto bodySize = static_cast<DWORD>(request.body.size());
         const BOOL sent = WinHttpSendRequest(handle,
             headers.empty() ? WINHTTP_NO_ADDITIONAL_HEADERS : headers.c_str(), static_cast<DWORD>(-1),
-            bodySize ? const_cast<char *>(request.body.data()) : WINHTTP_NO_REQUEST_DATA, bodySize, bodySize, 0);
+            bodySize != 0U ? const_cast<char*>(request.body.data()) : WINHTTP_NO_REQUEST_DATA, bodySize, bodySize, 0);
 
-        if (!sent) return _fail(response, "Cannot send request");
-        if (!WinHttpReceiveResponse(handle, nullptr)) return _fail(response, "No response");
+        if (sent == 0) {
+            _fail(response, "Cannot send request");
+            return;
+        }
+        if (WinHttpReceiveResponse(handle, nullptr) == 0) {
+            _fail(response, "No response");
+            return;
+        }
 
         // status and headers
         DWORD status = 0;
@@ -240,10 +248,10 @@ class HttpClient::Impl {
         size = 0;
         WinHttpQueryHeaders(handle, WINHTTP_QUERY_RAW_HEADERS_CRLF, WINHTTP_HEADER_NAME_BY_INDEX,
             WINHTTP_NO_OUTPUT_BUFFER, &size, WINHTTP_NO_HEADER_INDEX);
-        if (size) {
+        if (size != 0U) {
             std::wstring raw(size / sizeof(wchar_t), L'\0');
             if (WinHttpQueryHeaders(handle, WINHTTP_QUERY_RAW_HEADERS_CRLF, WINHTTP_HEADER_NAME_BY_INDEX,
-                    raw.data(), &size, WINHTTP_NO_HEADER_INDEX)) {
+                    raw.data(), &size, WINHTTP_NO_HEADER_INDEX) != 0) {
                 response.headers = parseHeaders(raw);
             }
         }
@@ -252,12 +260,18 @@ class HttpClient::Impl {
         std::string chunk;
         while (true) {
             DWORD available = 0;
-            if (!WinHttpQueryDataAvailable(handle, &available)) return _fail(response, "Cannot receive data");
+            if (WinHttpQueryDataAvailable(handle, &available) == 0) {
+                _fail(response, "Cannot receive data");
+                return;
+            }
             if (available == 0) return;
 
             chunk.resize(available);
             DWORD read = 0;
-            if (!WinHttpReadData(handle, chunk.data(), available, &read)) return _fail(response, "Cannot receive data");
+            if (WinHttpReadData(handle, chunk.data(), available, &read) == 0) {
+                _fail(response, "Cannot receive data");
+                return;
+            }
             if (read == 0) return;
 
             const std::string_view received { chunk.data(), read };

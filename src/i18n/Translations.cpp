@@ -53,11 +53,11 @@ std::string systemLanguageTag() {
 #ifdef _WIN32
     ULONG count = 0;
     ULONG size = 0;
-    if (!GetUserPreferredUILanguages(MUI_LANGUAGE_NAME, &count, nullptr, &size) || size == 0) return {};
+    if ((GetUserPreferredUILanguages(MUI_LANGUAGE_NAME, &count, nullptr, &size) == 0) || size == 0) return {};
 
     // double-null terminated list : the first one is the preferred one
     std::wstring languages(size, L'\0');
-    if (!GetUserPreferredUILanguages(MUI_LANGUAGE_NAME, &count, languages.data(), &size)) return {};
+    if (GetUserPreferredUILanguages(MUI_LANGUAGE_NAME, &count, languages.data(), &size) == 0) return {};
 
     std::string tag;
     for (const wchar_t c : languages) {

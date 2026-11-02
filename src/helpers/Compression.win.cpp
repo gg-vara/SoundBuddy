@@ -28,17 +28,17 @@ namespace compression {
 
 std::string compress(std::string_view data) {
     COMPRESSOR_HANDLE compressor = nullptr;
-    if (!CreateCompressor(COMPRESS_ALGORITHM_MSZIP, nullptr, &compressor)) return {};
+    if (CreateCompressor(COMPRESS_ALGORITHM_MSZIP, nullptr, &compressor) == 0) return {};
 
     // the API takes a non-const pointer, but does not write to the input
-    const auto input = const_cast<char *>(data.data());
+    auto* const input = const_cast<char*>(data.data());
 
     // first call : the size of the compressed buffer
     SIZE_T size = 0;
     std::string compressed;
-    if (!Compress(compressor, input, data.size(), nullptr, 0, &size) && GetLastError() == ERROR_INSUFFICIENT_BUFFER) {
+    if ((Compress(compressor, input, data.size(), nullptr, 0, &size) == 0) && GetLastError() == ERROR_INSUFFICIENT_BUFFER) {
         compressed.resize(size);
-        if (Compress(compressor, input, data.size(), compressed.data(), compressed.size(), &size)) {
+        if (Compress(compressor, input, data.size(), compressed.data(), compressed.size(), &size) != 0) {
             compressed.resize(size);
         } else {
             compressed.clear();

@@ -104,7 +104,7 @@ void MainWindow::_openWarnings() {
 
     // array of tracks, each an object of string values
     const auto doc = json::parse(content);
-    const auto rows = json::root(doc);
+    auto* const rows = json::root(doc);
 
     //
     auto howMany = static_cast<int>(yyjson_arr_size(rows));
@@ -149,7 +149,7 @@ void MainWindow::_openWarnings() {
             const auto cell = json::string(yyjson_obj_getn(cellsData, key.data(), key.size()));
             const auto cellData = QString::fromUtf8(cell.data(), static_cast<qsizetype>(cell.size()));
             if(cellData.isEmpty()) {
-                auto item = new QTableWidgetItem(this->style()->standardIcon(QStyle::SP_MessageBoxWarning), tr("Missing !"));
+                auto* item = new QTableWidgetItem(this->style()->standardIcon(QStyle::SP_MessageBoxWarning), tr("Missing !"));
                 auto font = item->font();
                 font.setBold(true);
                 font.setUnderline(true);
@@ -267,10 +267,12 @@ void MainWindow::_runMBeat() {
     this->_mbeatWorker.reset();
 
     this->_mbeatWorker = std::make_unique<MBeatThread>(this->_appSettings.getConnectivityInfos(), [this](const mbeat::Status &status) {
-        const auto indicator =
-            status.connectivity == mbeat::Connectivity::Connected ? ConnectivityIndicator::OK :
-            status.connectivity == mbeat::Connectivity::Checking ? ConnectivityIndicator::ONGOING :
-            ConnectivityIndicator::NOK;
+        auto indicator = ConnectivityIndicator::NOK;
+        switch (status.connectivity) {
+            case mbeat::Connectivity::Connected: indicator = ConnectivityIndicator::OK; break;
+            case mbeat::Connectivity::Checking: indicator = ConnectivityIndicator::ONGOING; break;
+            case mbeat::Connectivity::Refused: break;
+        }
 
         ui::post(this, [this, text = QString::fromStdString(status.text), indicator] {
             this->_updateStatusBar(text, indicator);
@@ -287,7 +289,7 @@ void MainWindow::_runShouts() {
         this->_shoutUploader.reset();
     }
 
-    const auto tab = this->_shoutTab;
+    auto* const tab = this->_shoutTab;
     const auto run = tab->workerStarted();
 
     this->_shoutUploader = std::make_unique<ShoutUploader>(this->_appSettings.getConnectivityInfos(), tab->messageSink());
@@ -304,7 +306,7 @@ void MainWindow::_runFeeder() {
     // the previous run stops first
     this->_feederWorker.reset();
 
-    const auto tab = this->_feederTab;
+    auto* const tab = this->_feederTab;
     const auto run = tab->workerStarted();
 
     this->_feederWorker = std::make_unique<FeederThread>(this->_appSettings.getConnectivityInfos(), FeederThread::Callbacks {
@@ -348,7 +350,7 @@ void MainWindow::_initUI() {
 //////////
 
 void MainWindow::_initUITray() {
-    auto trayIcon = new QSystemTrayIcon;
+    auto* trayIcon = new QSystemTrayIcon;
     this->_trayIcon = trayIcon;
     trayIcon->setIcon(QIcon(":/icons/app_reverse.png"));
     trayIcon->setToolTip(this->windowTitle());
@@ -377,9 +379,9 @@ void MainWindow::_initUITray() {
 
 void MainWindow::_initStatusBar() {
     //
-    auto statusBar = new QStatusBar;
+    auto* statusBar = new QStatusBar;
 
-    auto sbWidget = new QWidget;
+    auto* sbWidget = new QWidget;
     this->_statusLight = new TrafficLightWidget;
     this->_statusLabel = new QLabel;
 
@@ -394,7 +396,7 @@ void MainWindow::_initStatusBar() {
 }
 
 void MainWindow::_initUITabs() {
-    auto tabs = new QTabWidget(this);
+    auto* tabs = new QTabWidget(this);
     this->_shoutTab = new ShoutTab(this, &this->_appSettings);
     this->_feederTab = new FeederTab(this);
 
@@ -414,7 +416,7 @@ void MainWindow::_initUITabs() {
 }
 
 void MainWindow::_initUIMenu() {
-    auto menuBar = new QMenuBar;
+    auto* menuBar = new QMenuBar;
     menuBar->addMenu(this->_getFileMenu(/*withMonitor=*/false));
     menuBar->addMenu(this->_getOptionsMenu());
     this->setMenuWidget(menuBar);
@@ -462,7 +464,7 @@ void MainWindow::_updateSearchSwitchUi(bool isSearching) {
 
 QMenu* MainWindow::_getFileMenu(bool withMonitor) {
     //
-    auto fileMenuItem = new QMenu(tr("File"));
+    auto* fileMenuItem = new QMenu(tr("File"));
 
     // myPlatformAction
     this->_myPlatformAction = new QAction(tr("My %1").arg(DEST_PLATFORM_PRODUCT_NAME), fileMenuItem);
@@ -473,7 +475,7 @@ QMenu* MainWindow::_getFileMenu(bool withMonitor) {
     );
 
     // accessPreferencesAction
-    auto accessPreferencesAction = new QAction(tr("Preferences"), fileMenuItem);
+    auto* accessPreferencesAction = new QAction(tr("Preferences"), fileMenuItem);
     QObject::connect(
         accessPreferencesAction, &QAction::triggered,
         this, &MainWindow::_accessPreferences
@@ -488,13 +490,13 @@ QMenu* MainWindow::_getFileMenu(bool withMonitor) {
     );
 
     // openData
-    auto openDataFolder = new QAction(tr("Access upload data folder"), fileMenuItem);
+    auto* openDataFolder = new QAction(tr("Access upload data folder"), fileMenuItem);
     QObject::connect(openDataFolder, &QAction::triggered, [=]() {
         platform::openPath(platform::dataDirectory());
     });
 
     // quit
-    auto quitAction = new QAction(tr("Quit"), fileMenuItem);
+    auto* quitAction = new QAction(tr("Quit"), fileMenuItem);
     QObject::connect(
         quitAction, &QAction::triggered,
         this, &MainWindow::_forcedClose
@@ -502,7 +504,7 @@ QMenu* MainWindow::_getFileMenu(bool withMonitor) {
 
     if(withMonitor) {
         // monitorAction
-        auto monitorAction = new QAction(tr("Open monitor..."), fileMenuItem);
+        auto* monitorAction = new QAction(tr("Open monitor..."), fileMenuItem);
         QObject::connect(
             monitorAction, &QAction::triggered,
             this, &MainWindow::_trueShow

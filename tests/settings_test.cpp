@@ -48,8 +48,8 @@ int main(int argc, char** argv) {
 
     // AppSettings, under the test identity
     const QCoreApplication app(argc, argv);
-    app.setOrganizationName(APP_PUBLISHER_ORG);
-    app.setApplicationName(APP_NAME);
+    QCoreApplication::setOrganizationName(APP_PUBLISHER_ORG);
+    QCoreApplication::setApplicationName(APP_NAME);
 
     testdata::removeDataDirectory();
     const auto dataFile = platform::dataDirectory() / "settings.json";

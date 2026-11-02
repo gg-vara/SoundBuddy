@@ -26,8 +26,9 @@ LightWidget::LightWidget(const QColor &color, QWidget* parent) : QWidget(parent)
 bool LightWidget::isOn() const { return _on; }
 
 void LightWidget::setOn(bool on) {
-    if (on == _on)
+    if (on == _on) {
         return;
+    }
     _on = on;
     update();
 }
@@ -35,7 +36,7 @@ void LightWidget::setOn(bool on) {
 void LightWidget::turnOff() { setOn(/*on=*/false); }
 void LightWidget::turnOn() { setOn(/*on=*/true); }
 
-void LightWidget::paintEvent(QPaintEvent *) {
+void LightWidget::paintEvent(QPaintEvent* /*event*/) {
     if (!_on) return;
 
     QPainter painter(this);

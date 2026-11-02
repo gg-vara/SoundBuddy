@@ -85,7 +85,7 @@ bool iTunesSession::_hasJumped() {
 
 void iTunesSession::_dispatchMessages() {
     MSG message;
-    while (PeekMessageW(&message, nullptr, 0, 0, PM_REMOVE)) {
+    while (PeekMessageW(&message, nullptr, 0, 0, PM_REMOVE) != 0) {
         TranslateMessage(&message);
         DispatchMessageW(&message);
     }

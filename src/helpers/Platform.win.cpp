@@ -65,7 +65,7 @@ std::filesystem::path applicationFile() {
 }
 
 bool shellOpen(const std::wstring& target) {
-    const auto result = ShellExecuteW(nullptr, L"open", target.c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+    auto* const result = ShellExecuteW(nullptr, L"open", target.c_str(), nullptr, nullptr, SW_SHOWNORMAL);
     return reinterpret_cast<INT_PTR>(result) > 32;
 }
 
@@ -118,7 +118,7 @@ std::string percentDecoded(std::string_view text) {
             const auto high = hexValue(text[i + 1]);
             const auto low = hexValue(text[i + 2]);
             if (high >= 0 && low >= 0) {
-                decoded += static_cast<char>(high * 16 + low);
+                decoded += static_cast<char>((high * 16) + low);
                 i += 2;
                 continue;
             }
@@ -191,7 +191,7 @@ std::string_view musicAppName() {
 bool claimSingleInstance() {
     // the mutex is released by the system when the process ends; its handle is never closed before
     static const bool claimed = [] {
-        const auto mutex = CreateMutexW(nullptr, FALSE, L"Local\\" APP_PUBLISHER_ORG "." APP_NAME);
+        auto* const mutex = CreateMutexW(nullptr, FALSE, L"Local\\" APP_PUBLISHER_ORG "." APP_NAME);
         return mutex != nullptr && GetLastError() != ERROR_ALREADY_EXISTS;
     }();
     return claimed;

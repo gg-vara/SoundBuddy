@@ -25,7 +25,7 @@ int runClaimingChild() {
     std::wstring command = std::wstring(L"\"") + executable.data() + L"\" claim";
     STARTUPINFOW startup { .cb = sizeof(startup) };
     PROCESS_INFORMATION process {};
-    if (!CreateProcessW(nullptr, command.data(), nullptr, nullptr, FALSE, 0, nullptr, nullptr, &startup, &process)) return -1;
+    if (CreateProcessW(nullptr, command.data(), nullptr, nullptr, FALSE, 0, nullptr, nullptr, &startup, &process) == 0) return -1;
 
     WaitForSingleObject(process.hProcess, INFINITE);
     DWORD code = 0;

@@ -42,7 +42,7 @@ class LightWidget : public QWidget {
     void turnOn();
 
  protected:
-    void paintEvent(QPaintEvent *) override;
+    void paintEvent(QPaintEvent* /*event*/) override;
 
  private:
     QColor _color;

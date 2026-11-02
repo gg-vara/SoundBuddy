@@ -21,11 +21,12 @@ int main(int argc, char** argv) {
     i18n::setLanguage(i18n::Language::English);
     CHECK(i18n::tr("Quit") == "Quit", "English keeps source texts");
     CHECK(i18n::languageCode() == "en", "English code");
-    CHECK(i18n::formatDataSize(45'678'901) == "43.56 MB" && i18n::formatDataSize(3ull << 40) == "3072.00 GB", "English sizes, up to GB");
+    CHECK(i18n::formatDataSize(45'678'901) == "43.56 MB" && i18n::formatDataSize(3ULL << 40) == "3072.00 GB", "English sizes, up to GB");
 
     // Qt bridge
-    QCoreApplication app(argc, argv);
-    app.installTranslator(new QtTranslatorBridge(&app));
+    const QCoreApplication app(argc, argv);
+    QtTranslatorBridge bridge;
+    QCoreApplication::installTranslator(&bridge);
 
     i18n::setLanguage(i18n::Language::French);
     CHECK(QCoreApplication::translate("MainWindow", "Quit") == QString::fromUtf8("Quitter"), "Qt tr() served by the bridge");

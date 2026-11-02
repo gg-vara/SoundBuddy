@@ -26,10 +26,12 @@
 namespace workers {
 
 void report(const MessageSink& sink, std::string_view source, const Message& message) {
-    const auto level =
-        message.kind == MessageKind::Issue ? logs::Level::Error :
-        message.kind == MessageKind::Warning ? logs::Level::Warning :
-        logs::Level::Info;
+    auto level = logs::Level::Info;
+    switch (message.kind) {
+        case MessageKind::Issue: level = logs::Level::Error; break;
+        case MessageKind::Warning: level = logs::Level::Warning; break;
+        case MessageKind::Standard: break;
+    }
     logs::write(level, source, message.text);
 
     if (sink) sink(message);

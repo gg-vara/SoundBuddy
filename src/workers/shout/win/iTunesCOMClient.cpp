@@ -49,7 +49,7 @@ struct Variant : public VARIANT {
 
 HRESULT propertyByName(IDispatch * object, const wchar_t * name, VARIANT * result) {
     DISPID id = DISPID_UNKNOWN;
-    auto nameParam = const_cast<LPOLESTR>(name);
+    auto* nameParam = const_cast<LPOLESTR>(name);
     const auto hr = object->GetIDsOfNames(IID_NULL, &nameParam, 1, LOCALE_USER_DEFAULT, &id);
     if (FAILED(hr)) return hr;
 
@@ -72,7 +72,7 @@ std::wstring toISODate(VARIANT * value) {
     if (FAILED(VariantChangeType(value, value, 0, VT_DATE))) return {};
 
     SYSTEMTIME time;
-    if (!VariantTimeToSystemTime(value->date, &time)) return {};
+    if (VariantTimeToSystemTime(value->date, &time) == 0) return {};
 
     return std::format(L"{:04}-{:02}-{:02}T{:02}:{:02}:{:02}",
         time.wYear, time.wMonth, time.wDay, time.wHour, time.wMinute, time.wSecond);
@@ -126,15 +126,15 @@ class iTunesCOMClient::EventSink final : public IDispatch {
         return S_OK;
     }
 
-    HRESULT STDMETHODCALLTYPE GetTypeInfo(UINT, LCID, ITypeInfo **) override {
+    HRESULT STDMETHODCALLTYPE GetTypeInfo(UINT /*iTInfo*/, LCID /*lcid*/, ITypeInfo** /*ppTInfo*/) override {
         return E_NOTIMPL;
     }
 
-    HRESULT STDMETHODCALLTYPE GetIDsOfNames(REFIID, LPOLESTR *, UINT, LCID, DISPID *) override {
+    HRESULT STDMETHODCALLTYPE GetIDsOfNames(REFIID, LPOLESTR* /*rgszNames*/, UINT /*cNames*/, LCID /*lcid*/, DISPID* /*rgDispId*/) override {
         return E_NOTIMPL;
     }
 
-    HRESULT STDMETHODCALLTYPE Invoke(DISPID id, REFIID, LCID, WORD, DISPPARAMS *, VARIANT *, EXCEPINFO *, UINT *) override {
+    HRESULT STDMETHODCALLTYPE Invoke(DISPID id, REFIID, LCID /*lcid*/, WORD /*wFlags*/, DISPPARAMS* /*pDispParams*/, VARIANT* /*pVarResult*/, EXCEPINFO* /*pExcepInfo*/, UINT* /*puArgErr*/) override {
         if (id == _playId || id == _stopId) {
             _onEvent(Event::PlayerStateChanged);
         } else if (id == _quitId) {
@@ -191,7 +191,7 @@ HRESULT iTunesCOMClient::PropertyIds::get(IDispatch * object, const wchar_t * na
 
     if (found == _ids.end()) {
         DISPID id = DISPID_UNKNOWN;
-        auto nameParam = const_cast<LPOLESTR>(name);
+        auto* nameParam = const_cast<LPOLESTR>(name);
         const auto hr = object->GetIDsOfNames(IID_NULL, &nameParam, 1, LOCALE_USER_DEFAULT, &id);
 
         // unknown names are remembered too, so they are not looked up again
@@ -235,7 +235,7 @@ iTunesCOMClient::iTunesCOMClient(std::function<void(Event)> onEvent) {
 }
 
 iTunesCOMClient::~iTunesCOMClient() {
-    if (_connectionPoint && _cookie) {
+    if (_connectionPoint && (_cookie != 0U)) {
         _connectionPoint->Unadvise(_cookie);
     }
 }
@@ -249,7 +249,7 @@ ComPtr<IDispatch> iTunesCOMClient::_currentTrack() const {
 
 // "Location" is only exposed by file tracks : its id is looked up on each track rather than remembered,
 // since other kinds of tracks (URL...) might use the same id for another property
-std::wstring iTunesCOMClient::_trackLocation(IDispatch * track) const {
+std::wstring iTunesCOMClient::_trackLocation(IDispatch* track) {
     Variant value;
     if (SUCCEEDED(propertyByName(track, L"Location", &value))) return toString(&value);
 

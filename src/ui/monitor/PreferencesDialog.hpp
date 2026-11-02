@@ -41,14 +41,14 @@ class PreferencesDialog : public QDialog {
         _platformPasswordEdit(new QLineEdit(this)) {
         this->setWindowTitle(tr("Preferences"));
         this->setModal(true);
-        auto layout = new QGridLayout;
+        auto* layout = new QGridLayout;
         this->setLayout(layout);
 
         //
         // Platform connectivity
         //
 
-        auto connectivityGroup = new QGroupBox(tr("%1 connectivity").arg(DEST_PLATFORM_PRODUCT_NAME), this);
+        auto* connectivityGroup = new QGroupBox(tr("%1 connectivity").arg(DEST_PLATFORM_PRODUCT_NAME), this);
         connectivityGroup->setLayout(new QVBoxLayout);
 
             this->_platformPasswordEdit->setEchoMode(QLineEdit::Password);
@@ -72,7 +72,7 @@ class PreferencesDialog : public QDialog {
         // Automation
         //
 
-        auto automationGroup = new QGroupBox(tr("Automation"), this);
+        auto* automationGroup = new QGroupBox(tr("Automation"), this);
         automationGroup->setLayout(new QVBoxLayout);
 
             this->_launchAppAtStartupChk = new QCheckBox(tr("Launch %1 at system boot").arg(APP_NAME), this);

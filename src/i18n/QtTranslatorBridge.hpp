@@ -31,7 +31,7 @@ class QtTranslatorBridge : public QTranslator {
  public:
     using QTranslator::QTranslator;
 
-    QString translate(const char *, const char * sourceText, const char *, int) const override {
+    QString translate(const char* /*context*/, const char* sourceText, const char* /*disambiguation*/, int /*n*/) const override {
         if (sourceText == nullptr || i18n::language() == i18n::Language::English) return {};
 
         const std::string_view source { sourceText };

@@ -20,11 +20,11 @@ std::string decompress(const std::string& compressed, std::size_t originalSize) 
     std::string output(originalSize, '\0');
 #ifdef _WIN32
     DECOMPRESSOR_HANDLE decompressor = nullptr;
-    if (!CreateDecompressor(COMPRESS_ALGORITHM_MSZIP, nullptr, &decompressor)) return {};
+    if (CreateDecompressor(COMPRESS_ALGORITHM_MSZIP, nullptr, &decompressor) == 0) return {};
     SIZE_T size = 0;
     const auto ok = Decompress(decompressor, const_cast<char *>(compressed.data()), compressed.size(), output.data(), output.size(), &size);
     CloseDecompressor(decompressor);
-    if (!ok) return {};
+    if (ok == 0) return {};
 #else
     auto size = static_cast<uLongf>(output.size());
     if (uncompress(reinterpret_cast<Bytef *>(output.data()), &size, reinterpret_cast<const Bytef *>(compressed.data()), compressed.size()) != Z_OK) return {};
@@ -39,7 +39,7 @@ int main() {
     // JSON alike, larger than the 32 KB blocks of MSZIP
     std::string library = "[";
     for (int i = 0; i < 20000; ++i) {
-        library += std::format(R"({{"Name":"Track {} café","Artist":"Artist {}","Year":"{}"}},)", i, i % 97, 1960 + i % 60);
+        library += std::format(R"({{"Name":"Track {} café","Artist":"Artist {}","Year":"{}"}},)", i, i % 97, 1960 + (i % 60));
     }
     library.back() = ']';
 
