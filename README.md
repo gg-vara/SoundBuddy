@@ -31,11 +31,12 @@ All dependencies are fetched via Homebrew (https://brew.sh), make sure you have 
 - `brew bundle check --file prerequisites/Brewfile` tells what is missing
 
 #### Security
-Now from OSX 13.2+, executables have to be signed with a developper identity to be even lauched (the app bundle, the Velopack package...).
-You need a locally registered XCode / Apple developper platform linked to your XCode app, and then set `APPLE_CODESIGN_ID` and `APPLE_CERT_APP_CODE_SIGN_IDENTITY` env variables:
-They would look like:
-- APPLE_CODESIGN_ID=U2T7J2AC52
-- APPLE_CERT_APP_CODE_SIGN_IDENTITY="Apple Development: Guillaume VARA (U2T7J2AC52)"
+Local builds are signed ad hoc, which lets them run on the Mac that built them. Distributed packages have to be signed with a Developer ID and notarized, or Gatekeeper refuses them : Velopack does both when packaging (see [Velopack's signing](https://docs.velopack.io/packaging/signing)), as these environment variables tell :
+- `APPLE_CERT_APP_CODE_SIGN_IDENTITY` : the Developer ID Application certificate, as `"Developer ID Application: Guillaume VARA"`
+- `APPLE_CERT_INSTALL_SIGN_IDENTITY` : the Developer ID Installer certificate, as `"Developer ID Installer: Guillaume VARA"`
+- `APPLE_NOTARY_PROFILE` : the notarization credentials, stored once with `xcrun notarytool store-credentials <profile>`
+
+Without them, packages are made unsigned.
 
 ### Windows (MSYS2 CLANG64)
 
@@ -55,7 +56,7 @@ On Windows, if installer is not signed, Chrome + Windows Defender will ring alar
 
 - First, generate `.pfx` file by running `toolchains/win_generate_pfx.sh`. Script will ask for publisher infos: give required infos if relevant.
   - Make sure that the Organisation Name is the same as the `APP_PUBLISHER_ORG` in `CMakeLists.txt` !
-- Then, build and run the project as usual (Debug builds are not signed)
+- Then, package the app as usual (see Publishing a release) : Velopack signs the executable, the updater and the installer with it. Builds themselves, and packages of the `windows-release-unsigned` preset, are not signed
 
 ### Building from the command line
 

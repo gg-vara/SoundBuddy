@@ -1,7 +1,7 @@
 # SoundBuddy tests, run by ctest : see the *-debug test presets, or the windows-test workflow.
 #
-# Each test is a program built from the sources it covers. tests/support/version.h replaces the
-# generated one, so that tests use their own data directory, registry values and locks.
+# Each test is a program linked to the tests' core library : the app's core sources (cmake/SoundBuddyCore.cmake)
+# compiled with tests/support/version.h, so that tests use their own data directory, registry values and locks.
 
 get_filename_component(TOOLCHAIN_BIN_DIR ${CMAKE_CXX_COMPILER} DIRECTORY)
 
@@ -9,40 +9,11 @@ get_filename_component(TOOLCHAIN_BIN_DIR ${CMAKE_CXX_COMPILER} DIRECTORY)
 # Tested core #
 ###############
 
-# app sources without user interface, shared by the tests
-add_library(soundbuddy_tested_core STATIC
-    ${PROJECT_SOURCE_DIR}/src/helpers/Hash.cpp
-    ${PROJECT_SOURCE_DIR}/src/helpers/Platform.cpp
-    ${PROJECT_SOURCE_DIR}/src/i18n/Translations.cpp
-    ${PROJECT_SOURCE_DIR}/src/logs/Logs.cpp
-    ${PROJECT_SOURCE_DIR}/src/net/HttpClient.cpp
-    ${PROJECT_SOURCE_DIR}/src/settings/Settings.cpp
-    ${PROJECT_SOURCE_DIR}/src/workers/base/Message.cpp
-    $<$<PLATFORM_ID:Windows>:${PROJECT_SOURCE_DIR}/src/helpers/Compression.win.cpp>
-    $<$<PLATFORM_ID:Windows>:${PROJECT_SOURCE_DIR}/src/helpers/Platform.win.cpp>
-    $<$<PLATFORM_ID:Windows>:${PROJECT_SOURCE_DIR}/src/net/HttpClient.win.cpp>
-    $<$<PLATFORM_ID:Darwin>:${PROJECT_SOURCE_DIR}/src/helpers/Compression.mac.cpp>
-    $<$<PLATFORM_ID:Darwin>:${PROJECT_SOURCE_DIR}/src/helpers/Platform.mac.mm>
-    $<$<PLATFORM_ID:Darwin>:${PROJECT_SOURCE_DIR}/src/net/HttpClient.mac.mm>
-)
+add_library(soundbuddy_tested_core STATIC)
+soundbuddy_add_core(soundbuddy_tested_core PUBLIC)
 
-target_include_directories(soundbuddy_tested_core PUBLIC
-    ${CMAKE_CURRENT_SOURCE_DIR}/support  # first : version.h of the tests
-    ${PROJECT_SOURCE_DIR}
-)
-
-target_compile_definitions(soundbuddy_tested_core PUBLIC $<$<CONFIG:Debug>:_DEBUG>)
-target_link_libraries(soundbuddy_tested_core PUBLIC yyjson)
-
-if(WIN32)
-    target_compile_definitions(soundbuddy_tested_core PUBLIC UNICODE _UNICODE)
-    target_link_libraries(soundbuddy_tested_core PUBLIC bcrypt cabinet shell32 ole32 uuid advapi32 winhttp)
-elseif(APPLE)
-    target_compile_options(soundbuddy_tested_core PRIVATE $<$<COMPILE_LANGUAGE:OBJCXX>:-fobjc-arc>)
-    target_link_libraries(soundbuddy_tested_core PUBLIC "-framework CoreFoundation" "-framework Foundation" "-framework AppKit" z)
-endif()
-
-set_target_properties(soundbuddy_tested_core PROPERTIES AUTOMOC OFF AUTOUIC OFF AUTORCC OFF)
+# first : version.h of the tests
+target_include_directories(soundbuddy_tested_core BEFORE PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/support)
 
 #########
 # Tests #
@@ -56,14 +27,7 @@ function(soundbuddy_test name)
     target_link_libraries(test_${name} PRIVATE soundbuddy_tested_core ${TEST_LIBRARIES})
 
     # out of the app directory, which is packaged
-    set_target_properties(test_${name} PROPERTIES
-        AUTOMOC OFF AUTOUIC OFF AUTORCC OFF
-        RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-    )
-
-    if(APPLE)
-        target_compile_options(test_${name} PRIVATE $<$<COMPILE_LANGUAGE:OBJCXX>:-fobjc-arc>)
-    endif()
+    set_target_properties(test_${name} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
 
     add_test(NAME ${name} COMMAND test_${name})
 
@@ -83,31 +47,20 @@ soundbuddy_test(compression)
 soundbuddy_test(json)
 soundbuddy_test(logs)
 soundbuddy_test(platform)
-
 soundbuddy_test(upload)
-
 soundbuddy_test(i18n)
-
 # import of the settings of previous versions, as QSettings stored them : in the registry on Windows, the preferences on macOS
-soundbuddy_test(settings
-    SOURCES
-        ${PROJECT_SOURCE_DIR}/src/helpers/AppSettings.cpp
-        $<$<PLATFORM_ID:Windows>:${PROJECT_SOURCE_DIR}/src/helpers/AppSettings.win.cpp>
-        $<$<PLATFORM_ID:Darwin>:${PROJECT_SOURCE_DIR}/src/helpers/AppSettings.mac.cpp>
-)
-
-soundbuddy_test(shout SOURCES
-    ${PROJECT_SOURCE_DIR}/src/workers/shout/ShoutPayload.cpp
-    ${PROJECT_SOURCE_DIR}/src/workers/shout/ShoutPayloadConsumer.cpp
-)
-
-soundbuddy_test(sse SOURCES ${PROJECT_SOURCE_DIR}/src/net/SseParser.cpp)
+soundbuddy_test(settings)
+soundbuddy_test(shout)
+soundbuddy_test(sse)
 
 # workers, against unreachable platforms : local closed port, unroutable address
-soundbuddy_test(shout_uploader SOURCES ${PROJECT_SOURCE_DIR}/src/workers/shout/ShoutUploader.cpp)
-soundbuddy_test(mbeat SOURCES ${PROJECT_SOURCE_DIR}/src/workers/mBeat/MBeatThread.cpp)
-soundbuddy_test(feeder SOURCES ${PROJECT_SOURCE_DIR}/src/workers/feeder/FeederThread.cpp LIBRARIES itunes-library-parser)
+soundbuddy_test(shout_uploader)
+soundbuddy_test(mbeat)
+soundbuddy_test(feeder)
+soundbuddy_test(shout_watcher)
 
+# updates, through Velopack, which only the app links otherwise
 soundbuddy_test(update_checker SOURCES ${PROJECT_SOURCE_DIR}/src/workers/base/UpdateChecker.cpp LIBRARIES velopack)
 if(WIN32)
     # the import library refers to "velopack_libc.dll" (see cmake/Velopack.cmake)
@@ -115,21 +68,6 @@ if(WIN32)
         COMMAND ${CMAKE_COMMAND} -E copy_if_different ${VELOPACK_LIB} $<TARGET_FILE_DIR:test_update_checker>/velopack_libc.dll
     )
 endif()
-soundbuddy_test(shout_watcher
-    SOURCES
-        ${PROJECT_SOURCE_DIR}/src/workers/shout/ShoutPayload.cpp
-        ${PROJECT_SOURCE_DIR}/src/workers/shout/ShoutPayloadConsumer.cpp
-        ${PROJECT_SOURCE_DIR}/src/workers/shout/ShoutWatcher.cpp
-        $<$<PLATFORM_ID:Windows>:${PROJECT_SOURCE_DIR}/src/workers/shout/ShoutWatcher.win.cpp>
-        $<$<PLATFORM_ID:Windows>:${PROJECT_SOURCE_DIR}/src/workers/shout/win/iTunesCOMClient.cpp>
-        $<$<PLATFORM_ID:Windows>:${PROJECT_SOURCE_DIR}/src/workers/shout/win/iTunesSession.cpp>
-        $<$<PLATFORM_ID:Darwin>:${PROJECT_SOURCE_DIR}/src/workers/shout/ShoutWatcher.mac.cpp>
-    LIBRARIES
-        $<$<PLATFORM_ID:Windows>:oleaut32>
-)
 
 # against public test services (httpbin.org, stream.wikimedia.org) : left out of the default test runs
-soundbuddy_test(network
-    SOURCES ${PROJECT_SOURCE_DIR}/src/net/SseParser.cpp
-    LABELS network
-)
+soundbuddy_test(network LABELS network)

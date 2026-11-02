@@ -84,6 +84,14 @@ if(ACTION STREQUAL "pack")
         list(APPEND pack_args --signAppIdentity ${SIGN_APP_IDENTITY})
     endif()
 
+    if(SIGN_INSTALL_IDENTITY)
+        list(APPEND pack_args --signInstallIdentity ${SIGN_INSTALL_IDENTITY})
+    endif()
+
+    if(NOTARY_PROFILE)
+        list(APPEND pack_args --notaryProfile ${NOTARY_PROFILE})
+    endif()
+
     # runtimes the installer installs when missing
     if(FRAMEWORK)
         list(APPEND pack_args --framework ${FRAMEWORK})

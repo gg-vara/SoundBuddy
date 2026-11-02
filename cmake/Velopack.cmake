@@ -57,6 +57,10 @@ elseif(APPLE)
         COMMAND install_name_tool -id @executable_path/libvelopack_libc.dylib $<TARGET_FILE_DIR:appExec>/libvelopack_libc.dylib
         COMMAND install_name_tool -change /Users/runner/_work/velopack/velopack/target/x86_64-apple-darwin/release/deps/libvelopack_libc.dylib
             @executable_path/libvelopack_libc.dylib $<TARGET_FILE:appExec>
+        # these changes void the ad hoc signatures, without which Apple Silicon Macs refuse to run them : signed again, ad hoc.
+        # Velopack signs the packages for real (see below)
+        COMMAND codesign --force --sign - $<TARGET_FILE_DIR:appExec>/libvelopack_libc.dylib
+        COMMAND codesign --force --sign - $<TARGET_FILE:appExec>
     )
 endif()
 
@@ -97,10 +101,15 @@ if(WIN32)
         -DFRAMEWORK=webview2
     )
 
-    # installer and updater are signed with the same certificate as the executable
+    # Velopack signs the executable, the updater and the installer (with the signtool it brings), with certs/all.pfx
     if(SOUNDBUDDY_CODESIGN)
+        set(EXPECTED_PFX_PATH ${PROJECT_SOURCE_DIR}/certs/all.pfx)
+        if(NOT EXISTS "${EXPECTED_PFX_PATH}")
+            message(FATAL_ERROR ".pfx file is expected to sign the packages : run toolchains/win_generate_pfx.sh in its folder first, or configure without SOUNDBUDDY_CODESIGN")
+        endif()
+
         list(APPEND VELOPACK_SCRIPT_ARGS
-            "-DSIGN_PARAMS=/f ${EXPECTED_PFX_PATH} /tr ${TIMESTAMP_SERVER} /td SHA256 /fd SHA256"
+            "-DSIGN_PARAMS=/f ${EXPECTED_PFX_PATH} /tr http://timestamp.acs.microsoft.com /td SHA256 /fd SHA256"
         )
     endif()
 elseif(APPLE)
@@ -115,7 +124,11 @@ elseif(APPLE)
         -DRUNTIME=${VELOPACK_RUNTIME}
         -DPACK_DIR=$<TARGET_BUNDLE_DIR:appExec>
         -DICON=${CMAKE_SOURCE_DIR}/resources/icons/package.icns
+        # Velopack signs the bundle and the installer, then has them notarized, as these variables tell (see README.md) :
+        # left out, the packages are not signed, which Gatekeeper refuses
         "-DSIGN_APP_IDENTITY=$ENV{APPLE_CERT_APP_CODE_SIGN_IDENTITY}"
+        "-DSIGN_INSTALL_IDENTITY=$ENV{APPLE_CERT_INSTALL_SIGN_IDENTITY}"
+        "-DNOTARY_PROFILE=$ENV{APPLE_NOTARY_PROFILE}"
     )
 endif()
 

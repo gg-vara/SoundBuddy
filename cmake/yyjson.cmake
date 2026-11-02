@@ -1,8 +1,8 @@
 # yyjson : JSON reading and writing (settings, SoundVitrine requests and responses)
 #
-# built from sources, as a static library linked to appExec
+# built from sources, as a static library (linked by cmake/SoundBuddyCore.cmake)
 
-SET(YYJSON_VERSION 0.13.0)
+set(YYJSON_VERSION 0.13.0)
 
 include(FetchContent)
 FetchContent_Declare(yyjson
@@ -11,7 +11,3 @@ FetchContent_Declare(yyjson
     DOWNLOAD_EXTRACT_TIMESTAMP ON
 )
 FetchContent_MakeAvailable(yyjson)
-
-target_link_libraries(appExec PRIVATE
-    yyjson
-)
