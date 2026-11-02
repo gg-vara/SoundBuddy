@@ -84,7 +84,7 @@ void ShoutUploader::_uploadQueuedShouts(std::stop_token stop) {
             _connectivityInfos,
             AppSettings::getShoutUploadInfos(),
             shout
-        }, false, stop);
+        }, AppSettings::FeedFormat::Json, stop);
 
         if (response.ok()) {
             logs::debug("ShoutUploader", "Uploaded, HTTP {}", response.status);

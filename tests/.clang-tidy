@@ -1,0 +1,4 @@
+# clang-tidy for the tests : the project's checks (../.clang-tidy), but a test throwing an exception just fails
+InheritParentConfig: true
+Checks: >
+  -bugprone-exception-escape

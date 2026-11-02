@@ -43,7 +43,7 @@ Checks: >
 
 # our own headers only (not Qt, nor fetched dependencies)
 HeaderFilterRegex: '.*[/\\](src|tests)[/\\].*'
-ExcludeHeaderFilterRegex: '.*[/\\]_?deps[/\\].*'
+ExcludeHeaderFilterRegex: '.*([/\\]_?deps[/\\]|iTunesCOMInterface).*'
 
 CheckOptions:
   # bare boolean literals as arguments, as foo(true) : prefer an enum, or name it

@@ -45,6 +45,6 @@ class LightWidget : public QWidget {
     void paintEvent(QPaintEvent *) override;
 
  private:
-    QColor _mColor;
-    bool _mOn;
+    QColor _color;
+    bool _on;
 };

@@ -74,7 +74,7 @@ void FeederThread::_feed(std::stop_token stop) {
 
         // UTF-8 paths, as the library parser takes them
         const auto musicAppLibPath = platform::toUtf8(platform::musicLibraryFile());
-        const auto outputPath = platform::toUtf8(AppSettings::getFeedOutputFilePath(false));
+        const auto outputPath = platform::toUtf8(AppSettings::getFeedOutputFilePath(AppSettings::FeedFormat::Json));
         const auto warningPath = platform::toUtf8(AppSettings::getFeedWarningFilePath());
         logs::info("Feeder", "Reading library {}", musicAppLibPath);
 
@@ -128,7 +128,7 @@ void FeederThread::_feed(std::stop_token stop) {
         }
 
         // write into file
-        std::ofstream file { AppSettings::getFeedOutputFilePath(true), std::ios::binary | std::ios::trunc };
+        std::ofstream file { AppSettings::getFeedOutputFilePath(AppSettings::FeedFormat::Compressed), std::ios::binary | std::ios::trunc };
         file.write(compressedData.data(), static_cast<std::streamsize>(compressedData.size()));
         file.close();
 
@@ -144,7 +144,7 @@ void FeederThread::_feed(std::stop_token stop) {
             _connectivityInfos,
             AppSettings::getFeederUploadInfos(),
             compressedData,
-        }, true, stop);
+        }, AppSettings::FeedFormat::Compressed, stop);
 
         if (stop.stop_requested()) return;
 

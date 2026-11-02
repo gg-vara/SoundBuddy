@@ -35,7 +35,7 @@ namespace logs {
 
 namespace {
 
-constexpr std::uintmax_t maxFileSize = 1024 * 1024;
+constexpr std::uintmax_t maxFileSize = std::uintmax_t { 1024 } * 1024;
 
 std::mutex mutex;
 std::filesystem::path currentFile;

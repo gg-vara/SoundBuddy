@@ -12,7 +12,7 @@ int main() {
     const UploadHelper::UploadInstructions instructions { infos, AppSettings::getShoutUploadInfos(), "{}" };
     CHECK(instructions.getUploadUrl() == "https://host.example/u/j\xC3\xA9r\xC3\xB4me/uploadShout", "shout upload URL");
     CHECK(AppSettings::getFeederUploadInfos().outputFileName == "SoundVitrine_file", "library upload file name");
-    CHECK(AppSettings::getFeedOutputExtension(true) == ".zmlib" && AppSettings::getFeedOutputContentType(false) == "application/json", "feed extension and content type");
+    CHECK(AppSettings::getFeedOutputExtension(AppSettings::FeedFormat::Compressed) == ".zmlib" && AppSettings::getFeedOutputContentType(AppSettings::FeedFormat::Json) == "application/json", "feed extension and content type");
 
     net::Response refused;
     refused.status = 403;

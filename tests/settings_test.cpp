@@ -34,7 +34,8 @@ int main(int argc, char** argv) {
 
     values.runAtStartup = true;
     values.platformHostUrl = "x";
-    CHECK(settings::save(file, values) && settings::load(file)->runAtStartup && settings::load(file)->platformHostUrl == "x", "overwrite");
+    const auto overwritten = settings::save(file, values) ? settings::load(file) : std::nullopt;
+    CHECK(overwritten && overwritten->runAtStartup && overwritten->platformHostUrl == "x", "overwrite");
 
     { std::ofstream { file, std::ios::binary } << R"({"autoRunShout": true, "platformUsername": 42, "unknown": []})"; }
     loaded = settings::load(file);

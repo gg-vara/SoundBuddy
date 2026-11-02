@@ -44,7 +44,7 @@ bool readChunks(const std::filesystem::path& file, Consume&& consume) {
     std::ifstream stream { file, std::ios::binary };
     if (!stream) return false;
 
-    std::vector<char> buffer(64 * 1024);
+    std::vector<char> buffer(std::size_t { 64 } * 1024);
     while (stream) {
         stream.read(buffer.data(), static_cast<std::streamsize>(buffer.size()));
         const auto count = stream.gcount();

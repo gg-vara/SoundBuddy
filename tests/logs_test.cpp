@@ -52,7 +52,7 @@ int main() {
     for (auto& thread : threads) thread.join();
 
     CHECK(std::filesystem::exists(rotated), "rotated into soundbuddy.1.log");
-    CHECK(std::filesystem::file_size(file) <= 1024 * 1024 && std::filesystem::file_size(rotated) <= 1024 * 1024, "files under 1 MB");
+    CHECK(std::filesystem::file_size(file) <= std::uintmax_t { 1024 } * 1024 && std::filesystem::file_size(rotated) <= std::uintmax_t { 1024 } * 1024, "files under 1 MB");
 
     auto all = readLines(rotated);
     const auto current = readLines(file);

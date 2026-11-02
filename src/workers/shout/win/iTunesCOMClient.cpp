@@ -28,7 +28,8 @@
 #include <string>
 #include <utility>
 
-#include "iTunesCOMInterface_i.c"
+// identifiers of the iTunes COM SDK, defined once here
+#include "iTunesCOMInterface_i.c"  // NOLINT(bugprone-suspicious-include)
 
 using Microsoft::WRL::ComPtr;
 

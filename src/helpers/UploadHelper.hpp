@@ -23,11 +23,11 @@ class UploadHelper {
     };
 
     // blocking; a stop requested on "stop" aborts the upload
-    static net::Response uploadDataToPlatform(net::HttpClient &client, const UploadInstructions &instructions, const bool isCompressed, std::stop_token stop = {}) {
+    static net::Response uploadDataToPlatform(net::HttpClient &client, const UploadInstructions &instructions, AppSettings::FeedFormat format, std::stop_token stop = {}) {
         //
         const auto& fileName = instructions.uploadInfos.outputFileName;
-        const auto fileExtension = AppSettings::getFeedOutputExtension(isCompressed);
-        const auto contentType = AppSettings::getFeedOutputContentType(isCompressed);
+        const auto fileExtension = AppSettings::getFeedOutputExtension(format);
+        const auto contentType = AppSettings::getFeedOutputContentType(format);
 
         net::Multipart form;
         form.addFile(fileName, fileName + std::string { fileExtension }, std::string { contentType }, instructions.dataToUpload);

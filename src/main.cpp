@@ -25,6 +25,8 @@
 
 #include <Velopack.hpp>
 
+#include <cstdlib>
+#include <exception>
 #include <string_view>
 
 #include "helpers/Platform.h"
@@ -65,9 +67,16 @@ void logQtMessage(QtMsgType type, const QMessageLogContext &, const QString &mes
     logs::write(level, "Qt", message.toStdString());
 }
 
-}  // namespace
+// last words before quitting on an unhandled exception : never throws
+void logFatalError(const char * what) noexcept {
+    try {
+        logs::error("App", "Fatal error : {}", what);
+        logs::stop();
+    } catch (...) {  // NOLINT(bugprone-empty-catch) : nothing left to report to
+    }
+}
 
-int main(int argc, char** argv) {
+int run(int argc, char** argv) {
     logs::start(platform::dataDirectory() / "logs" / "soundbuddy.log");
 
     // must run first : handles install / update / uninstall hooks, and may exit the process right away
@@ -113,4 +122,17 @@ int main(int argc, char** argv) {
     logs::info("App", "Exiting with code {}", exitCode);
     logs::stop();
     return exitCode;
+}
+
+}  // namespace
+
+int main(int argc, char** argv) {
+    try {
+        return run(argc, argv);
+    } catch (const std::exception& e) {
+        logFatalError(e.what());
+    } catch (...) {
+        logFatalError("unknown exception");
+    }
+    return EXIT_FAILURE;
 }

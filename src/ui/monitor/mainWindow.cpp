@@ -189,7 +189,7 @@ void MainWindow::_onUpdateChecked(const UpdateChecker::CheckResults &checkResult
     // next check will go un-notified
     this->_userNotificationOnUpdateCheck = false;
 
-    this->_updateSearchSwitchUi(false);
+    this->_updateSearchSwitchUi(/*isSearching=*/false);
 
     switch (checkResults.result) {
         case UpdateChecker::Result::UpdateReady:
@@ -247,10 +247,10 @@ void MainWindow::_requireUpdateCheckFromUser() {
 }
 
 void MainWindow::_checkForAppUpdates() {
-    this->_updateSearchSwitchUi(true);
+    this->_updateSearchSwitchUi(/*isSearching=*/true);
     // a check already in progress will end the search the same way
     this->_updateChecker.check([this](const UpdateChecker::CheckResults &results) {
-        ui::post(this, [this, results] { this->_onUpdateChecked(results); });
+        ui::post(this, [this, results = results] { this->_onUpdateChecked(results); });
     });
 }
 
@@ -358,12 +358,12 @@ void MainWindow::_initUITray() {
     QMenu* cMenu;
 
     #ifdef _WIN32
-        cMenu = this->_getFileMenu(true);
+        cMenu = this->_getFileMenu(/*withMonitor=*/true);
     #endif
 
     #ifdef __APPLE__
         cMenu = new QMenu("");
-        cMenu->addMenu(this->_getFileMenu(true));
+        cMenu->addMenu(this->_getFileMenu(/*withMonitor=*/true));
         cMenu->addMenu(this->_getOptionsMenu());
     #endif
 
@@ -412,7 +412,7 @@ void MainWindow::_initUITabs() {
 
 void MainWindow::_initUIMenu() {
     auto menuBar = new QMenuBar;
-    menuBar->addMenu(this->_getFileMenu(false));
+    menuBar->addMenu(this->_getFileMenu(/*withMonitor=*/false));
     menuBar->addMenu(this->_getOptionsMenu());
     this->setMenuWidget(menuBar);
 }

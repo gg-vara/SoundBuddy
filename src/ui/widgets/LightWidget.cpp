@@ -19,28 +19,28 @@
 
 #include "LightWidget.h"
 
-LightWidget::LightWidget(const QColor &color, QWidget* parent) : QWidget(parent), _mColor(color), _mOn(true) {
+LightWidget::LightWidget(const QColor &color, QWidget* parent) : QWidget(parent), _color(color), _on(true) {
     this->setLayout(new QHBoxLayout);
 }
 
-bool LightWidget::isOn() const { return _mOn; }
+bool LightWidget::isOn() const { return _on; }
 
 void LightWidget::setOn(bool on) {
-    if (on == _mOn)
+    if (on == _on)
         return;
-    _mOn = on;
+    _on = on;
     update();
 }
 
-void LightWidget::turnOff() { setOn(false); }
-void LightWidget::turnOn() { setOn(true); }
+void LightWidget::turnOff() { setOn(/*on=*/false); }
+void LightWidget::turnOn() { setOn(/*on=*/true); }
 
 void LightWidget::paintEvent(QPaintEvent *) {
-    if (!_mOn) return;
+    if (!_on) return;
 
     QPainter painter(this);
     painter.setRenderHint(QPainter::Antialiasing);
-    painter.setBrush(_mColor);
+    painter.setBrush(_color);
 
     auto height = this->height();
 

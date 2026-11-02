@@ -30,9 +30,9 @@ class AppSettings {
 
     // texts are UTF-8
     struct ConnectivityInfos {
-        const std::string platformHostUrl;
-        const std::string username;
-        const std::string password;
+        std::string platformHostUrl;
+        std::string username;
+        std::string password;
 
         // Whenever infos are considered valid for usage
         bool areOK = false;
@@ -78,16 +78,22 @@ class AppSettings {
         return platform::dataDirectory() / feedWarningFileName;
     }
 
-    static std::filesystem::path getFeedOutputFilePath(bool isCompressed) {
-        return platform::dataDirectory() / (std::string(feedOutputBaseFileName) + (isCompressed ? zippedFeedOutputExtension : basicFeedOutputExtension));
+    // format of the files uploaded to the platform
+    enum class FeedFormat {
+        Json,
+        Compressed  // compressed JSON library (see compression::compress())
+    };
+
+    static std::filesystem::path getFeedOutputFilePath(FeedFormat format) {
+        return platform::dataDirectory() / (std::string(feedOutputBaseFileName) + std::string(getFeedOutputExtension(format)));
     }
 
-    static std::string_view getFeedOutputExtension(bool isCompressed) {
-        return isCompressed ? zippedFeedOutputExtension : basicFeedOutputExtension;
+    static std::string_view getFeedOutputExtension(FeedFormat format) {
+        return format == FeedFormat::Compressed ? zippedFeedOutputExtension : basicFeedOutputExtension;
     }
 
-    static std::string_view getFeedOutputContentType(bool isCompressed) {
-        return isCompressed ? "application/compressed-mlib" : "application/json";
+    static std::string_view getFeedOutputContentType(FeedFormat format) {
+        return format == FeedFormat::Compressed ? "application/compressed-mlib" : "application/json";
     }
 
  private:

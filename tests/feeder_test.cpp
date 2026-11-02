@@ -72,7 +72,7 @@ int main() {
         CHECK(!report.messages.empty() && report.messages.back().kind == workers::MessageKind::Issue, "ends on an issue : no library, or platform unreachable");
         if (hasLibrary) {
             CHECK(report.filesGenerated, "library export written");
-            CHECK(std::filesystem::exists(AppSettings::getFeedOutputFilePath(true)), "compressed export written");
+            CHECK(std::filesystem::exists(AppSettings::getFeedOutputFilePath(AppSettings::FeedFormat::Compressed)), "compressed export written");
             CHECK(report.messages.back().text.find("SoundVitrine") != std::string::npos, "upload failure reported");
         }
     }
