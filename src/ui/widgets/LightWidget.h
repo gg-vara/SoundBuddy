@@ -46,5 +46,5 @@ class LightWidget : public QWidget {
 
  private:
     QColor _color;
-    bool _on;
+    bool _on = true;
 };

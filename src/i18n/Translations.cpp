@@ -88,7 +88,11 @@ Language detectLanguage() {
     return Language::English;
 }
 
-std::atomic<std::optional<Language>> currentLanguage;
+// detected on first use, unless set before
+std::atomic<std::optional<Language>>& currentLanguage() {
+    static std::atomic<std::optional<Language>> language;
+    return language;
+}
 
 #ifdef _DEBUG
 // reports each untranslated text once, to spot missing table entries during development
@@ -106,16 +110,16 @@ void reportMissing(std::string_view source) {
 }  // namespace
 
 Language language() {
-    auto language = currentLanguage.load();
+    auto language = currentLanguage().load();
     if (!language) {
         language = detectLanguage();
-        currentLanguage.store(language);
+        currentLanguage().store(language);
     }
     return *language;
 }
 
 void setLanguage(Language language) {
-    currentLanguage.store(language);
+    currentLanguage().store(language);
 }
 
 std::string_view languageCode() {

@@ -93,6 +93,9 @@ std::vector<Header> parseHeaders(std::wstring_view raw) {
 
 class HttpClient::Impl {
  public:
+    Impl(const Impl&) = delete;
+    void operator=(const Impl&) = delete;
+
     explicit Impl(const std::string& userAgent) {
         // automatic proxy (system settings, WPAD) requires Windows 8.1
         _session = WinHttpOpen(widen(userAgent).c_str(), WINHTTP_ACCESS_TYPE_AUTOMATIC_PROXY,

@@ -28,9 +28,9 @@ class FeederTab : public TemplateTab {
 
  public:
     explicit FeederTab(QWidget* parent = nullptr) : TemplateTab(parent) {
-        this->tButton->setText(tr("Generate Digest and Upload"));
+        this->button()->setText(tr("Generate Digest and Upload"));
 
-        this->layout()->addWidget(this->_scrollArea);
-        this->layout()->addWidget(this->tButton);
+        this->layout()->addWidget(this->_scrollArea());
+        this->layout()->addWidget(this->button());
     }
 };

@@ -61,19 +61,23 @@ class MainWindow : public QMainWindow {
     MainWindow();
     void informWarningPresence();
 
+ protected:
+    void hideEvent(QHideEvent *event) override;
+    void closeEvent(QCloseEvent *event) override;
+
  private:
     bool _forceQuitOnMacOs = false;
     bool _userNotificationOnUpdateCheck = false;
-    QSystemTrayIcon* _trayIcon;
-    QAction* _myPlatformAction;
-    QAction* _openWarningsAction;
+    QSystemTrayIcon* _trayIcon = nullptr;
+    QAction* _myPlatformAction = nullptr;
+    QAction* _openWarningsAction = nullptr;
     AppSettings _appSettings;
 
     // statusbar
     void _initStatusBar();
     void _updateStatusBar(const QString &message, const ConnectivityIndicator &indic);
-    QLabel* _statusLabel;
-    TrafficLightWidget* _statusLight;
+    QLabel* _statusLabel = nullptr;
+    TrafficLightWidget* _statusLight = nullptr;
 
     ///
     /// UI instantiation 
@@ -102,8 +106,6 @@ class MainWindow : public QMainWindow {
     ///
 
     // visibility
-    void hideEvent(QHideEvent *event);
-    void closeEvent(QCloseEvent *event);
     void _trueShow();
     void _trueHide(QEvent* event);
     void _forcedClose();

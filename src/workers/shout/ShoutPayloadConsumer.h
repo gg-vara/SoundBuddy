@@ -24,7 +24,7 @@
 #include "ShoutPayload.h"
 
 struct ShoutConsumeResult {
-    bool hasMeaningfulChange;
+    bool hasMeaningfulChange = false;
     ShoutJSONParsingResult parsingResult;
 };
 

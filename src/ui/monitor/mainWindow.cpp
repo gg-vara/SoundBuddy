@@ -41,7 +41,7 @@ MainWindow::MainWindow() {
 
     // autostart shout thread ?
     if (this->_appSettings.values().autoRunShout) {
-        this->_shoutTab->tButton->click();
+        this->_shoutTab->button()->click();
     }
 }
 
@@ -121,8 +121,10 @@ void MainWindow::_openWarnings() {
     std::vector<std::string_view> columns;
     QStringList headers;
     {
-        std::size_t index, count;
-        yyjson_val *key, *value;
+        std::size_t index = 0;
+        std::size_t count = 0;
+        yyjson_val* key = nullptr;
+        yyjson_val* value = nullptr;
         yyjson_obj_foreach(yyjson_arr_get_first(rows), index, count, key, value) {
             columns.push_back(json::string(key));
             headers << QString::fromUtf8(columns.back().data(), static_cast<qsizetype>(columns.back().size()));
@@ -137,8 +139,9 @@ void MainWindow::_openWarnings() {
 
     // for each row
     howMany = 0;
-    std::size_t rowIndex, rowCount;
-    yyjson_val * cellsData;
+    std::size_t rowIndex = 0;
+    std::size_t rowCount = 0;
+    yyjson_val* cellsData = nullptr;
     yyjson_arr_foreach(rows, rowIndex, rowCount, cellsData) {
         // each cell
         int col = 0;
@@ -355,7 +358,7 @@ void MainWindow::_initUITray() {
         this, &MainWindow::_iconActivated
     );
 
-    QMenu* cMenu;
+    QMenu* cMenu = nullptr;
 
     #ifdef _WIN32
         cMenu = this->_getFileMenu(/*withMonitor=*/true);
@@ -396,12 +399,12 @@ void MainWindow::_initUITabs() {
     this->_feederTab = new FeederTab(this);
 
     QObject::connect(
-        this->_shoutTab->tButton, &QPushButton::clicked,
+        this->_shoutTab->button(), &QPushButton::clicked,
         this, &MainWindow::_runShouts
     );
 
     QObject::connect(
-        this->_feederTab->tButton, &QPushButton::clicked,
+        this->_feederTab->button(), &QPushButton::clicked,
         this, &MainWindow::_runFeeder
     );
 

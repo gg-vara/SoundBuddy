@@ -1,4 +1,7 @@
-# clang-tidy for the tests : the project's checks (../.clang-tidy), but a test throwing an exception just fails
+# clang-tidy for the tests : the project's checks (../.clang-tidy), but a test throwing an exception just fails,
+# CHECK() is a macro (for __FILE__ and __LINE__), as the stand-ins of the generated version.h, and counts failures globally
 InheritParentConfig: true
 Checks: >
-  -bugprone-exception-escape
+  -bugprone-exception-escape,
+  -cppcoreguidelines-avoid-non-const-global-variables,
+  -cppcoreguidelines-macro-usage

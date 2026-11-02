@@ -56,20 +56,10 @@ class LogScrollView : public QWidget {
         label->setWordWrap(true);
 
         //
-        Qt::GlobalColor color;
-        switch(msgType) {
-            case workers::MessageKind::Issue:
-                color = Qt::red;
-            break;
-
-            case workers::MessageKind::Warning:
-                color = Qt::darkYellow;
-            break;
-
-            default:
-                color = Qt::black;
-            break;
-        }
+        const auto color =
+            msgType == workers::MessageKind::Issue ? Qt::red :
+            msgType == workers::MessageKind::Warning ? Qt::darkYellow :
+            Qt::black;
 
         //
         QPalette palette = label->palette();

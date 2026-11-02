@@ -22,26 +22,26 @@
 #include "src/ui/WorkerBridge.hpp"
 
 TemplateTab::TemplateTab(QWidget* parent) : QWidget(parent),
-    tButton(new QPushButton(this)),
-    _scrollArea(new QScrollArea(this)) {
+    _button(new QPushButton(this)),
+    _logArea(new QScrollArea(this)) {
         //
         QObject::connect(
-            this->_scrollArea->verticalScrollBar(), &QScrollBar::rangeChanged,
+            this->_logArea->verticalScrollBar(), &QScrollBar::rangeChanged,
             this, &TemplateTab::_scrollUpdate
         );
 
         this->setLayout(new QBoxLayout(QBoxLayout::TopToBottom, this));
-        this->_scrollArea->setWidgetResizable(true);
+        this->_logArea->setWidgetResizable(true);
 }
 
 // the scroll area deletes the previous log
 void TemplateTab::_createNewLog() {
     this->_lsv = new LogScrollView(nullptr);
-    this->_scrollArea->setWidget(this->_lsv);
+    this->_logArea->setWidget(this->_lsv);
 }
 
 int TemplateTab::workerStarted() {
-    this->tButton->setEnabled(false);
+    this->_button->setEnabled(false);
     this->_createNewLog();
     return ++this->_run;
 }
@@ -49,7 +49,7 @@ int TemplateTab::workerStarted() {
 void TemplateTab::workerFinished(int run) {
     // a stopped run finishes after its replacement started
     if (run != this->_run) return;
-    this->tButton->setEnabled(true);
+    this->_button->setEnabled(true);
 }
 
 workers::MessageSink TemplateTab::messageSink() {
@@ -73,6 +73,6 @@ void TemplateTab::_printLog(const QString &text, workers::MessageKind kind, work
 
 void TemplateTab::_scrollUpdate(int min, int max) {
     // to perform heavy CPU consuming action
-    auto tabScrollBar = this->_scrollArea->verticalScrollBar();
+    auto tabScrollBar = this->_logArea->verticalScrollBar();
     tabScrollBar->setValue(tabScrollBar->maximum());
 }

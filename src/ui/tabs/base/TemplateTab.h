@@ -36,7 +36,9 @@ class TemplateTab : public QWidget {
 
  public:
     explicit TemplateTab(QWidget* parent = nullptr);
-    QPushButton* tButton = nullptr;
+
+    // starts the tab's worker
+    QPushButton* button() const { return _button; }
 
     // prints the messages of a worker in this tab's log, from any thread
     workers::MessageSink messageSink();
@@ -48,9 +50,13 @@ class TemplateTab : public QWidget {
     void workerFinished(int run);
 
  protected:
+    QScrollArea* _scrollArea() const { return _logArea; }
+
+ private:
+    QPushButton* _button = nullptr;
+    QScrollArea* _logArea = nullptr;
     LogScrollView* _lsv = nullptr;
     int _run = 0;
-    QScrollArea* _scrollArea = nullptr;
 
     void _scrollUpdate(int min, int max);
 

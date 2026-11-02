@@ -40,7 +40,7 @@ using Digest = std::array<unsigned char, 16>;
 
 // passes the content of "file" to "consume", chunk by chunk; false if it cannot be read entirely
 template <typename Consume>
-bool readChunks(const std::filesystem::path& file, Consume&& consume) {
+bool readChunks(const std::filesystem::path& file, const Consume& consume) {
     std::ifstream stream { file, std::ios::binary };
     if (!stream) return false;
 

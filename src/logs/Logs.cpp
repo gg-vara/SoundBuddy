@@ -37,10 +37,18 @@ namespace {
 
 constexpr std::uintmax_t maxFileSize = std::uintmax_t { 1024 } * 1024;
 
-std::mutex mutex;
-std::filesystem::path currentFile;
-std::ofstream stream;
-std::uintmax_t currentSize = 0;
+// the log file, shared by all threads
+struct LogFile {
+    std::mutex mutex;
+    std::filesystem::path path;
+    std::ofstream stream;
+    std::uintmax_t size = 0;
+};
+
+LogFile& logFile() {
+    static LogFile instance;
+    return instance;
+}
 
 std::string_view label(Level level) {
     switch (level) {
@@ -66,45 +74,47 @@ void writeToDebugOutputs(const std::string& line) {
 }
 
 // with the mutex held
-void openCurrentFile() {
-    stream.open(currentFile, std::ios::binary | std::ios::app);
+void open(LogFile& log) {
+    log.stream.open(log.path, std::ios::binary | std::ios::app);
 
     std::error_code error;
-    currentSize = std::filesystem::file_size(currentFile, error);
-    if (error) currentSize = 0;
+    log.size = std::filesystem::file_size(log.path, error);
+    if (error) log.size = 0;
 }
 
 // with the mutex held : soundbuddy.log becomes soundbuddy.1.log
-void rotate() {
-    stream.close();
+void rotate(LogFile& log) {
+    log.stream.close();
 
-    auto previous = currentFile;
+    auto previous = log.path;
     previous.replace_extension();
     previous += ".1";
-    previous += currentFile.extension();
+    previous += log.path.extension();
 
     std::error_code error;
-    std::filesystem::rename(currentFile, previous, error);
+    std::filesystem::rename(log.path, previous, error);
 
-    openCurrentFile();
+    open(log);
 }
 
 }  // namespace
 
 void start(const std::filesystem::path& file) {
-    std::lock_guard lock { mutex };
+    auto& log = logFile();
+    std::lock_guard lock { log.mutex };
 
     std::error_code error;
     std::filesystem::create_directories(file.parent_path(), error);
 
-    stream.close();
-    currentFile = file;
-    openCurrentFile();
+    log.stream.close();
+    log.path = file;
+    open(log);
 }
 
 void stop() {
-    std::lock_guard lock { mutex };
-    stream.close();
+    auto& log = logFile();
+    std::lock_guard lock { log.mutex };
+    log.stream.close();
 }
 
 void write(Level level, std::string_view source, std::string_view message) {
@@ -114,17 +124,18 @@ void write(Level level, std::string_view source, std::string_view message) {
 
     const auto line = std::format("{} [{}] [{}] {}\n", timestamps::localPrecise(), label(level), source, message);
 
-    std::lock_guard lock { mutex };
+    auto& log = logFile();
+    std::lock_guard lock { log.mutex };
 
     writeToDebugOutputs(line);
 
-    if (!stream.is_open()) return;
-    if (currentSize > 0 && currentSize + line.size() > maxFileSize) rotate();
+    if (!log.stream.is_open()) return;
+    if (log.size > 0 && log.size + line.size() > maxFileSize) rotate(log);
 
     // flushed right away, so that nothing is lost on crash
-    stream.write(line.data(), static_cast<std::streamsize>(line.size()));
-    stream.flush();
-    currentSize += line.size();
+    log.stream.write(line.data(), static_cast<std::streamsize>(line.size()));
+    log.stream.flush();
+    log.size += line.size();
 }
 
 }  // namespace logs

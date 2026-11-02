@@ -30,15 +30,7 @@ namespace net {
 // multipart/form-data request body (RFC 7578)
 class Multipart {
  public:
-    Multipart() {
-        static constexpr const char alphabet[] = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
-
-        std::random_device random;
-        std::uniform_int_distribution<std::size_t> pick(0, sizeof(alphabet) - 2);
-
-        _boundary = "----SoundBuddyBoundary";
-        for (int i = 0; i < 24; ++i) _boundary += alphabet[pick(random)];
-    }
+    Multipart() : _boundary(_randomBoundary()) {}
 
     void addField(std::string_view name, std::string_view value) {
         _beginPart(name, {}, {});
@@ -60,6 +52,17 @@ class Multipart {
 
  private:
     std::string _boundary;
+
+    static std::string _randomBoundary() {
+        static constexpr std::string_view alphabet = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+
+        std::random_device random;
+        std::uniform_int_distribution<std::size_t> pick(0, alphabet.size() - 1);
+
+        std::string boundary = "----SoundBuddyBoundary";
+        for (int i = 0; i < 24; ++i) boundary += alphabet[pick(random)];
+        return boundary;
+    }
     std::string _body;
 
     void _beginPart(std::string_view name, std::string_view fileName, std::string_view contentType) {

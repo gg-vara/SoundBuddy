@@ -42,14 +42,15 @@ std::runtime_error comError(const char * what, const HRESULT hr) {
 }
 
 struct Variant : public VARIANT {
-    Variant() { VariantInit(this); }
+    // VariantInit() initializes the base
+    Variant() { VariantInit(this); }  // NOLINT(cppcoreguidelines-pro-type-member-init)
     ~Variant() { VariantClear(this); }
     Variant(const Variant&) = delete;
     void operator=(const Variant&) = delete;
 };
 
 HRESULT propertyByName(IDispatch * object, const wchar_t * name, VARIANT * result) {
-    DISPID id;
+    DISPID id = DISPID_UNKNOWN;
     auto nameParam = const_cast<LPOLESTR>(name);
     const auto hr = object->GetIDsOfNames(IID_NULL, &nameParam, 1, LOCALE_USER_DEFAULT, &id);
     if (FAILED(hr)) return hr;
@@ -89,12 +90,15 @@ std::wstring toISODate(VARIANT * value) {
 
 class iTunesCOMClient::EventSink final : public IDispatch {
  public:
-    EventSink(std::function<void(Event)> onEvent, ITypeInfo * eventsInfo) : _onEvent(std::move(onEvent)) {
-        // DISPIDs are read from iTunes type library rather than hardcoded
-        _playId = _idOf(eventsInfo, L"OnPlayerPlayEvent");
-        _stopId = _idOf(eventsInfo, L"OnPlayerStopEvent");
-        _quitId = _idOf(eventsInfo, L"OnAboutToPromptUserToQuitEvent");
-    }
+    // deleted by Release()
+    virtual ~EventSink() = default;
+
+    // DISPIDs are read from iTunes type library rather than hardcoded
+    EventSink(std::function<void(Event)> onEvent, ITypeInfo * eventsInfo) :
+        _onEvent(std::move(onEvent)),
+        _playId(_idOf(eventsInfo, L"OnPlayerPlayEvent")),
+        _stopId(_idOf(eventsInfo, L"OnPlayerStopEvent")),
+        _quitId(_idOf(eventsInfo, L"OnAboutToPromptUserToQuitEvent")) {}
 
     // IUnknown
     HRESULT STDMETHODCALLTYPE QueryInterface(REFIID riid, void ** object) override {
@@ -146,6 +150,7 @@ class iTunesCOMClient::EventSink final : public IDispatch {
 
  private:
     LONG _refCount = 1;
+
     std::function<void(Event)> _onEvent;
     DISPID _playId;
     DISPID _stopId;
@@ -153,7 +158,7 @@ class iTunesCOMClient::EventSink final : public IDispatch {
 
     // the type info is a proxy to iTunes process, which cannot remote GetIDsOfNames : lookup through the members descriptions
     static DISPID _idOf(ITypeInfo * eventsInfo, const wchar_t * name) {
-        TYPEATTR * attributes;
+        TYPEATTR * attributes = nullptr;
         auto hr = eventsInfo->GetTypeAttr(&attributes);
         if (FAILED(hr)) throw comError("Cannot read iTunes events description", hr);
 
@@ -161,7 +166,7 @@ class iTunesCOMClient::EventSink final : public IDispatch {
         eventsInfo->ReleaseTypeAttr(attributes);
 
         for (WORD i = 0; i < functionsCount; ++i) {
-            FUNCDESC * function;
+            FUNCDESC * function = nullptr;
             if (FAILED(eventsInfo->GetFuncDesc(i, &function))) continue;
 
             const auto id = function->memid;
@@ -189,7 +194,7 @@ HRESULT iTunesCOMClient::PropertyIds::get(IDispatch * object, const wchar_t * na
     auto found = _ids.find(name);
 
     if (found == _ids.end()) {
-        DISPID id;
+        DISPID id = DISPID_UNKNOWN;
         auto nameParam = const_cast<LPOLESTR>(name);
         const auto hr = object->GetIDsOfNames(IID_NULL, &nameParam, 1, LOCALE_USER_DEFAULT, &id);
 
@@ -216,7 +221,7 @@ iTunesCOMClient::iTunesCOMClient(std::function<void(Event)> onEvent) {
     ComPtr<ITypeInfo> appInfo;
     ComPtr<ITypeLib> typeLib;
     ComPtr<ITypeInfo> eventsInfo;
-    UINT index;
+    UINT index = 0;
 
     hr = _app->GetTypeInfo(0, LOCALE_USER_DEFAULT, &appInfo);
     if (SUCCEEDED(hr)) hr = appInfo->GetContainingTypeLib(&typeLib, &index);

@@ -33,7 +33,12 @@ class PreferencesDialog : public QDialog {
     Q_OBJECT
 
  public:
-    explicit PreferencesDialog(AppSettings* appSettings, QWidget* parent = nullptr) : QDialog(parent), _appSettings(appSettings) {
+    explicit PreferencesDialog(AppSettings* appSettings, QWidget* parent = nullptr) :
+        QDialog(parent),
+        _appSettings(appSettings),
+        _platformUrlEdit(new QLineEdit(this)),
+        _platformUsernameEdit(new QLineEdit(this)),
+        _platformPasswordEdit(new QLineEdit(this)) {
         this->setWindowTitle(tr("Preferences"));
         this->setModal(true);
         auto layout = new QGridLayout;
@@ -46,9 +51,6 @@ class PreferencesDialog : public QDialog {
         auto connectivityGroup = new QGroupBox(tr("%1 connectivity").arg(DEST_PLATFORM_PRODUCT_NAME), this);
         connectivityGroup->setLayout(new QVBoxLayout);
 
-            this->_platformUrlEdit = new QLineEdit(this);
-            this->_platformUsernameEdit = new QLineEdit(this);
-            this->_platformPasswordEdit = new QLineEdit(this);
             this->_platformPasswordEdit->setEchoMode(QLineEdit::Password);
 
             this->_platformUrlEdit->setPlaceholderText(tr("Host URL"));
@@ -107,6 +109,7 @@ class PreferencesDialog : public QDialog {
         this->_appSettings->save();
     }
 
+ protected:
     void closeEvent(QCloseEvent *event) override {
         //
         auto& values = this->_appSettings->values();
