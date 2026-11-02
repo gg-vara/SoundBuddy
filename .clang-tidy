@@ -39,7 +39,7 @@ Checks: >
 #   const data members (intended, as in AppSettings::ConnectivityInfos)
 # - low-level code (Win32, COM, WinHTTP) : pointer arithmetic, casts, unions and varargs of C APIs
 # - duplicates of enabled checks : C arrays (modernize-avoid-c-arrays), public members (misc-non-private-member-variables-in-classes)
-# - until the native user interface : widgets owned by Qt parents, Qt umbrella headers
+# - the Qt user interface of macOS : widgets owned by Qt parents, Qt umbrella headers
 
 # our own headers only (not Qt, nor fetched dependencies)
 HeaderFilterRegex: '.*[/\\](src|tests)[/\\].*'
@@ -48,6 +48,8 @@ ExcludeHeaderFilterRegex: '.*([/\\]_?deps[/\\]|iTunesCOMInterface).*'
 CheckOptions:
   # bare boolean literals as arguments, as foo(true) : prefer an enum, or name it
   bugprone-argument-comment.CommentBoolLiterals: true
+  # running out of memory ends the process anyway : allocations may throw where exceptions should not escape
+  bugprone-exception-escape.IgnoredExceptions: 'bad_alloc,bad_array_new_length,length_error'
   # "if (done) return;" stays on one line
   readability-braces-around-statements.ShortStatementLines: 1
   readability-implicit-bool-conversion.AllowPointerConditions: true

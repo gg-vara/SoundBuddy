@@ -85,24 +85,20 @@ SET(CMAKE_CXX_STANDARD 20)
 SET(CMAKE_CXX_STANDARD_REQUIRED ON)
 SET(CMAKE_C_STANDARD 11)
 
-# Qt
-SET(CMAKE_AUTOMOC ON)
-SET(CMAKE_AUTORCC ON)
-SET(CMAKE_AUTOUIC ON)
-
-find_package(Qt6 REQUIRED COMPONENTS 
-    Core 
-    Gui 
-    Widgets
-)
-
-#
-qt_standard_project_setup()
-
+# Qt : user interface on macOS, until it moves to the system webview as on Windows
 if(APPLE)
-    find_package(Qt6 REQUIRED COMPONENTS 
+    SET(CMAKE_AUTOMOC ON)
+    SET(CMAKE_AUTORCC ON)
+    SET(CMAKE_AUTOUIC ON)
+
+    find_package(Qt6 REQUIRED COMPONENTS
+        Core
+        Gui
+        Widgets
         DBus
     )
+
+    qt_standard_project_setup()
 endif()
 
 ##########################
@@ -140,15 +136,21 @@ file(GLOB_RECURSE APP_CPP_FILES "src/*.cpp")
 file(GLOB_RECURSE APP_HPP_FILES "src/*.hpp")
 
 if (APPLE)
-    list(REMOVE_ITEM APP_CPP_FILES 
+    list(REMOVE_ITEM APP_CPP_FILES
         ${CMAKE_CURRENT_SOURCE_DIR}/src/workers/shout/win/iTunesCOMClient.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/workers/shout/win/iTunesSession.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/workers/shout/ShoutWatcher.win.cpp
+        # webview user interface : Windows only for now
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/ui/Controller.cpp
     )
+    list(FILTER APP_CPP_FILES EXCLUDE REGEX "/src/ui/win/")
 elseif (WIN32)
     list(REMOVE_ITEM APP_CPP_FILES
         ${CMAKE_CURRENT_SOURCE_DIR}/src/workers/shout/ShoutWatcher.mac.cpp
     )
+    # Qt user interface : macOS only
+    list(FILTER APP_CPP_FILES EXCLUDE REGEX "/src/ui/qt/")
+    list(FILTER APP_HPP_FILES EXCLUDE REGEX "/src/ui/qt/")
 endif()
 
 # Objective-C++ sources (native macOS APIs)
@@ -168,8 +170,11 @@ add_executable(appExec ${BUNDLE_TYPE}
     ${APP_HPP_FILES}
     ${APP_CPP_FILES}
     ${APP_ICO}
-    resources/resources.qrc
-) 
+)
+
+if (APPLE)
+    target_sources(appExec PRIVATE resources/resources.qrc)
+endif()
 
 # generate debug symbols
 if (APPLE)
@@ -240,7 +245,7 @@ endif()
 # translations #
 ################
 
-# compiled in from src/i18n/*.inc tables (see src/i18n/Translations.h) : only Qt own translations are deployed
+# compiled in from src/i18n/*.inc tables (see src/i18n/Translations.h) : on macOS, only Qt own translations are deployed
 
 ############
 # Velopack #
@@ -277,18 +282,33 @@ if(SOUNDBUDDY_BUILD_TESTS)
     add_subdirectory(tests)
 endif()
 
-########
-# QT 6 #
-########
+##################
+# User interface #
+##################
 
-target_link_libraries(appExec PRIVATE
-    Qt6::Core
-    Qt6::Gui 
-    Qt6::Widgets
-)
+if(WIN32)
+    # page in the system webview (see cmake/webview.cmake)
+    include(webview)
+    target_link_libraries(appExec PRIVATE webview::core)
+endif()
+
+if(APPLE)
+    target_link_libraries(appExec PRIVATE
+        Qt6::Core
+        Qt6::Gui
+        Qt6::Widgets
+    )
+endif()
+
+###############
+# OS services #
+###############
 
 if(WIN32)
     target_link_libraries(appExec PRIVATE
+        # window, webview host
+        dwmapi
+        shlwapi
         # iTunes COM API
         ole32
         oleaut32
@@ -315,9 +335,10 @@ if(APPLE)
 endif()
 
 # QT LIBRARIES COPY
-include(DeployQt)
-DeployQt(appExec)
-
+if(APPLE)
+    include(DeployQt)
+    DeployQt(appExec)
+endif()
 
 if(WIN32)
     include(CMakeDependencies)

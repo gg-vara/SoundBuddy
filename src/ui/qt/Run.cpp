@@ -17,7 +17,7 @@
 // for further details. Resources without explicit references to a
 // different license and copyright still refer to this GPL.
 
-// Qt user interface
+// Qt user interface, on macOS until it moves to the system webview as on Windows
 
 #include <QString>
 #include <QApplication>

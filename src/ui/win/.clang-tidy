@@ -1,0 +1,4 @@
+# the webview hands the tasks it dispatches to Win32 messages, as integers : the analyzer takes them for leaks
+InheritParentConfig: true
+Checks: >
+  -clang-analyzer-cplusplus.NewDeleteLeaks

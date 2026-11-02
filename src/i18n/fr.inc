@@ -152,3 +152,27 @@
   "J'attends qu'%1 se relance..." },
 { "Connecting to %1 ...",
   "Connexion à %1 ..." },
+
+// page (src/ui/page)
+{ "Stop",
+  "Arrêter" },
+{ "No messages yet",
+  "Aucun message pour le moment" },
+{ "Nothing playing",
+  "Rien en lecture" },
+{ "Save",
+  "Enregistrer" },
+{ "Cancel",
+  "Annuler" },
+{ "Close",
+  "Fermer" },
+{ "More",
+  "Plus" },
+{ "Show password",
+  "Afficher le mot de passe" },
+{ "Hide password",
+  "Masquer le mot de passe" },
+
+// MainWindow (Windows)
+{ "%1 needs the Microsoft Edge WebView2 Runtime to show its window. Please install it, then try again.",
+  "%1 a besoin du Runtime Microsoft Edge WebView2 pour afficher sa fenêtre. Merci de l'installer, puis de réessayer." },

@@ -23,6 +23,10 @@
 #include <exception>
 #include <string_view>
 
+#ifdef _WIN32
+#include <windows.h>
+#endif
+
 #include "src/helpers/Platform.h"
 #include "src/logs/Logs.h"
 #include "src/ui/Run.h"
@@ -83,3 +87,10 @@ int main(int argc, char** argv) {
     }
     return EXIT_FAILURE;
 }
+
+#ifdef _WIN32
+// entry point of release builds, without a console
+int WINAPI WinMain(HINSTANCE /*instance*/, HINSTANCE /*previous*/, LPSTR /*commandLine*/, int /*show*/) {
+    return main(__argc, __argv);
+}
+#endif

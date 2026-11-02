@@ -19,7 +19,7 @@
 
 #pragma once
 
-// User interface, in Qt widgets (src/ui/qt)
+// User interface : a web page in the system webview on Windows (src/ui/win), Qt widgets on macOS for now (src/ui/qt)
 namespace ui {
 
 // shows the user interface (in the tray) until the user quits : returns the exit code

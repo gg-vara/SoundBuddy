@@ -16,7 +16,7 @@ Requires a C++20 enabled compiler. We assume you have Git installed on your syst
 
 SoundBuddy have some dependencies that are external and thus need to be installed on your system. They are listed in `prerequisites/`, in 3 parts :
 - build : the toolchain (compiler, linker, CMake, Ninja) and release tooling (GitHub CLI)
-- runtime : the libraries the app links to and ships with (Qt, until the native user interface)
+- runtime : the libraries the app links to and ships with (on macOS, Qt, until its user interface moves to the system webview; none on Windows)
 - devex : development comfort (clangd and clang-tidy, debugger), optional to build
 
 The other libraries are declared in CMake (`FetchContent`, submodules), and Velopack's CLI in the .NET tools manifest (`.config/dotnet-tools.json`). CMake checks the toolchain when configuring, and tells what is missing.
@@ -46,6 +46,7 @@ We use MSYS2 build system (https://www.msys2.org) as our build platform, with it
 - Run command in terminal to update obsolete packages : `pacman -Syyu`
 - Run command in terminal to fetch depedencies, listed in `prerequisites/msys2/{build,runtime,devex}.txt` : `pacman -S --needed $(sed 's/#.*//' ./prerequisites/msys2/*.txt)` (or only some of the lists, as `./prerequisites/msys2/{build,runtime}.txt`)
 - Install the .NET SDK (https://dotnet.microsoft.com/download), which runs Velopack's CLI to package releases
+- Install Bun (https://bun.sh), which builds the user interface page : `winget install Oven-sh.Bun`
 
 #### Security
 On Windows, if installer is not signed, Chrome + Windows Defender will ring alarms all over the place.
@@ -87,9 +88,19 @@ Unit tests lie in `tests/`, one program per tested part, and are built with the 
 
 Tests run under their own identity (`tests/support/version.h`) : they never touch the app's data directory, settings or startup registration.
 
+## User interface
+
+On Windows, the user interface is a web page shown in the system webview (WebView2), hosted by a native window and tray icon (`src/ui/win`). The application state and its workers live in C++ (`src/ui/Controller.cpp`); the page shows it, and asks for changes :
+
+- `src/ui/page` : the page, in TypeScript with [Solid](https://www.solidjs.com), its states in an [XState](https://stately.ai/docs/xstate) machine (`src/machine.ts`), built by [Vite](https://vite.dev) into a single HTML file embedded in the executable
+- `bun run dev` (from `src/ui/page`) : the page in a browser, with live reload, against a stand-in of the application (`src/dev/fakeNative.ts`)
+- `bun test` : the page's tests (state machine, state changes), also run by `ctest` as the `page` test
+
+Its dependencies are locked in `src/ui/page/bun.lock`; CMake installs them and builds the page with the app.
+
 ## Translations
 
-Texts are written in English in the code (`tr()`, or `i18n::tr()` outside of Qt classes). Their translations are compiled into the app from `src/i18n/*.inc` tables (`{ "English text", "translation" },`), and the language follows the system's user interface one.
+Texts are written in English in the code (`i18n::tr()`, or `t()` in the page, and `tr()` in the Qt classes of macOS). Their translations are compiled into the app from `src/i18n/*.inc` tables (`{ "English text", "translation" },`), and the language follows the system's user interface one.
 
 To translate a new text, add it to `src/i18n/fr.inc`. Debug builds log every untranslated text as `[i18n] missing translation : "..."`.
 

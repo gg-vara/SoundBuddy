@@ -1,3 +1,2 @@
-# runtime : libraries the app links to and ships with
-mingw-w64-clang-x86_64-qt6-base           # until the native user interface; also provides windeployqt
-mingw-w64-clang-x86_64-qt6-translations   # Qt own texts (standard buttons...)
+# runtime : libraries the app links to and ships with, for MSYS2 CLANG64 (see README.md)
+# none : libc++ comes with the compiler (build.txt), and the user interface runs in WebView2, part of Windows

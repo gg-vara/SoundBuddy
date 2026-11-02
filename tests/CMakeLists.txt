@@ -86,8 +86,8 @@ soundbuddy_test(platform)
 
 soundbuddy_test(upload)
 
-# Qt : translation bridge
-soundbuddy_test(i18n LIBRARIES Qt6::Core)
+# Qt translation bridge, on macOS
+soundbuddy_test(i18n LIBRARIES $<$<PLATFORM_ID:Darwin>:Qt6::Core>)
 
 # import of the settings of previous versions : from the registry on Windows, with QSettings on macOS
 soundbuddy_test(settings

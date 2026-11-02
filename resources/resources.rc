@@ -1,1 +1,6 @@
-IDI_ICON1               ICON    DISCARDABLE     "icons\\app_reverse.ico"
+// executable icon (the first icon group, in names order), window and tray icons
+APP_TRAY                ICON    "icons/app_reverse.ico"
+APP_WINDOW              ICON    "icons/app.ico"
+
+// visual styles of the dialogs, DPI awareness
+1                       24      "soundbuddy.manifest"
