@@ -71,6 +71,13 @@ The workspace recommends its extensions (`.vscode/extensions.json`) :
 
 On Windows, clangd and CMake are taken from the CLANG64 environment of `MSYS2_ROOT`. On macOS, set `clangd.path` and `cmake.cmakePath` in your user settings, to Homebrew's ones.
 
+### Static analysis and layout
+
+- `.clang-tidy` lists the static analysis checks, which clangd shows in the editor as you type (with quick fixes). From the command line : `clang-tidy -p build_debug <file>`
+- `.clang-format` describes the code layout, applied by clangd when formatting a file, or with `clang-format -i <file>`
+
+Both come with `clang-tools-extra` (see `prerequisites/msys2/devex.txt`), or Homebrew's `llvm`.
+
 ### Tests
 
 Unit tests lie in `tests/`, one program per tested part, and are built with the Debug presets.

@@ -1,0 +1,57 @@
+# clang-tidy : static analysis, read by clangd in editors (see README.md).
+# Whole families of checks, minus the ones that are matters of taste, or noise for this code base.
+Checks: >
+  -*,
+  bugprone-*,
+  clang-analyzer-*,
+  concurrency-*,
+  cppcoreguidelines-*,
+  misc-*,
+  modernize-*,
+  performance-*,
+  readability-*,
+
+  -modernize-use-trailing-return-type,
+  -modernize-use-nodiscard,
+  -readability-identifier-length,
+  -readability-magic-numbers,
+  -cppcoreguidelines-avoid-magic-numbers,
+  -performance-enum-size,
+  -bugprone-easily-swappable-parameters,
+  -bugprone-throwing-static-initialization,
+  -cppcoreguidelines-avoid-const-or-ref-data-members,
+
+  -cppcoreguidelines-pro-bounds-*,
+  -cppcoreguidelines-pro-type-const-cast,
+  -cppcoreguidelines-pro-type-reinterpret-cast,
+  -cppcoreguidelines-pro-type-union-access,
+  -cppcoreguidelines-pro-type-vararg,
+
+  -cppcoreguidelines-avoid-c-arrays,
+  -cppcoreguidelines-non-private-member-variables-in-classes,
+
+  -cppcoreguidelines-owning-memory,
+  -misc-include-cleaner
+
+# Disabled above :
+# - matters of taste : trailing return types, [[nodiscard]] everywhere, short names, magic numbers, enum sizes
+# - noise : adjacent parameters of the same type, static initializations which could only throw bad_alloc,
+#   const data members (intended, as in AppSettings::ConnectivityInfos)
+# - low-level code (Win32, COM, WinHTTP) : pointer arithmetic, casts, unions and varargs of C APIs
+# - duplicates of enabled checks : C arrays (modernize-avoid-c-arrays), public members (misc-non-private-member-variables-in-classes)
+# - until the native user interface : widgets owned by Qt parents, Qt umbrella headers
+
+# our own headers only (not Qt, nor fetched dependencies)
+HeaderFilterRegex: '.*[/\\](src|tests)[/\\].*'
+ExcludeHeaderFilterRegex: '.*[/\\]_?deps[/\\].*'
+
+CheckOptions:
+  # bare boolean literals as arguments, as foo(true) : prefer an enum, or name it
+  bugprone-argument-comment.CommentBoolLiterals: true
+  # "if (done) return;" stays on one line
+  readability-braces-around-statements.ShortStatementLines: 1
+  readability-implicit-bool-conversion.AllowPointerConditions: true
+  # plain structs
+  misc-non-private-member-variables-in-classes.IgnoreClassesWithAllMemberVariablesBeingPublic: true
+  cppcoreguidelines-special-member-functions.AllowSoleDefaultDtor: true
+  cppcoreguidelines-special-member-functions.AllowMissingMoveFunctionsWhenCopyIsDeleted: true

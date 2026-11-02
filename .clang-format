@@ -1,0 +1,31 @@
+# clang-format : code layout, read by clangd and editors (see README.md).
+# Google style, adjusted to the existing code to keep reformatting small.
+BasedOnStyle: Google
+
+IndentWidth: 4
+ContinuationIndentWidth: 4
+AccessModifierOffset: -3  # " public:"
+
+# lines are wrapped by hand
+ColumnLimit: 0
+
+# arguments on their own lines close the call on its own line
+AlignAfterOpenBracket: BlockIndent
+
+# constructor initializers, one per line, after the colon
+BreakConstructorInitializers: AfterColon
+ConstructorInitializerIndentWidth: 4
+PackConstructorInitializers: Never
+
+# "Type* name", "{ a, b }", "Type value {}"
+DerivePointerAlignment: false
+PointerAlignment: Left
+Cpp11BracedListStyle: false
+SpaceBeforeCpp11BracedList: true
+
+AllowShortFunctionsOnASingleLine: Inline
+AllowShortIfStatementsOnASingleLine: WithoutElse
+SpacesBeforeTrailingComments: 2
+
+# include groups are ordered by hand (system, libraries, project)
+SortIncludes: Never
