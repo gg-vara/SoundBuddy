@@ -48,7 +48,7 @@ struct Request {
 struct Response {
     int status = 0;  // HTTP status, 0 if no response was received
     std::vector<Header> headers;
-    std::string body;  // empty when streamed
+    std::string body;   // empty when streamed
     std::string error;  // transport error (resolution, connection, TLS, timeout, cancellation...), empty on success
 
     bool ok() const { return error.empty() && status >= 200 && status < 300; }

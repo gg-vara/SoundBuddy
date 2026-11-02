@@ -6,18 +6,14 @@
 
 namespace {
 
-void addString(yyjson_mut_doc * doc, yyjson_mut_val * object, const char * key, const std::string& value) {
+void addString(yyjson_mut_doc* doc, yyjson_mut_val* object, const char* key, const std::string& value) {
     yyjson_mut_obj_add_strncpy(doc, object, key, value.data(), value.size());
 }
 
 }  // namespace
 
 std::string ShoutPayload::hasChangedHash() const {
-    return std::to_string(static_cast<int>(playing)) +
-           name +
-           album +
-           artist +
-           std::to_string(positionMs) +
+    return std::to_string(static_cast<int>(playing)) + name + album + artist + std::to_string(positionMs) +
            (playedDate >= skippedDate ? playedDate : skippedDate);
 }
 
@@ -31,8 +27,7 @@ std::string ShoutPayload::getFileHash() const {
     return hash::md5File(platform::fromUtf8(fileLocation));
 }
 
-ShoutJSONParsingResult ShoutPayload::toJSON() const
-{
+ShoutJSONParsingResult ShoutPayload::toJSON() const {
     auto audioFileHash = getFileHash();
     const auto isEmptyShout = audioFileHash.empty();
 
@@ -56,9 +51,5 @@ ShoutJSONParsingResult ShoutPayload::toJSON() const
         addString(doc.get(), obj, "md5", audioFileHash);
     }
 
-    return {
-        .json = json::write(doc),
-        .audioFileHash = std::move(audioFileHash),
-        .isEmpty = isEmptyShout
-    };
+    return { .json = json::write(doc), .audioFileHash = std::move(audioFileHash), .isEmpty = isEmptyShout };
 }

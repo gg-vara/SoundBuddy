@@ -26,7 +26,7 @@
 #include <system_error>
 
 #ifdef _WIN32
-    #include <windows.h>
+#include <windows.h>
 #endif
 
 #include "src/helpers/Timestamps.hpp"
@@ -52,10 +52,14 @@ LogFile& logFile() {
 
 std::string_view label(Level level) {
     switch (level) {
-        case Level::Debug: return "DEBUG";
-        case Level::Info: return "INFO";
-        case Level::Warning: return "WARNING";
-        case Level::Error: return "ERROR";
+        case Level::Debug:
+            return "DEBUG";
+        case Level::Info:
+            return "INFO";
+        case Level::Warning:
+            return "WARNING";
+        case Level::Error:
+            return "ERROR";
     }
     return "?";
 }

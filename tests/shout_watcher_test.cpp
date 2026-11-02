@@ -7,7 +7,7 @@
 #include <vector>
 
 #ifdef _WIN32
-    #include <windows.h>
+#include <windows.h>
 #endif
 
 #include "Check.h"
@@ -42,9 +42,21 @@ int main() {
     auto start = std::chrono::steady_clock::now();
     {
         const ShoutWatcher watcher { {
-            .onMessage = [&](const workers::Message& message) { const std::scoped_lock lock { mutex }; messages.push_back(message); },
-            .onShout = [&](std::string shout) { const std::scoped_lock lock { mutex }; shouts.push_back(std::move(shout)); },
-            .onFinished = [&] { const std::scoped_lock lock { mutex }; finished = true; },
+            .onMessage =
+                [&](const workers::Message& message) {
+                    const std::scoped_lock lock { mutex };
+                    messages.push_back(message);
+                },
+            .onShout =
+                [&](std::string shout) {
+                    const std::scoped_lock lock { mutex };
+                    shouts.push_back(std::move(shout));
+                },
+            .onFinished =
+                [&] {
+                    const std::scoped_lock lock { mutex };
+                    finished = true;
+                },
         } };
 
         // waits for the music app, polled every second

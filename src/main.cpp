@@ -59,11 +59,15 @@ void logVelopackMessage(void* /*userData*/, const char* level, const char* messa
 // Qt own messages, until the app no longer relies on Qt
 logs::Level toLevel(QtMsgType type) {
     switch (type) {
-        case QtDebugMsg: return logs::Level::Debug;
-        case QtInfoMsg: return logs::Level::Info;
-        case QtWarningMsg: return logs::Level::Warning;
+        case QtDebugMsg:
+            return logs::Level::Debug;
+        case QtInfoMsg:
+            return logs::Level::Info;
+        case QtWarningMsg:
+            return logs::Level::Warning;
         case QtCriticalMsg:
-        case QtFatalMsg: break;
+        case QtFatalMsg:
+            break;
     }
     return logs::Level::Error;
 }
@@ -73,7 +77,7 @@ void logQtMessage(QtMsgType type, const QMessageLogContext& /*context*/, const Q
 }
 
 // last words before quitting on an unhandled exception : never throws
-void logFatalError(const char * what) noexcept {
+void logFatalError(const char* what) noexcept {
     try {
         logs::error("App", "Fatal error : {}", what);
         logs::stop();
@@ -100,34 +104,32 @@ int run(int argc, char** argv) {
     const QApplication app(argc, argv);
 
     // activate translations, in the user interface language of the system...
-        const auto locale = i18n::language() == i18n::Language::French
-            ? QLocale(QLocale::French)
-            : QLocale(QLocale::English);
+    const auto locale = i18n::language() == i18n::Language::French ? QLocale(QLocale::French) : QLocale(QLocale::English);
 
-        // Qt own texts (standard buttons...)
-        QTranslator qtTranslator;
-        if (qtTranslator.load(locale, "qt", "_", getResourcesPath() + "translations")) {
-            QApplication::installTranslator(&qtTranslator);
-        }
+    // Qt own texts (standard buttons...)
+    QTranslator qtTranslator;
+    if (qtTranslator.load(locale, "qt", "_", getResourcesPath() + "translations")) {
+        QApplication::installTranslator(&qtTranslator);
+    }
 
-        // app
-        QtTranslatorBridge appTranslator;
-        QApplication::installTranslator(&appTranslator);
+    // app
+    QtTranslatorBridge appTranslator;
+    QApplication::installTranslator(&appTranslator);
 
-        //
-        QApplication::setQuitOnLastWindowClosed(false);
-        QApplication::setApplicationName(APP_NAME);
-        QApplication::setOrganizationName(APP_PUBLISHER_ORG);
-        QApplication::setApplicationDisplayName(APP_NAME);
+    //
+    QApplication::setQuitOnLastWindowClosed(false);
+    QApplication::setApplicationName(APP_NAME);
+    QApplication::setOrganizationName(APP_PUBLISHER_ORG);
+    QApplication::setApplicationDisplayName(APP_NAME);
 
-        // fetch main window
-        const MainWindow mw;
+    // fetch main window
+    const MainWindow mw;
 
-        // wait for the app to close
-        const auto exitCode = QApplication::exec();
-        logs::info("App", "Exiting with code {}", exitCode);
-        logs::stop();
-        return exitCode;
+    // wait for the app to close
+    const auto exitCode = QApplication::exec();
+    logs::info("App", "Exiting with code {}", exitCode);
+    logs::stop();
+    return exitCode;
 }
 
 }  // namespace

@@ -42,7 +42,7 @@ bool ShoutWatcher::_waitForAvailableSession(const std::stop_token& stop) {
         auto* windowHandler = FindWindowW(nullptr, windowName.c_str());
 
         // if not found, wait and retry
-        if(!windowHandler) {
+        if (!windowHandler) {
             workers::waitFor(stop, 1s);
             continue;
         }
@@ -50,15 +50,16 @@ bool ShoutWatcher::_waitForAvailableSession(const std::stop_token& stop) {
         // Music App found, store the associated PID
         DWORD currentProcessID = 0;
         auto success = GetWindowThreadProcessId(windowHandler, &currentProcessID);
-        
+
         // if cannot fetch, wait and retry
         if (success == 0) {
             workers::waitFor(stop, 1s);
             continue;
         }
 
-        // if has already been ran and iTunes is still the same instance, do not proceed, since it means that the window is shutting down right now.
-        if(_previousProcessID != 0 && _previousProcessID == currentProcessID) {
+        // if has already been ran and iTunes is still the same instance, do not proceed, since it means that the window is shutting down
+        // right now.
+        if (_previousProcessID != 0 && _previousProcessID == currentProcessID) {
             workers::waitFor(stop, 1s);
             continue;
         }
@@ -74,16 +75,15 @@ bool ShoutWatcher::_waitForAvailableSession(const std::stop_token& stop) {
     return false;
 }
 
-
 namespace {
 
 ShoutPayload toPayload(const iTunesCOMClient::Snapshot& snapshot) {
-    const auto &track = snapshot.track;
+    const auto& track = snapshot.track;
 
     // no current track, shout empty
-    if (!track.exists) return ShoutPayload{};
+    if (!track.exists) return ShoutPayload {};
 
-    ShoutPayload payload{};
+    ShoutPayload payload {};
     payload.name = platform::narrow(track.name);
     payload.album = platform::narrow(track.album);
     payload.artist = platform::narrow(track.artist);
@@ -118,9 +118,7 @@ void ShoutWatcher::_execWatchSession(const std::stop_token& stop) {
         _say(i18n::format(i18n::tr("Listening to %1 !"), { platform::musicAppName() }));
 
         // process events
-        session.run(stop, [this](const iTunesCOMClient::Snapshot& snapshot) {
-            _processPayload(toPayload(snapshot));
-        });
+        session.run(stop, [this](const iTunesCOMClient::Snapshot& snapshot) { _processPayload(toPayload(snapshot)); });
     } catch (const std::exception& e) {
         _say(e.what(), workers::MessageKind::Issue);
     }

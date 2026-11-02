@@ -79,9 +79,7 @@ void MBeatThread::_run(const std::stop_token& stop) {
             // body first, as the platform explains why credentials are refused
             std::string details = response.body;
             if (details.empty()) {
-                details = response.error.empty()
-                    ? std::format("HTTP {}", response.status)
-                    : response.error;
+                details = response.error.empty() ? std::format("HTTP {}", response.status) : response.error;
             }
 
             logs::warning("MBeat", "Credentials check failed : {}", details);

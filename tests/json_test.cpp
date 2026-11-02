@@ -12,7 +12,9 @@ int main() {
     CHECK(json::string(yyjson_arr_get(root, 0)) == "a\xC3\xA9", "string, unicode escape");
     CHECK(json::string(yyjson_arr_get(root, 1), "fallback") == "fallback", "string fallback");
     CHECK(json::integer(yyjson_arr_get(root, 1)) == 3 && json::integer(yyjson_arr_get(root, 2)) == 2, "integer, decimals truncated");
-    CHECK(json::integer(yyjson_arr_get(root, 0), -1) == -1 && json::integer(yyjson_arr_get(root, 99)) == 0, "integer fallback, out of range");
+    CHECK(
+        json::integer(yyjson_arr_get(root, 0), -1) == -1 && json::integer(yyjson_arr_get(root, 99)) == 0, "integer fallback, out of range"
+    );
     CHECK(json::boolean(yyjson_arr_get(root, 3)) && !json::boolean(yyjson_arr_get(root, 4)), "boolean");
 
     const auto created = json::create();

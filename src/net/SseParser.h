@@ -38,7 +38,8 @@ class SseParser {
  public:
     using OnEvent = std::function<void(const SseEvent&)>;
 
-    explicit SseParser(OnEvent onEvent) : _onEvent(std::move(onEvent)) {}
+    explicit SseParser(OnEvent onEvent) :
+        _onEvent(std::move(onEvent)) {}
 
     void feed(std::string_view chunk);
 
@@ -51,9 +52,9 @@ class SseParser {
  private:
     OnEvent _onEvent;
 
-    std::string _line;  // incomplete line, waiting for the next chunk
+    std::string _line;               // incomplete line, waiting for the next chunk
     bool _skipNextLineFeed = false;  // a line ended with '\r', possibly followed by '\n' in the next chunk
-    bool _firstLine = true;  // to remove a leading byte order mark
+    bool _firstLine = true;          // to remove a leading byte order mark
 
     std::string _eventType;
     std::string _data;

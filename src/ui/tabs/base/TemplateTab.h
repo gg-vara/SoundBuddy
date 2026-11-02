@@ -32,7 +32,7 @@
 #include "LogScrollView.hpp"
 
 class TemplateTab : public QWidget {
-  Q_OBJECT 
+    Q_OBJECT
 
  public:
     explicit TemplateTab(QWidget* parent = nullptr);
@@ -63,5 +63,5 @@ class TemplateTab : public QWidget {
     void _createNewLog();
 
     // on the user interface thread
-    void _printLog(const QString &text, workers::MessageKind kind, workers::LineMode line);
+    void _printLog(const QString& text, workers::MessageKind kind, workers::LineMode line);
 };

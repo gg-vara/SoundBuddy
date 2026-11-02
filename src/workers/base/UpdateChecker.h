@@ -27,7 +27,7 @@
 class UpdateChecker {
  public:
     enum class Result {
-        UpdateReady,   // downloaded, ready to be applied
+        UpdateReady,  // downloaded, ready to be applied
         NoUpdate,
         NotInstalled,  // not running from a Velopack installation (development builds...)
         Failed
@@ -36,7 +36,7 @@ class UpdateChecker {
     struct CheckResults {
         Result result = Result::Failed;
         std::string version;  // of the downloaded update
-        std::string error;  // UTF-8
+        std::string error;    // UTF-8
     };
 
     // called on the checker's thread

@@ -17,7 +17,6 @@
 // for further details. Resources without explicit references to a
 // different license and copyright still refer to this GPL.
 
-
 #include "Hash.h"
 
 #include <array>
@@ -26,10 +25,10 @@
 #include <vector>
 
 #ifdef _WIN32
-    #include <windows.h>
-    #include <bcrypt.h>
+#include <windows.h>
+#include <bcrypt.h>
 #elif defined(__APPLE__)
-    #include <CommonCrypto/CommonDigest.h>
+#include <CommonCrypto/CommonDigest.h>
 #endif
 
 namespace hash {
@@ -60,7 +59,7 @@ std::optional<Digest> md5(const std::filesystem::path& file) {
     BCRYPT_HASH_HANDLE hash = nullptr;
     if (!BCRYPT_SUCCESS(BCryptCreateHash(BCRYPT_MD5_ALG_HANDLE, &hash, nullptr, 0, nullptr, 0, 0))) return std::nullopt;
 
-    const bool read = readChunks(file, [hash](char * data, std::size_t size) {
+    const bool read = readChunks(file, [hash](char* data, std::size_t size) {
         return BCRYPT_SUCCESS(BCryptHashData(hash, reinterpret_cast<PUCHAR>(data), static_cast<ULONG>(size), 0));
     });
 
@@ -82,7 +81,7 @@ std::optional<Digest> md5(const std::filesystem::path& file) {
     CC_MD5_CTX context;
     CC_MD5_Init(&context);
 
-    const bool read = readChunks(file, [&context](char * data, std::size_t size) {
+    const bool read = readChunks(file, [&context](char* data, std::size_t size) {
         CC_MD5_Update(&context, data, static_cast<CC_LONG>(size));
         return true;
     });

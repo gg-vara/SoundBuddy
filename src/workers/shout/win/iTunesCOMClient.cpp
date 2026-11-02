@@ -35,7 +35,7 @@ using Microsoft::WRL::ComPtr;
 
 namespace {
 
-std::runtime_error comError(const char * what, const HRESULT hr) {
+std::runtime_error comError(const char* what, const HRESULT hr) {
     return std::runtime_error(std::format("{} (HRESULT 0x{:08X})", what, static_cast<unsigned long>(hr)));
 }
 
@@ -47,7 +47,7 @@ struct Variant : public VARIANT {
     void operator=(const Variant&) = delete;
 };
 
-HRESULT propertyByName(IDispatch * object, const wchar_t * name, VARIANT * result) {
+HRESULT propertyByName(IDispatch* object, const wchar_t* name, VARIANT* result) {
     DISPID id = DISPID_UNKNOWN;
     auto* nameParam = const_cast<LPOLESTR>(name);
     const auto hr = object->GetIDsOfNames(IID_NULL, &nameParam, 1, LOCALE_USER_DEFAULT, &id);
@@ -57,25 +57,24 @@ HRESULT propertyByName(IDispatch * object, const wchar_t * name, VARIANT * resul
     return object->Invoke(id, IID_NULL, LOCALE_USER_DEFAULT, DISPATCH_PROPERTYGET, &noParams, result, nullptr, nullptr);
 }
 
-std::wstring toString(VARIANT * value) {
+std::wstring toString(VARIANT* value) {
     if (FAILED(VariantChangeType(value, value, 0, VT_BSTR)) || value->bstrVal == nullptr) return {};
     return { value->bstrVal, SysStringLen(value->bstrVal) };
 }
 
-int toInt(VARIANT * value) {
+int toInt(VARIANT* value) {
     if (FAILED(VariantChangeType(value, value, 0, VT_I4))) return 0;
     return value->lVal;
 }
 
 // ISO 8601 local date time, like "2019-08-12T21:29:55"
-std::wstring toISODate(VARIANT * value) {
+std::wstring toISODate(VARIANT* value) {
     if (FAILED(VariantChangeType(value, value, 0, VT_DATE))) return {};
 
     SYSTEMTIME time;
     if (VariantTimeToSystemTime(value->date, &time) == 0) return {};
 
-    return std::format(L"{:04}-{:02}-{:02}T{:02}:{:02}:{:02}",
-        time.wYear, time.wMonth, time.wDay, time.wHour, time.wMinute, time.wSecond);
+    return std::format(L"{:04}-{:02}-{:02}T{:02}:{:02}:{:02}", time.wYear, time.wMonth, time.wDay, time.wHour, time.wMinute, time.wSecond);
 }
 
 }  // namespace
@@ -90,18 +89,18 @@ class iTunesCOMClient::EventSink final : public IDispatch {
     virtual ~EventSink() = default;
 
     // DISPIDs are read from iTunes type library rather than hardcoded
-    EventSink(std::function<void(Event)> onEvent, ITypeInfo * eventsInfo) :
+    EventSink(std::function<void(Event)> onEvent, ITypeInfo* eventsInfo) :
         _onEvent(std::move(onEvent)),
         _playId(_idOf(eventsInfo, L"OnPlayerPlayEvent")),
         _stopId(_idOf(eventsInfo, L"OnPlayerStopEvent")),
         _quitId(_idOf(eventsInfo, L"OnAboutToPromptUserToQuitEvent")) {}
 
     // IUnknown
-    HRESULT STDMETHODCALLTYPE QueryInterface(REFIID riid, void ** object) override {
+    HRESULT STDMETHODCALLTYPE QueryInterface(REFIID riid, void** object) override {
         if (object == nullptr) return E_POINTER;
 
         if (riid == IID_IUnknown || riid == IID_IDispatch || riid == DIID__IiTunesEvents) {
-            *object = static_cast<IDispatch *>(this);
+            *object = static_cast<IDispatch*>(this);
             AddRef();
             return S_OK;
         }
@@ -110,9 +109,7 @@ class iTunesCOMClient::EventSink final : public IDispatch {
         return E_NOINTERFACE;
     }
 
-    ULONG STDMETHODCALLTYPE AddRef() override {
-        return InterlockedIncrement(&_refCount);
-    }
+    ULONG STDMETHODCALLTYPE AddRef() override { return InterlockedIncrement(&_refCount); }
 
     ULONG STDMETHODCALLTYPE Release() override {
         const auto count = InterlockedDecrement(&_refCount);
@@ -121,20 +118,22 @@ class iTunesCOMClient::EventSink final : public IDispatch {
     }
 
     // IDispatch, only Invoke is called by event sources
-    HRESULT STDMETHODCALLTYPE GetTypeInfoCount(UINT * count) override {
+    HRESULT STDMETHODCALLTYPE GetTypeInfoCount(UINT* count) override {
         *count = 0;
         return S_OK;
     }
 
-    HRESULT STDMETHODCALLTYPE GetTypeInfo(UINT /*iTInfo*/, LCID /*lcid*/, ITypeInfo** /*ppTInfo*/) override {
+    HRESULT STDMETHODCALLTYPE GetTypeInfo(UINT /*iTInfo*/, LCID /*lcid*/, ITypeInfo** /*ppTInfo*/) override { return E_NOTIMPL; }
+
+    HRESULT STDMETHODCALLTYPE
+    GetIDsOfNames(REFIID, LPOLESTR* /*rgszNames*/, UINT /*cNames*/, LCID /*lcid*/, DISPID* /*rgDispId*/) override {
         return E_NOTIMPL;
     }
 
-    HRESULT STDMETHODCALLTYPE GetIDsOfNames(REFIID, LPOLESTR* /*rgszNames*/, UINT /*cNames*/, LCID /*lcid*/, DISPID* /*rgDispId*/) override {
-        return E_NOTIMPL;
-    }
-
-    HRESULT STDMETHODCALLTYPE Invoke(DISPID id, REFIID, LCID /*lcid*/, WORD /*wFlags*/, DISPPARAMS* /*pDispParams*/, VARIANT* /*pVarResult*/, EXCEPINFO* /*pExcepInfo*/, UINT* /*puArgErr*/) override {
+    HRESULT STDMETHODCALLTYPE Invoke(
+        DISPID id, REFIID, LCID /*lcid*/, WORD /*wFlags*/, DISPPARAMS* /*pDispParams*/, VARIANT* /*pVarResult*/, EXCEPINFO* /*pExcepInfo*/,
+        UINT* /*puArgErr*/
+    ) override {
         if (id == _playId || id == _stopId) {
             _onEvent(Event::PlayerStateChanged);
         } else if (id == _quitId) {
@@ -153,8 +152,8 @@ class iTunesCOMClient::EventSink final : public IDispatch {
     DISPID _quitId;
 
     // the type info is a proxy to iTunes process, which cannot remote GetIDsOfNames : lookup through the members descriptions
-    static DISPID _idOf(ITypeInfo * eventsInfo, const wchar_t * name) {
-        TYPEATTR * attributes = nullptr;
+    static DISPID _idOf(ITypeInfo* eventsInfo, const wchar_t* name) {
+        TYPEATTR* attributes = nullptr;
         auto hr = eventsInfo->GetTypeAttr(&attributes);
         if (FAILED(hr)) throw comError("Cannot read iTunes events description", hr);
 
@@ -162,7 +161,7 @@ class iTunesCOMClient::EventSink final : public IDispatch {
         eventsInfo->ReleaseTypeAttr(attributes);
 
         for (WORD i = 0; i < functionsCount; ++i) {
-            FUNCDESC * function = nullptr;
+            FUNCDESC* function = nullptr;
             if (FAILED(eventsInfo->GetFuncDesc(i, &function))) continue;
 
             const auto id = function->memid;
@@ -181,12 +180,11 @@ class iTunesCOMClient::EventSink final : public IDispatch {
     }
 };
 
-
 //
 // Properties
 //
 
-HRESULT iTunesCOMClient::PropertyIds::get(IDispatch * object, const wchar_t * name, VARIANT * result) {
+HRESULT iTunesCOMClient::PropertyIds::get(IDispatch* object, const wchar_t* name, VARIANT* result) {
     auto found = _ids.find(name);
 
     if (found == _ids.end()) {
@@ -209,8 +207,7 @@ HRESULT iTunesCOMClient::PropertyIds::get(IDispatch * object, const wchar_t * na
 //
 
 iTunesCOMClient::iTunesCOMClient(std::function<void(Event)> onEvent) {
-    auto hr = CoCreateInstance(CLSID_iTunesApp, nullptr, CLSCTX_ALL, IID_IDispatch,
-        reinterpret_cast<void **>(_app.GetAddressOf()));
+    auto hr = CoCreateInstance(CLSID_iTunesApp, nullptr, CLSCTX_ALL, IID_IDispatch, reinterpret_cast<void**>(_app.GetAddressOf()));
     if (FAILED(hr)) throw comError("Cannot connect to iTunes", hr);
 
     // events description, from the type library containing the application interface
@@ -255,7 +252,7 @@ std::wstring iTunesCOMClient::_trackLocation(IDispatch* track) {
 
     // fallback on the IITFileOrCDTrack interface, much costlier since it is a new remote interface
     ComPtr<IDispatch> fileTrack;
-    if (FAILED(track->QueryInterface(IID_IITFileOrCDTrack, reinterpret_cast<void **>(fileTrack.GetAddressOf())))) {
+    if (FAILED(track->QueryInterface(IID_IITFileOrCDTrack, reinterpret_cast<void**>(fileTrack.GetAddressOf())))) {
         return {};
     }
 
@@ -276,10 +273,10 @@ iTunesCOMClient::Snapshot iTunesCOMClient::snapshot() const {
     if (!track) return result;
 
     // track
-    auto &t = result.track;
+    auto& t = result.track;
     t.exists = true;
 
-    const auto read = [this, &track](const wchar_t * name, auto convert, auto &field) {
+    const auto read = [this, &track](const wchar_t* name, auto convert, auto& field) {
         Variant value;
         if (SUCCEEDED(_trackIds.get(track.Get(), name, &value))) field = convert(&value);
     };

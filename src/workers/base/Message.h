@@ -26,17 +26,10 @@
 // Messages of the workers, shown in the user interface
 namespace workers {
 
-enum class MessageKind {
-    Standard,
-    Issue,
-    Warning
-};
+enum class MessageKind { Standard, Issue, Warning };
 
 // whether a message follows the previous ones, or replaces the last one (as a progress)
-enum class LineMode {
-    Append,
-    ReplaceLast
-};
+enum class LineMode { Append, ReplaceLast };
 
 struct Message {
     std::string text;  // UTF-8, translated

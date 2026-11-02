@@ -14,7 +14,9 @@ int main(int argc, char** argv) {
     CHECK(i18n::languageCode() == "fr", "French code");
 
     CHECK(i18n::format(i18n::tr("Logged as \"%1\""), { "guillaume" }) == "Connecté en tant que \"guillaume\"", "format %1");
-    CHECK(i18n::format("%2 then %1, 100% sure %3", { "a", "b" }) == "b then a, 100% sure %3", "format : order, literal %, missing argument");
+    CHECK(
+        i18n::format("%2 then %1, 100% sure %3", { "a", "b" }) == "b then a, 100% sure %3", "format : order, literal %, missing argument"
+    );
 
     CHECK(i18n::formatDataSize(12) == "12 o" && i18n::formatDataSize(1536) == "1,50 Ko", "French sizes");
 

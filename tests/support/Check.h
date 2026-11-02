@@ -8,7 +8,7 @@ namespace check {
 
 inline int failures = 0;
 
-inline void report(bool ok, const char * what, const char * file, int line) {
+inline void report(bool ok, const char* what, const char* file, int line) {
     if (ok) {
         std::printf("  OK    %s\n", what);
     } else {

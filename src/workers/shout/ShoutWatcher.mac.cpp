@@ -30,7 +30,7 @@
 
 namespace {
 
-std::string toString(yyjson_val * value) {
+std::string toString(yyjson_val* value) {
     return std::string { json::string(value) };
 }
 
@@ -48,7 +48,7 @@ void ShoutWatcher::_execWatchSession(const std::stop_token& stop) {
     // prepare script exec
     QProcess p;
     p.setProgram("/usr/bin/osascript");
-    p.setArguments({ "-l", "AppleScript", "-s", "s"});
+    p.setArguments({ "-l", "AppleScript", "-s", "s" });
     p.write(scriptContent);
     p.closeWriteChannel();
 
@@ -74,7 +74,7 @@ void ShoutWatcher::_execWatchSession(const std::stop_token& stop) {
         }
 
         // default values and inst
-        payload = ShoutPayload{};
+        payload = ShoutPayload {};
 
         // if has result
         if (result.size()) {
@@ -95,7 +95,8 @@ void ShoutWatcher::_execWatchSession(const std::stop_token& stop) {
             payload.genre = toString(at(4));
             payload.duration = static_cast<int>(json::integer(at(5)));
             payload.year = static_cast<int>(json::integer(at(6)));
-            payload.positionMs = static_cast<int>(json::integer(at(7)) * 1000); // TODO get the real thing instead of emulating the millisecond track state
+            payload.positionMs =
+                static_cast<int>(json::integer(at(7)) * 1000);  // TODO get the real thing instead of emulating the millisecond track state
             payload.playing = json::string(at(8)) == "paused" ? 0 : 1;
             payload.skippedDate = toString(at(9));
             payload.playedDate = toString(at(10));
@@ -104,8 +105,8 @@ void ShoutWatcher::_execWatchSession(const std::stop_token& stop) {
         // compare with old shout, if equivalent, don't reshout
         _processPayload(payload);
 
-       // maybe wait a bit before looping again
-       maybeWait:
+    // maybe wait a bit before looping again
+    maybeWait:
         workers::waitFor(stop, std::chrono::seconds { 1 });
     }
 }

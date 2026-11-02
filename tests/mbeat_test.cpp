@@ -48,11 +48,16 @@ long long millisecondsSince(std::chrono::steady_clock::time_point start) {
 
 int main() {
     // credentials URL
-    const auto url = [](const char * host) { return mbeat::credentialsUrl({ .platformHostUrl = host, .username = "user", .password = "password", .areOK = true }); };
+    const auto url = [](const char* host) {
+        return mbeat::credentialsUrl({ .platformHostUrl = host, .username = "user", .password = "password", .areOK = true });
+    };
     CHECK(url("https://soundvitrine.com") == "https://soundvitrine.com/hb/creds", "HTTPS kept");
     CHECK(url("http://soundvitrine.com") == "https://soundvitrine.com/hb/creds", "HTTP upgraded to HTTPS");
     CHECK(url("soundvitrine.com") == "https://soundvitrine.com/hb/creds", "HTTPS added");
-    CHECK(url("https://localhost:3000") == "http://localhost:3000/hb/creds" && url("127.0.0.1") == "http://127.0.0.1/hb/creds", "HTTP for a local platform");
+    CHECK(
+        url("https://localhost:3000") == "http://localhost:3000/hb/creds" && url("127.0.0.1") == "http://127.0.0.1/hb/creds",
+        "HTTP for a local platform"
+    );
 
     // no credentials : refused right away, then the thread ends
     {
@@ -68,15 +73,20 @@ int main() {
         Statuses statuses;
         auto start = std::chrono::steady_clock::now();
         {
-            const MBeatThread heartbeat { { .platformHostUrl = "http://127.0.0.1:9", .username = "user", .password = "password", .areOK = true }, statuses.sink() };
+            const MBeatThread heartbeat {
+                { .platformHostUrl = "http://127.0.0.1:9", .username = "user", .password = "password", .areOK = true }, statuses.sink()
+            };
             CHECK(statuses.waitFor(2, 10s), "two statuses");
             start = std::chrono::steady_clock::now();
         }
         CHECK(millisecondsSince(start) < 500, "stopped right away while waiting for the next heartbeat");
 
         const auto received = statuses.get();
-        CHECK(received.size() == 2 && received[0].connectivity == mbeat::Connectivity::Checking
-            && received[1].connectivity == mbeat::Connectivity::Refused, "checking, then refused");
+        CHECK(
+            received.size() == 2 && received[0].connectivity == mbeat::Connectivity::Checking &&
+                received[1].connectivity == mbeat::Connectivity::Refused,
+            "checking, then refused"
+        );
         CHECK(received.size() == 2 && received[1].text.find("SoundVitrine") != std::string::npos, "refusal names the platform");
     }
 
@@ -85,7 +95,9 @@ int main() {
         Statuses statuses;
         auto start = std::chrono::steady_clock::now();
         {
-            const MBeatThread heartbeat { { .platformHostUrl = "http://10.255.255.1", .username = "user", .password = "password", .areOK = true }, statuses.sink() };
+            const MBeatThread heartbeat {
+                { .platformHostUrl = "http://10.255.255.1", .username = "user", .password = "password", .areOK = true }, statuses.sink()
+            };
             CHECK(statuses.waitFor(1, 2s), "checking");
             std::this_thread::sleep_for(300ms);
             start = std::chrono::steady_clock::now();

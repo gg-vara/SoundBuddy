@@ -30,7 +30,8 @@ namespace net {
 // multipart/form-data request body (RFC 7578)
 class Multipart {
  public:
-    Multipart() : _boundary(_randomBoundary()) {}
+    Multipart() :
+        _boundary(_randomBoundary()) {}
 
     void addField(std::string_view name, std::string_view value) {
         _beginPart(name, {}, {});

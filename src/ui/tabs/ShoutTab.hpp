@@ -31,14 +31,13 @@ class ShoutTab : public TemplateTab {
     Q_OBJECT
 
  public:
-    ShoutTab(QWidget* parent, AppSettings* appSettings) : TemplateTab(parent), _appSettings(appSettings) {
+    ShoutTab(QWidget* parent, AppSettings* appSettings) :
+        TemplateTab(parent),
+        _appSettings(appSettings) {
         this->_checkAutoLaunch = new QCheckBox(tr("Start shouting at app launch"));
         this->button()->setText(tr("Connect to %1").arg(musicAppName()));
 
-        QObject::connect(
-            this->_checkAutoLaunch, &QCheckBox::checkStateChanged,
-            this, &ShoutTab::_changeAutoLaunch
-        );
+        QObject::connect(this->_checkAutoLaunch, &QCheckBox::checkStateChanged, this, &ShoutTab::_changeAutoLaunch);
 
         this->layout()->addWidget(this->_scrollArea());
         this->layout()->addWidget(this->button());

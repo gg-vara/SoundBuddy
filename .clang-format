@@ -6,8 +6,8 @@ IndentWidth: 4
 ContinuationIndentWidth: 4
 AccessModifierOffset: -3  # " public:"
 
-# lines are wrapped by hand
-ColumnLimit: 0
+# two files side by side
+ColumnLimit: 140
 
 # arguments on their own lines close the call on its own line
 AlignAfterOpenBracket: BlockIndent

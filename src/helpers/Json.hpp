@@ -17,7 +17,6 @@
 // for further details. Resources without explicit references to a
 // different license and copyright still refer to this GPL.
 
-
 #pragma once
 
 #include <yyjson.h>
@@ -40,7 +39,7 @@ inline Document parse(std::string_view text) {
 }
 
 // root value of "doc", or null
-inline yyjson_val * root(const Document& doc) {
+inline yyjson_val* root(const Document& doc) {
     return yyjson_doc_get_root(doc.get());
 }
 
@@ -58,20 +57,20 @@ inline std::string write(const MutableDocument& doc, yyjson_write_flag flags = Y
 }
 
 // string content of "value", or "fallback" if it is not a string
-inline std::string_view string(yyjson_val * value, std::string_view fallback = {}) {
+inline std::string_view string(yyjson_val* value, std::string_view fallback = {}) {
     if (!yyjson_is_str(value)) return fallback;
     return { yyjson_get_str(value), yyjson_get_len(value) };
 }
 
 // "value" as an integer (decimals truncated), or "fallback" if it is not a number
-inline std::int64_t integer(yyjson_val * value, std::int64_t fallback = 0) {
+inline std::int64_t integer(yyjson_val* value, std::int64_t fallback = 0) {
     if (yyjson_is_int(value)) return yyjson_get_sint(value);
     if (yyjson_is_real(value)) return static_cast<std::int64_t>(yyjson_get_real(value));
     return fallback;
 }
 
 // "value" as a boolean, or "fallback" if it is not one
-inline bool boolean(yyjson_val * value, bool fallback = false) {
+inline bool boolean(yyjson_val* value, bool fallback = false) {
     return yyjson_is_bool(value) ? yyjson_get_bool(value) : fallback;
 }
 

@@ -54,17 +54,17 @@ class ShoutWatcher {
     ShoutPayloadConsumer _consumer;
     std::atomic<bool> _running { true };
 
-    #ifdef _WIN32
-        // music app process of the previous session
-        unsigned long _previousProcessID = 0;
-    #endif
+#ifdef _WIN32
+    // music app process of the previous session
+    unsigned long _previousProcessID = 0;
+#endif
 
     // declared last : started once the members it uses are initialized, stopped and joined first
     std::jthread _worker;
 
     void _run(const std::stop_token& stop);
     void _say(std::string text, workers::MessageKind kind = workers::MessageKind::Standard);
-    void _processPayload(const ShoutPayload &incomingPayload);
+    void _processPayload(const ShoutPayload& incomingPayload);
 
     // platform specific
 

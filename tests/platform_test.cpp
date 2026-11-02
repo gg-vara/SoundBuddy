@@ -7,7 +7,7 @@
 #include <string>
 
 #ifdef _WIN32
-    #include <windows.h>
+#include <windows.h>
 #endif
 
 #include "Check.h"
@@ -38,8 +38,10 @@ int runClaimingChild() {
 std::wstring registeredStartupCommand() {
     std::array<wchar_t, 1024> value {};
     auto size = static_cast<DWORD>(value.size() * sizeof(wchar_t));
-    if (RegGetValueW(HKEY_CURRENT_USER, LR"(Software\Microsoft\Windows\CurrentVersion\Run)", L"" APP_NAME,
-            RRF_RT_REG_SZ, nullptr, value.data(), &size) != ERROR_SUCCESS) return {};
+    const auto result = RegGetValueW(
+        HKEY_CURRENT_USER, LR"(Software\Microsoft\Windows\CurrentVersion\Run)", L"" APP_NAME, RRF_RT_REG_SZ, nullptr, value.data(), &size
+    );
+    if (result != ERROR_SUCCESS) return {};
     return value.data();
 }
 #endif
@@ -52,8 +54,10 @@ int main(int argc, char** argv) {
 
     // data directory
     const auto data = platform::dataDirectory();
-    CHECK(std::filesystem::is_directory(data) && data.filename() == APP_NAME && data.parent_path().filename() == APP_PUBLISHER_ORG,
-        "data directory created, under the test identity");
+    CHECK(
+        std::filesystem::is_directory(data) && data.filename() == APP_NAME && data.parent_path().filename() == APP_PUBLISHER_ORG,
+        "data directory created, under the test identity"
+    );
 
     // UTF-8
     const std::string utf8 = "D:/Musique/caf\xC3\xA9/\xE9\x9F\xB3.xml";
@@ -62,7 +66,10 @@ int main(int argc, char** argv) {
     CHECK(platform::fromUtf8(utf8).wstring() == L"D:/Musique/caf\u00e9/\u97f3.xml", "UTF-8 path to UTF-16");
     const std::wstring wide = L"Caf\u00e9 \u97f3\U0001F3B5";
     CHECK(platform::narrow(wide) == "Caf\xC3\xA9 \xE9\x9F\xB3\xF0\x9F\x8E\xB5", "narrow, including a surrogate pair");
-    CHECK(platform::widen(platform::narrow(wide)) == wide && platform::narrow(L"").empty() && platform::widen("").empty(), "widen round trip, empty texts");
+    CHECK(
+        platform::widen(platform::narrow(wide)) == wide && platform::narrow(L"").empty() && platform::widen("").empty(),
+        "widen round trip, empty texts"
+    );
 #endif
 
     // launch at login

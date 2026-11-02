@@ -84,7 +84,7 @@ class iTunesCOMClient {
     // DISPIDs of an interface, resolved on first use
     class PropertyIds {
      public:
-        HRESULT get(IDispatch * object, const wchar_t * name, VARIANT * result);
+        HRESULT get(IDispatch* object, const wchar_t* name, VARIANT* result);
 
      private:
         std::unordered_map<std::wstring, DISPID> _ids;

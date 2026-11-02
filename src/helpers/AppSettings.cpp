@@ -21,7 +21,8 @@
 
 #include <QSettings>
 
-AppSettings::AppSettings() : _file(platform::dataDirectory() / "settings.json") {
+AppSettings::AppSettings() :
+    _file(platform::dataDirectory() / "settings.json") {
     if (auto stored = settings::load(_file)) {
         _values = std::move(*stored);
     } else if (auto legacy = _readLegacySettings()) {

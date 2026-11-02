@@ -42,7 +42,5 @@ class QtTranslatorBridge : public QTranslator {
         return QString::fromUtf8(translation.data(), static_cast<qsizetype>(translation.size()));
     }
 
-    bool isEmpty() const override {
-        return false;
-    }
+    bool isEmpty() const override { return false; }
 };

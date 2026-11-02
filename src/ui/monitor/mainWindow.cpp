@@ -57,10 +57,10 @@ void MainWindow::_onAppSettingsChanged() {
 
     // restart threads ?
     _runMBeat();
-    if(this->_shoutWorker && this->_shoutWorker->isRunning()) {
+    if (this->_shoutWorker && this->_shoutWorker->isRunning()) {
         _runShouts();
     }
-    if(this->_feederWorker && this->_feederWorker->isRunning()) {
+    if (this->_feederWorker && this->_feederWorker->isRunning()) {
         _runFeeder();
     }
 }
@@ -79,9 +79,9 @@ void MainWindow::_accessPlatform() {
     const auto platformHomeUrl = this->_appSettings.getConnectivityInfos().getPlaformHomeUrl();
 
     //
-    if(platformHomeUrl.empty()) {
-        QMessageBox::critical(this,
-            tr("Cannot access %1 plaform").arg(DEST_PLATFORM_PRODUCT_NAME),
+    if (platformHomeUrl.empty()) {
+        QMessageBox::critical(
+            this, tr("Cannot access %1 plaform").arg(DEST_PLATFORM_PRODUCT_NAME),
             tr("%1 Plaform URL is not valid. Please check Preferences connectivity parameters.").arg(DEST_PLATFORM_PRODUCT_NAME)
         );
         return;
@@ -108,7 +108,7 @@ void MainWindow::_openWarnings() {
 
     //
     auto howMany = static_cast<int>(yyjson_arr_size(rows));
-    if(howMany == 0) {
+    if (howMany == 0) {
         QMessageBox::information(this, tr("No warnings found"), tr("Congratulations, your latest export was flawless !"));
         return;
     }
@@ -148,7 +148,7 @@ void MainWindow::_openWarnings() {
         for (const auto key : columns) {
             const auto cell = json::string(yyjson_obj_getn(cellsData, key.data(), key.size()));
             const auto cellData = QString::fromUtf8(cell.data(), static_cast<qsizetype>(cell.size()));
-            if(cellData.isEmpty()) {
+            if (cellData.isEmpty()) {
                 auto* item = new QTableWidgetItem(this->style()->standardIcon(QStyle::SP_MessageBoxWarning), tr("Missing !"));
                 auto font = item->font();
                 font.setBold(true);
@@ -169,7 +169,6 @@ void MainWindow::_openWarnings() {
     layout.addWidget(&table);
     display.setLayout(&layout);
 
-
     // Get the screen size (Qt5)
     const QRect screenGeometry = this->screen()->geometry();
     const int screenWidth = screenGeometry.width();
@@ -185,7 +184,7 @@ void MainWindow::_setupAutoUpdate() {
     this->_checkForAppUpdates();
 }
 
-void MainWindow::_onUpdateChecked(const UpdateChecker::CheckResults &checkResults) {
+void MainWindow::_onUpdateChecked(const UpdateChecker::CheckResults& checkResults) {
     // if the user asks directly to check updates
     const bool userAsked = this->_userNotificationOnUpdateCheck;
 
@@ -200,43 +199,38 @@ void MainWindow::_onUpdateChecked(const UpdateChecker::CheckResults &checkResult
 
         case UpdateChecker::Result::NoUpdate:
             if (userAsked) {
-                QMessageBox::information(this,
-                    tr("Checking updates"),
-                    tr("No updates available at the time."),
-                    QMessageBox::Ok,
-                    QMessageBox::Ok);
+                QMessageBox::information(
+                    this, tr("Checking updates"), tr("No updates available at the time."), QMessageBox::Ok, QMessageBox::Ok
+                );
             }
             return;
 
         case UpdateChecker::Result::NotInstalled:
             if (userAsked) {
-                QMessageBox::information(this,
-                    tr("Checking updates"),
-                    tr("Updates are only available for installed versions of %1.").arg(APP_NAME),
-                    QMessageBox::Ok,
-                    QMessageBox::Ok);
+                QMessageBox::information(
+                    this, tr("Checking updates"), tr("Updates are only available for installed versions of %1.").arg(APP_NAME),
+                    QMessageBox::Ok, QMessageBox::Ok
+                );
             }
             return;
 
         case UpdateChecker::Result::Failed:
             if (userAsked) {
-                QMessageBox::critical(this,
-                    tr("Error while checking updates"),
-                    QString::fromStdString(checkResults.error),
-                    QMessageBox::Ok,
-                    QMessageBox::Ok);
+                QMessageBox::critical(
+                    this, tr("Error while checking updates"), QString::fromStdString(checkResults.error), QMessageBox::Ok, QMessageBox::Ok
+                );
             }
             return;
     }
 
     // update downloaded : if declined, it is applied on next launch anyway
-    auto msgboxRslt = QMessageBox::information(this,
-        tr("Update Available"),
+    auto msgboxRslt = QMessageBox::information(
+        this, tr("Update Available"),
         tr("%1 %2 is ready to be installed. Would you like to restart %1 now to install it ?")
             .arg(APP_NAME)
             .arg(QString::fromStdString(checkResults.version)),
-        QMessageBox::Yes | QMessageBox::No,
-        QMessageBox::Yes);
+        QMessageBox::Yes | QMessageBox::No, QMessageBox::Yes
+    );
 
     if (msgboxRslt == QMessageBox::Yes) {
         this->_updateChecker.applyUpdateOnExit();
@@ -252,12 +246,12 @@ void MainWindow::_requireUpdateCheckFromUser() {
 void MainWindow::_checkForAppUpdates() {
     this->_updateSearchSwitchUi(/*isSearching=*/true);
     // a check already in progress will end the search the same way
-    this->_updateChecker.check([this](const UpdateChecker::CheckResults &results) {
+    this->_updateChecker.check([this](const UpdateChecker::CheckResults& results) {
         ui::post(this, [this, results = results] { this->_onUpdateChecked(results); });
     });
 }
 
-void MainWindow::_updateStatusBar(const QString &message, const ConnectivityIndicator &indic) {
+void MainWindow::_updateStatusBar(const QString& message, const ConnectivityIndicator& indic) {
     this->_statusLabel->setText(message);
     this->_statusLight->setCurrentIndex(static_cast<int>(indic));
 }
@@ -266,17 +260,20 @@ void MainWindow::_runMBeat() {
     // the previous heartbeat stops first
     this->_mbeatWorker.reset();
 
-    this->_mbeatWorker = std::make_unique<MBeatThread>(this->_appSettings.getConnectivityInfos(), [this](const mbeat::Status &status) {
+    this->_mbeatWorker = std::make_unique<MBeatThread>(this->_appSettings.getConnectivityInfos(), [this](const mbeat::Status& status) {
         auto indicator = ConnectivityIndicator::NOK;
         switch (status.connectivity) {
-            case mbeat::Connectivity::Connected: indicator = ConnectivityIndicator::OK; break;
-            case mbeat::Connectivity::Checking: indicator = ConnectivityIndicator::ONGOING; break;
-            case mbeat::Connectivity::Refused: break;
+            case mbeat::Connectivity::Connected:
+                indicator = ConnectivityIndicator::OK;
+                break;
+            case mbeat::Connectivity::Checking:
+                indicator = ConnectivityIndicator::ONGOING;
+                break;
+            case mbeat::Connectivity::Refused:
+                break;
         }
 
-        ui::post(this, [this, text = QString::fromStdString(status.text), indicator] {
-            this->_updateStatusBar(text, indicator);
-        });
+        ui::post(this, [this, text = QString::fromStdString(status.text), indicator] { this->_updateStatusBar(text, indicator); });
     });
 }
 
@@ -309,11 +306,14 @@ void MainWindow::_runFeeder() {
     auto* const tab = this->_feederTab;
     const auto run = tab->workerStarted();
 
-    this->_feederWorker = std::make_unique<FeederThread>(this->_appSettings.getConnectivityInfos(), FeederThread::Callbacks {
-        .onMessage = tab->messageSink(),
-        .onFilesGenerated = [this] { ui::post(this, [this] { this->_updateWarningsMenuItem(); }); },
-        .onFinished = [tab, run] { ui::post(tab, [tab, run] { tab->workerFinished(run); }); },
-    });
+    this->_feederWorker = std::make_unique<FeederThread>(
+        this->_appSettings.getConnectivityInfos(),
+        FeederThread::Callbacks {
+            .onMessage = tab->messageSink(),
+            .onFilesGenerated = [this] { ui::post(this, [this] { this->_updateWarningsMenuItem(); }); },
+            .onFinished = [tab, run] { ui::post(tab, [tab, run] { tab->workerFinished(run); }); },
+        }
+    );
 }
 
 //
@@ -322,13 +322,13 @@ void MainWindow::_runFeeder() {
 
 // main initialization
 void MainWindow::_initUI() {
-    // values specific to this
-    #ifdef _DEBUG
-        const QString stdTitle = QString("DEBUG - ") + APP_NAME;
-    #else
-        QString stdTitle = APP_NAME;
-    #endif
-    
+// values specific to this
+#ifdef _DEBUG
+    const QString stdTitle = QString("DEBUG - ") + APP_NAME;
+#else
+    QString stdTitle = APP_NAME;
+#endif
+
     this->setWindowTitle(stdTitle);
     this->setMinimumSize(QSize(480, 400));
     this->setWindowIcon(QIcon(":/icons/app.png"));
@@ -339,11 +339,10 @@ void MainWindow::_initUI() {
     this->_initUIMenu();
     this->_initStatusBar();
 
-    #ifdef _DEBUG
-        this->_trueShow();
-    #endif
+#ifdef _DEBUG
+    this->_trueShow();
+#endif
 }
-
 
 //////////
 // Tray //
@@ -355,22 +354,19 @@ void MainWindow::_initUITray() {
     trayIcon->setIcon(QIcon(":/icons/app_reverse.png"));
     trayIcon->setToolTip(this->windowTitle());
 
-    QObject::connect(
-        this->_trayIcon, &QSystemTrayIcon::activated,
-        this, &MainWindow::_iconActivated
-    );
+    QObject::connect(this->_trayIcon, &QSystemTrayIcon::activated, this, &MainWindow::_iconActivated);
 
     QMenu* cMenu = nullptr;
 
-    #ifdef _WIN32
-        cMenu = this->_getFileMenu(/*withMonitor=*/true);
-    #endif
+#ifdef _WIN32
+    cMenu = this->_getFileMenu(/*withMonitor=*/true);
+#endif
 
-    #ifdef __APPLE__
-        cMenu = new QMenu("");
-        cMenu->addMenu(this->_getFileMenu(/*withMonitor=*/true));
-        cMenu->addMenu(this->_getOptionsMenu());
-    #endif
+#ifdef __APPLE__
+    cMenu = new QMenu("");
+    cMenu->addMenu(this->_getFileMenu(/*withMonitor=*/true));
+    cMenu->addMenu(this->_getOptionsMenu());
+#endif
 
     this->_trayIcon->setContextMenu(cMenu);
 
@@ -400,15 +396,9 @@ void MainWindow::_initUITabs() {
     this->_shoutTab = new ShoutTab(this, &this->_appSettings);
     this->_feederTab = new FeederTab(this);
 
-    QObject::connect(
-        this->_shoutTab->button(), &QPushButton::clicked,
-        this, &MainWindow::_runShouts
-    );
+    QObject::connect(this->_shoutTab->button(), &QPushButton::clicked, this, &MainWindow::_runShouts);
 
-    QObject::connect(
-        this->_feederTab->button(), &QPushButton::clicked,
-        this, &MainWindow::_runFeeder
-    );
+    QObject::connect(this->_feederTab->button(), &QPushButton::clicked, this, &MainWindow::_runFeeder);
 
     tabs->addTab(this->_shoutTab, "Shout!");
     tabs->addTab(this->_feederTab, "Feeder");
@@ -431,14 +421,11 @@ void MainWindow::_initUIMenu() {
 //////////////////////
 
 QMenu* MainWindow::_getOptionsMenu() {
-    auto *optionsMenuItem = new QMenu(tr("Options"));
+    auto* optionsMenuItem = new QMenu(tr("Options"));
 
     // for checking available updates
     this->_cfugAction = new QAction(tr("Check for updates"), optionsMenuItem);
-        QObject::connect(
-        this->_cfugAction, &QAction::triggered,
-        this, &MainWindow::_requireUpdateCheckFromUser
-    );
+    QObject::connect(this->_cfugAction, &QAction::triggered, this, &MainWindow::_requireUpdateCheckFromUser);
 
     this->_versionAction = new QAction(APP_FULL_DENOM, optionsMenuItem);
     this->_versionAction->setEnabled(false);
@@ -469,46 +456,29 @@ QMenu* MainWindow::_getFileMenu(bool withMonitor) {
     // myPlatformAction
     this->_myPlatformAction = new QAction(tr("My %1").arg(DEST_PLATFORM_PRODUCT_NAME), fileMenuItem);
     _myPlatformAction->setEnabled(false);
-    QObject::connect(
-        _myPlatformAction, &QAction::triggered,
-        this, &MainWindow::_accessPlatform
-    );
+    QObject::connect(_myPlatformAction, &QAction::triggered, this, &MainWindow::_accessPlatform);
 
     // accessPreferencesAction
     auto* accessPreferencesAction = new QAction(tr("Preferences"), fileMenuItem);
-    QObject::connect(
-        accessPreferencesAction, &QAction::triggered,
-        this, &MainWindow::_accessPreferences
-    );
+    QObject::connect(accessPreferencesAction, &QAction::triggered, this, &MainWindow::_accessPreferences);
 
     // openWarningsAction
     this->_openWarningsAction = new QAction(tr("Read latest upload warnings report"), fileMenuItem);
     this->_openWarningsAction->setEnabled(false);
-    QObject::connect(
-        this->_openWarningsAction, &QAction::triggered,
-        this, &MainWindow::_openWarnings
-    );
+    QObject::connect(this->_openWarningsAction, &QAction::triggered, this, &MainWindow::_openWarnings);
 
     // openData
     auto* openDataFolder = new QAction(tr("Access upload data folder"), fileMenuItem);
-    QObject::connect(openDataFolder, &QAction::triggered, [=]() {
-        platform::openPath(platform::dataDirectory());
-    });
+    QObject::connect(openDataFolder, &QAction::triggered, [=]() { platform::openPath(platform::dataDirectory()); });
 
     // quit
     auto* quitAction = new QAction(tr("Quit"), fileMenuItem);
-    QObject::connect(
-        quitAction, &QAction::triggered,
-        this, &MainWindow::_forcedClose
-    );
+    QObject::connect(quitAction, &QAction::triggered, this, &MainWindow::_forcedClose);
 
-    if(withMonitor) {
+    if (withMonitor) {
         // monitorAction
         auto* monitorAction = new QAction(tr("Open monitor..."), fileMenuItem);
-        QObject::connect(
-            monitorAction, &QAction::triggered,
-            this, &MainWindow::_trueShow
-        );
+        QObject::connect(monitorAction, &QAction::triggered, this, &MainWindow::_trueShow);
 
         fileMenuItem->addAction(monitorAction);
         fileMenuItem->addSeparator();
@@ -533,21 +503,20 @@ QMenu* MainWindow::_getFileMenu(bool withMonitor) {
 /// Events handling //
 //////////////////////
 
-void MainWindow::closeEvent(QCloseEvent *event) {
-    // apple specific behaviour, prevent closing
-    #ifdef __APPLE__
-        if (!this->_forceQuitOnMacOS) {
-            return this->_trueHide(event);
-        }
-    #endif
+void MainWindow::closeEvent(QCloseEvent* event) {
+// apple specific behaviour, prevent closing
+#ifdef __APPLE__
+    if (!this->_forceQuitOnMacOS) {
+        return this->_trueHide(event);
+    }
+#endif
 
     // if running shout thread
     if (this->_shoutWorker && this->_shoutWorker->isRunning()) {
-        auto msgboxRslt = QMessageBox::warning(this,
-            tr("Shout worker running !"),
-            tr("Shout worker is actually running : Are you sure you want to exit ?"),
-            QMessageBox::Yes | QMessageBox::No,
-            QMessageBox::No);
+        auto msgboxRslt = QMessageBox::warning(
+            this, tr("Shout worker running !"), tr("Shout worker is actually running : Are you sure you want to exit ?"),
+            QMessageBox::Yes | QMessageBox::No, QMessageBox::No
+        );
 
         if (msgboxRslt == QMessageBox::Yes) {
             // makes sure to wait for ShoutWatcher to end. Limits COM app retention on Windows
@@ -576,7 +545,7 @@ void MainWindow::_trueShow() {
 }
 
 // hide window on minimize, only triggered on windows
-void MainWindow::hideEvent(QHideEvent *event) {
+void MainWindow::hideEvent(QHideEvent* event) {
     this->_trueHide(event);
 }
 
@@ -593,11 +562,11 @@ void MainWindow::_forcedClose() {
 // tray click handling
 void MainWindow::_iconActivated(QSystemTrayIcon::ActivationReason reason) {
     switch (reason) {
-    case QSystemTrayIcon::DoubleClick:
-        this->_trueShow();
-        break;
-    default:
-        break;
+        case QSystemTrayIcon::DoubleClick:
+            this->_trueShow();
+            break;
+        default:
+            break;
     }
 }
 

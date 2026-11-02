@@ -15,18 +15,12 @@ class AppSettings {
     // loads the settings file, or imports the settings of the previous versions on first launch
     AppSettings();
 
-    settings::Settings& values() {
-        return _values;
-    }
+    settings::Settings& values() { return _values; }
 
-    const settings::Settings& values() const {
-        return _values;
-    }
+    const settings::Settings& values() const { return _values; }
 
     // writes the current values to the settings file
-    bool save() const {
-        return settings::save(_file, _values);
-    }
+    bool save() const { return settings::save(_file, _values); }
 
     // texts are UTF-8
     struct ConnectivityInfos {
@@ -37,14 +31,13 @@ class AppSettings {
         // Whenever infos are considered valid for usage
         bool areOK = false;
 
-
         std::string getSoundHeartbeatUrl() const {
-            if(!areOK) return {};
+            if (!areOK) return {};
             return platformHostUrl + "/hb";
         }
 
         std::string getPlaformHomeUrl() const {
-            if(!areOK) return {};
+            if (!areOK) return {};
             return platformHostUrl + "/u/" + username;
         }
     };
@@ -59,25 +52,19 @@ class AppSettings {
             return {};
         }
 
-        return {
-            .platformHostUrl = _values.platformHostUrl,
-            .username = _values.platformUsername,
-            .password = _values.platformPassword,
-            .areOK = true
-        };
+        return { .platformHostUrl = _values.platformHostUrl,
+                 .username = _values.platformUsername,
+                 .password = _values.platformPassword,
+                 .areOK = true };
     }
 
-    static UploadInfos getShoutUploadInfos() {
-        return { .path = "/uploadShout", .outputFileName = "shout_file" };
-    }
+    static UploadInfos getShoutUploadInfos() { return { .path = "/uploadShout", .outputFileName = "shout_file" }; }
 
     static UploadInfos getFeederUploadInfos() {
         return { .path = "/uploadMusicLibrary", .outputFileName = DEST_PLATFORM_PRODUCT_NAME "_file" };
     }
 
-    static std::filesystem::path getFeedWarningFilePath() {
-        return platform::dataDirectory() / feedWarningFileName;
-    }
+    static std::filesystem::path getFeedWarningFilePath() { return platform::dataDirectory() / feedWarningFileName; }
 
     // format of the files uploaded to the platform
     enum class FeedFormat {
@@ -104,9 +91,9 @@ class AppSettings {
     // previous versions stored their settings with QSettings (registry on Windows, plist on macOS) : read once, to create the settings file
     static std::optional<settings::Settings> _readLegacySettings();
 
-    static inline const char * feedWarningFileName = "warnings.json";
+    static inline const char* feedWarningFileName = "warnings.json";
 
-    static inline const char * feedOutputBaseFileName = "output";
-    static inline const char * zippedFeedOutputExtension = ".zmlib";
-    static inline const char * basicFeedOutputExtension = ".json";
+    static inline const char* feedOutputBaseFileName = "output";
+    static inline const char* zippedFeedOutputExtension = ".zmlib";
+    static inline const char* basicFeedOutputExtension = ".json";
 };

@@ -4,10 +4,10 @@
 #include <string>
 
 #ifdef _WIN32
-    #include <windows.h>
-    #include <compressapi.h>
+#include <windows.h>
+#include <compressapi.h>
 #else
-    #include <zlib.h>
+#include <zlib.h>
 #endif
 
 #include "Check.h"
@@ -22,12 +22,14 @@ std::string decompress(const std::string& compressed, std::size_t originalSize) 
     DECOMPRESSOR_HANDLE decompressor = nullptr;
     if (CreateDecompressor(COMPRESS_ALGORITHM_MSZIP, nullptr, &decompressor) == 0) return {};
     SIZE_T size = 0;
-    const auto ok = Decompress(decompressor, const_cast<char *>(compressed.data()), compressed.size(), output.data(), output.size(), &size);
+    const auto ok = Decompress(decompressor, const_cast<char*>(compressed.data()), compressed.size(), output.data(), output.size(), &size);
     CloseDecompressor(decompressor);
     if (ok == 0) return {};
 #else
     auto size = static_cast<uLongf>(output.size());
-    if (uncompress(reinterpret_cast<Bytef *>(output.data()), &size, reinterpret_cast<const Bytef *>(compressed.data()), compressed.size()) != Z_OK) return {};
+    if (uncompress(reinterpret_cast<Bytef*>(output.data()), &size, reinterpret_cast<const Bytef*>(compressed.data()), compressed.size()) !=
+        Z_OK)
+        return {};
 #endif
     output.resize(size);
     return output;

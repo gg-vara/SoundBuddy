@@ -30,9 +30,9 @@
 #include <unordered_map>
 
 #ifdef _WIN32
-    #include <windows.h>
+#include <windows.h>
 #elif defined(__APPLE__)
-    #include <CoreFoundation/CoreFoundation.h>
+#include <CoreFoundation/CoreFoundation.h>
 #endif
 
 #include "src/logs/Logs.h"
@@ -45,7 +45,7 @@ using Table = std::unordered_map<std::string_view, std::string_view>;
 
 // English source text => translation
 const Table frenchTable {
-    #include "fr.inc"
+#include "fr.inc"
 };
 
 // language tag of the user interface, like "fr-FR", lowercase
@@ -72,7 +72,7 @@ std::string systemLanguageTag() {
         const auto first = static_cast<CFStringRef>(CFArrayGetValueAtIndex(languages, 0));
         char buffer[64];
         if (CFStringGetCString(first, buffer, sizeof(buffer), kCFStringEncodingUTF8)) {
-            for (const char * c = buffer; *c; ++c) tag += static_cast<char>(std::tolower(static_cast<unsigned char>(*c)));
+            for (const char* c = buffer; *c; ++c) tag += static_cast<char>(std::tolower(static_cast<unsigned char>(*c)));
         }
     }
     if (languages) CFRelease(languages);
@@ -124,8 +124,10 @@ void setLanguage(Language language) {
 
 std::string_view languageCode() {
     switch (language()) {
-        case Language::French: return "fr";
-        case Language::English: break;
+        case Language::French:
+            return "fr";
+        case Language::English:
+            break;
     }
     return "en";
 }

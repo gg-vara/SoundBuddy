@@ -30,7 +30,7 @@ namespace ui {
 // runs "function" later on the thread of "receiver" (the user interface thread), unless "receiver" is destroyed meanwhile.
 // "receiver" must still exist when calling this : workers are stopped before the windows are destroyed
 template <typename Function>
-void post(QObject * receiver, Function&& function) {
+void post(QObject* receiver, Function&& function) {
     QMetaObject::invokeMethod(receiver, std::forward<Function>(function), Qt::QueuedConnection);
 }
 

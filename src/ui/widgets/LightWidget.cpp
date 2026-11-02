@@ -19,11 +19,15 @@
 
 #include "LightWidget.h"
 
-LightWidget::LightWidget(const QColor &color, QWidget* parent) : QWidget(parent), _color(color) {
+LightWidget::LightWidget(const QColor& color, QWidget* parent) :
+    QWidget(parent),
+    _color(color) {
     this->setLayout(new QHBoxLayout);
 }
 
-bool LightWidget::isOn() const { return _on; }
+bool LightWidget::isOn() const {
+    return _on;
+}
 
 void LightWidget::setOn(bool on) {
     if (on == _on) {
@@ -33,8 +37,12 @@ void LightWidget::setOn(bool on) {
     update();
 }
 
-void LightWidget::turnOff() { setOn(/*on=*/false); }
-void LightWidget::turnOn() { setOn(/*on=*/true); }
+void LightWidget::turnOff() {
+    setOn(/*on=*/false);
+}
+void LightWidget::turnOn() {
+    setOn(/*on=*/true);
+}
 
 void LightWidget::paintEvent(QPaintEvent* /*event*/) {
     if (!_on) return;
@@ -45,10 +53,5 @@ void LightWidget::paintEvent(QPaintEvent* /*event*/) {
 
     auto height = this->height();
 
-    painter.drawEllipse(
-        qFloor(height * .25),
-        qFloor(height * .25),
-        qFloor(height * .75),
-        qFloor(height * .75)
-    );
+    painter.drawEllipse(qFloor(height * .25), qFloor(height * .25), qFloor(height * .75), qFloor(height * .75));
 }

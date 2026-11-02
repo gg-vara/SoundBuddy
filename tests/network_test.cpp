@@ -26,7 +26,9 @@ int main() {
 
     // GET
     {
-        const auto response = client.send({ .method = "GET", .url = "https://httpbin.org/get?x=1", .headers = { { .name = "Accept-Language", .value = "fr" } } });
+        const auto response = client.send(
+            { .method = "GET", .url = "https://httpbin.org/get?x=1", .headers = { { .name = "Accept-Language", .value = "fr" } } }
+        );
         CHECK(response.ok() && response.status == 200, "GET : status 200");
         CHECK(response.body.find("\"x\": \"1\"") != std::string::npos, "query string sent");
         CHECK(response.body.find("SoundBuddy-network-test/1.0") != std::string::npos, "user agent sent");
@@ -46,8 +48,11 @@ int main() {
 
         const auto response = client.send(request);
         CHECK(response.ok(), "POST multipart : status 2xx");
-        CHECK(response.body.find("\"headless\": \"1\"") != std::string::npos && response.body.find("\"password\": \"not-a-real-password\"") != std::string::npos,
-            "form fields received");
+        CHECK(
+            response.body.find("\"headless\": \"1\"") != std::string::npos &&
+                response.body.find("\"password\": \"not-a-real-password\"") != std::string::npos,
+            "form fields received"
+        );
         CHECK(response.body.find("\"shout_file\":") != std::string::npos, "file part received");
     }
 
@@ -100,7 +105,9 @@ int main() {
         int events = 0;
         net::SseParser parser([&events](const net::SseEvent&) { ++events; });
 
-        net::Request request { .method = "GET", .url = "https://stream.wikimedia.org/v2/stream/recentchange", .headers = { { .name = "Accept", .value = "text/event-stream" } } };
+        net::Request request { .method = "GET",
+                               .url = "https://stream.wikimedia.org/v2/stream/recentchange",
+                               .headers = { { .name = "Accept", .value = "text/event-stream" } } };
         request.timeout = 0ms;  // no limit for a stream
 
         const auto start = std::chrono::steady_clock::now();

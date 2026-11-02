@@ -14,17 +14,17 @@
 class UploadHelper {
  public:
     struct UploadInstructions {
-        const AppSettings::ConnectivityInfos &connectivityInfos;
-        const AppSettings::UploadInfos &uploadInfos;
+        const AppSettings::ConnectivityInfos& connectivityInfos;
+        const AppSettings::UploadInfos& uploadInfos;
         std::string_view dataToUpload;
 
-        std::string getUploadUrl() const {
-            return connectivityInfos.getPlaformHomeUrl() + uploadInfos.path;
-        }
+        std::string getUploadUrl() const { return connectivityInfos.getPlaformHomeUrl() + uploadInfos.path; }
     };
 
     // blocking; a stop requested on "stop" aborts the upload
-    static net::Response uploadDataToPlatform(net::HttpClient &client, const UploadInstructions &instructions, AppSettings::FeedFormat format, const std::stop_token& stop = {}) {
+    static net::Response uploadDataToPlatform(
+        net::HttpClient& client, const UploadInstructions& instructions, AppSettings::FeedFormat format, const std::stop_token& stop = {}
+    ) {
         //
         const auto& fileName = instructions.uploadInfos.outputFileName;
         const auto fileExtension = AppSettings::getFeedOutputExtension(format);
@@ -48,10 +48,8 @@ class UploadHelper {
     }
 
     // why an upload failed, for logs : transport error or HTTP status, followed by the platform explanations if any
-    static std::string describeFailure(const net::Response &response) {
-        auto description = response.error.empty()
-            ? std::format("HTTP {}", response.status)
-            : response.error;
+    static std::string describeFailure(const net::Response& response) {
+        auto description = response.error.empty() ? std::format("HTTP {}", response.status) : response.error;
 
         if (!response.body.empty()) {
             description += " >> " + response.body;

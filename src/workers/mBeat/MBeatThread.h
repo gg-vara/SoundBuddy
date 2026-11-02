@@ -31,7 +31,7 @@
 namespace mbeat {
 
 enum class Connectivity {
-    Refused,   // no credentials, refused ones, or platform unreachable
+    Refused,  // no credentials, refused ones, or platform unreachable
     Checking,
     Connected
 };

@@ -78,8 +78,8 @@ void SseParser::_processField(std::string_view field, std::string_view value) {
     } else if (field == "id") {
         if (value.find('\0') == std::string_view::npos) _lastEventId = value;
     } else if (field == "retry") {
-        const bool digitsOnly = !value.empty() && value.size() <= 12
-            && std::ranges::all_of(value, [](char c) { return c >= '0' && c <= '9'; });
+        const bool digitsOnly =
+            !value.empty() && value.size() <= 12 && std::ranges::all_of(value, [](char c) { return c >= '0' && c <= '9'; });
         if (digitsOnly) _retry = std::chrono::milliseconds { std::stoll(std::string { value }) };
     }
 }

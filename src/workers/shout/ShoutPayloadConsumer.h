@@ -32,5 +32,5 @@ struct ShoutPayloadConsumer {
     std::string lastHasChangedHash;
 
     /** updates state and produce a JSON output */
-    ShoutConsumeResult consume(const ShoutPayload &incomingPayload);
+    ShoutConsumeResult consume(const ShoutPayload& incomingPayload);
 };

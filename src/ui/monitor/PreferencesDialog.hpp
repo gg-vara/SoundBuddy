@@ -51,20 +51,20 @@ class PreferencesDialog : public QDialog {
         auto* connectivityGroup = new QGroupBox(tr("%1 connectivity").arg(DEST_PLATFORM_PRODUCT_NAME), this);
         connectivityGroup->setLayout(new QVBoxLayout);
 
-            this->_platformPasswordEdit->setEchoMode(QLineEdit::Password);
+        this->_platformPasswordEdit->setEchoMode(QLineEdit::Password);
 
-            this->_platformUrlEdit->setPlaceholderText(tr("Host URL"));
-            this->_platformUsernameEdit->setPlaceholderText(tr("Username"));
-            this->_platformPasswordEdit->setPlaceholderText(tr("Password"));
+        this->_platformUrlEdit->setPlaceholderText(tr("Host URL"));
+        this->_platformUsernameEdit->setPlaceholderText(tr("Username"));
+        this->_platformPasswordEdit->setPlaceholderText(tr("Password"));
 
-            const auto& values = this->_appSettings->values();
-            this->_platformUrlEdit->setText(QString::fromStdString(values.platformHostUrl));
-            this->_platformUsernameEdit->setText(QString::fromStdString(values.platformUsername));
-            this->_platformPasswordEdit->setText(QString::fromStdString(values.platformPassword));
+        const auto& values = this->_appSettings->values();
+        this->_platformUrlEdit->setText(QString::fromStdString(values.platformHostUrl));
+        this->_platformUsernameEdit->setText(QString::fromStdString(values.platformUsername));
+        this->_platformPasswordEdit->setText(QString::fromStdString(values.platformPassword));
 
-            connectivityGroup->layout()->addWidget(this->_platformUrlEdit);
-            connectivityGroup->layout()->addWidget(this->_platformUsernameEdit);
-            connectivityGroup->layout()->addWidget(this->_platformPasswordEdit);
+        connectivityGroup->layout()->addWidget(this->_platformUrlEdit);
+        connectivityGroup->layout()->addWidget(this->_platformUsernameEdit);
+        connectivityGroup->layout()->addWidget(this->_platformPasswordEdit);
 
         layout->addWidget(connectivityGroup);
 
@@ -75,23 +75,19 @@ class PreferencesDialog : public QDialog {
         auto* automationGroup = new QGroupBox(tr("Automation"), this);
         automationGroup->setLayout(new QVBoxLayout);
 
-            this->_launchAppAtStartupChk = new QCheckBox(tr("Launch %1 at system boot").arg(APP_NAME), this);
+        this->_launchAppAtStartupChk = new QCheckBox(tr("Launch %1 at system boot").arg(APP_NAME), this);
 
-            this->_launchAppAtStartupChk->setChecked(values.runAtStartup);
+        this->_launchAppAtStartupChk->setChecked(values.runAtStartup);
 
-            automationGroup->layout()->addWidget(this->_launchAppAtStartupChk);
+        automationGroup->layout()->addWidget(this->_launchAppAtStartupChk);
 
-            if (platform::isLaunchingAtStartup()) {
-                this->_launchAppAtStartupChk->setChecked(true);
-            }
+        if (platform::isLaunchingAtStartup()) {
+            this->_launchAppAtStartupChk->setChecked(true);
+        }
 
-            QObject::connect(
-                this->_launchAppAtStartupChk, &QCheckBox::checkStateChanged,
-                this, &PreferencesDialog::_mightAddAppToStartup
-            );
+        QObject::connect(this->_launchAppAtStartupChk, &QCheckBox::checkStateChanged, this, &PreferencesDialog::_mightAddAppToStartup);
 
         layout->addWidget(automationGroup);
-
     }
 
  private:
@@ -110,7 +106,7 @@ class PreferencesDialog : public QDialog {
     }
 
  protected:
-    void closeEvent(QCloseEvent * /*event*/) override {
+    void closeEvent(QCloseEvent* /*event*/) override {
         //
         auto& values = this->_appSettings->values();
         values.platformHostUrl = this->_platformUrlEdit->text().toStdString();

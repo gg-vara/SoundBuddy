@@ -40,7 +40,8 @@ class LogScrollView : public QWidget {
     }
 
  public:
-    explicit LogScrollView(QWidget* parent) : QWidget(parent) {
+    explicit LogScrollView(QWidget* parent) :
+        QWidget(parent) {
         this->setLayout(new QVBoxLayout);
         this->layout()->setAlignment(Qt::AlignTop);
 
@@ -50,7 +51,7 @@ class LogScrollView : public QWidget {
         this->setPalette(palette);
     }
 
-    void addMessage(const QString &newMessage, workers::MessageKind msgType) {
+    void addMessage(const QString& newMessage, workers::MessageKind msgType) {
         //
         auto* label = new QLabel(newMessage);
         label->setWordWrap(true);
@@ -58,9 +59,14 @@ class LogScrollView : public QWidget {
         //
         auto color = Qt::black;
         switch (msgType) {
-            case workers::MessageKind::Issue: color = Qt::red; break;
-            case workers::MessageKind::Warning: color = Qt::darkYellow; break;
-            case workers::MessageKind::Standard: break;
+            case workers::MessageKind::Issue:
+                color = Qt::red;
+                break;
+            case workers::MessageKind::Warning:
+                color = Qt::darkYellow;
+                break;
+            case workers::MessageKind::Standard:
+                break;
         }
 
         //
@@ -75,20 +81,18 @@ class LogScrollView : public QWidget {
         this->layout()->addWidget(label);
     }
 
-    void updateLatestMessage(const QString &newMessage, workers::MessageKind msgType) {
+    void updateLatestMessage(const QString& newMessage, workers::MessageKind msgType) {
         //
         auto latestLabelIndex = this->layout()->count() - 1;
 
         // if no message, add message
-        if(latestLabelIndex < 0) {
+        if (latestLabelIndex < 0) {
             this->addMessage(newMessage, msgType);
             return;
         }
 
         // get label
-        auto* lbl = reinterpret_cast<QLabel*>(
-            this->layout()->itemAt(latestLabelIndex)->widget()
-        );
+        auto* lbl = reinterpret_cast<QLabel*>(this->layout()->itemAt(latestLabelIndex)->widget());
 
         // update its content
         lbl->setText(newMessage);

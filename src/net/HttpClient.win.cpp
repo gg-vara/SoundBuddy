@@ -49,13 +49,14 @@ std::string narrow(std::wstring_view text) {
 }
 
 // description of the last WinHTTP error, like "Cannot connect : The server name or address could not be resolved (12007)"
-std::string lastError(const char * step) {
+std::string lastError(const char* step) {
     const auto code = GetLastError();
 
-    wchar_t * message = nullptr;
+    wchar_t* message = nullptr;
     FormatMessageW(
         FORMAT_MESSAGE_FROM_HMODULE | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_IGNORE_INSERTS,
-        GetModuleHandleW(L"winhttp.dll"), code, 0, reinterpret_cast<LPWSTR>(&message), 0, nullptr);
+        GetModuleHandleW(L"winhttp.dll"), code, 0, reinterpret_cast<LPWSTR>(&message), 0, nullptr
+    );
 
     std::string description = message ? narrow(message) : std::string {};
     if (message) LocalFree(message);
@@ -99,8 +100,8 @@ class HttpClient::Impl {
 
     explicit Impl(const std::string& userAgent) {
         // automatic proxy (system settings, WPAD) requires Windows 8.1
-        _session = WinHttpOpen(widen(userAgent).c_str(), WINHTTP_ACCESS_TYPE_AUTOMATIC_PROXY,
-            WINHTTP_NO_PROXY_NAME, WINHTTP_NO_PROXY_BYPASS, 0);
+        _session =
+            WinHttpOpen(widen(userAgent).c_str(), WINHTTP_ACCESS_TYPE_AUTOMATIC_PROXY, WINHTTP_NO_PROXY_NAME, WINHTTP_NO_PROXY_BYPASS, 0);
 
         if (_session) {
             DWORD decompression = WINHTTP_DECOMPRESSION_FLAG_ALL;
@@ -112,7 +113,7 @@ class HttpClient::Impl {
         if (_session) WinHttpCloseHandle(_session);
     }
 
-    Response perform(const Request& request, const OnBodyChunk * onChunk, const std::stop_token& stop) {
+    Response perform(const Request& request, const OnBodyChunk* onChunk, const std::stop_token& stop) {
         Response response;
 
         if (stop.stop_requested()) {
@@ -150,9 +151,10 @@ class HttpClient::Impl {
             return response;
         }
 
-        auto* const handle = WinHttpOpenRequest(connection, widen(request.method).c_str(), pathAndQuery.c_str(),
-            nullptr, WINHTTP_NO_REFERER, WINHTTP_DEFAULT_ACCEPT_TYPES,
-            parts.nScheme == INTERNET_SCHEME_HTTPS ? WINHTTP_FLAG_SECURE : 0);
+        auto* const handle = WinHttpOpenRequest(
+            connection, widen(request.method).c_str(), pathAndQuery.c_str(), nullptr, WINHTTP_NO_REFERER, WINHTTP_DEFAULT_ACCEPT_TYPES,
+            parts.nScheme == INTERNET_SCHEME_HTTPS ? WINHTTP_FLAG_SECURE : 0
+        );
 
         if (!handle) {
             response.error = lastError("Cannot create request");
@@ -209,11 +211,11 @@ class HttpClient::Impl {
     }
 
     // sets response.error from the last error, unless the request was cancelled
-    void _fail(Response& response, const char * step) {
+    void _fail(Response& response, const char* step) {
         response.error = _isCancelled() ? std::string { "Request cancelled" } : lastError(step);
     }
 
-    void _exchange(HINTERNET handle, const Request& request, const OnBodyChunk * onChunk, Response& response) {
+    void _exchange(HINTERNET handle, const Request& request, const OnBodyChunk* onChunk, Response& response) {
         // zero means no limit, for WinHTTP too
         const auto timeout = static_cast<int>(request.timeout.count());
         WinHttpSetTimeouts(handle, timeout, timeout, timeout, timeout);
@@ -225,9 +227,10 @@ class HttpClient::Impl {
         }
 
         const auto bodySize = static_cast<DWORD>(request.body.size());
-        const BOOL sent = WinHttpSendRequest(handle,
-            headers.empty() ? WINHTTP_NO_ADDITIONAL_HEADERS : headers.c_str(), static_cast<DWORD>(-1),
-            bodySize != 0U ? const_cast<char*>(request.body.data()) : WINHTTP_NO_REQUEST_DATA, bodySize, bodySize, 0);
+        const BOOL sent = WinHttpSendRequest(
+            handle, headers.empty() ? WINHTTP_NO_ADDITIONAL_HEADERS : headers.c_str(), static_cast<DWORD>(-1),
+            bodySize != 0U ? const_cast<char*>(request.body.data()) : WINHTTP_NO_REQUEST_DATA, bodySize, bodySize, 0
+        );
 
         if (sent == 0) {
             _fail(response, "Cannot send request");
@@ -241,17 +244,21 @@ class HttpClient::Impl {
         // status and headers
         DWORD status = 0;
         DWORD size = sizeof(status);
-        WinHttpQueryHeaders(handle, WINHTTP_QUERY_STATUS_CODE | WINHTTP_QUERY_FLAG_NUMBER,
-            WINHTTP_HEADER_NAME_BY_INDEX, &status, &size, WINHTTP_NO_HEADER_INDEX);
+        WinHttpQueryHeaders(
+            handle, WINHTTP_QUERY_STATUS_CODE | WINHTTP_QUERY_FLAG_NUMBER, WINHTTP_HEADER_NAME_BY_INDEX, &status, &size,
+            WINHTTP_NO_HEADER_INDEX
+        );
         response.status = static_cast<int>(status);
 
         size = 0;
-        WinHttpQueryHeaders(handle, WINHTTP_QUERY_RAW_HEADERS_CRLF, WINHTTP_HEADER_NAME_BY_INDEX,
-            WINHTTP_NO_OUTPUT_BUFFER, &size, WINHTTP_NO_HEADER_INDEX);
+        WinHttpQueryHeaders(
+            handle, WINHTTP_QUERY_RAW_HEADERS_CRLF, WINHTTP_HEADER_NAME_BY_INDEX, WINHTTP_NO_OUTPUT_BUFFER, &size, WINHTTP_NO_HEADER_INDEX
+        );
         if (size != 0U) {
             std::wstring raw(size / sizeof(wchar_t), L'\0');
-            if (WinHttpQueryHeaders(handle, WINHTTP_QUERY_RAW_HEADERS_CRLF, WINHTTP_HEADER_NAME_BY_INDEX,
-                    raw.data(), &size, WINHTTP_NO_HEADER_INDEX) != 0) {
+            if (WinHttpQueryHeaders(
+                    handle, WINHTTP_QUERY_RAW_HEADERS_CRLF, WINHTTP_HEADER_NAME_BY_INDEX, raw.data(), &size, WINHTTP_NO_HEADER_INDEX
+                ) != 0) {
                 response.headers = parseHeaders(raw);
             }
         }
@@ -284,7 +291,8 @@ class HttpClient::Impl {
     }
 };
 
-HttpClient::HttpClient(const std::string& userAgent) : _impl(std::make_unique<Impl>(userAgent)) {}
+HttpClient::HttpClient(const std::string& userAgent) :
+    _impl(std::make_unique<Impl>(userAgent)) {}
 HttpClient::~HttpClient() = default;
 
 Response HttpClient::send(const Request& request, const std::stop_token& stop) {

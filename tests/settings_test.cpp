@@ -24,26 +24,42 @@ int main(int argc, char** argv) {
 
     CHECK(!settings::load(file), "missing file : nothing");
 
-    settings::Settings values { .platformHostUrl = "https://host.example", .platformUsername = "j\xC3\xA9r\xC3\xB4me \"q\"", .platformPassword = "p\\w\n", .autoRunShout = true, .runAtStartup = false };
+    settings::Settings values { .platformHostUrl = "https://host.example",
+                                .platformUsername = "j\xC3\xA9r\xC3\xB4me \"q\"",
+                                .platformPassword = "p\\w\n",
+                                .autoRunShout = true,
+                                .runAtStartup = false };
     CHECK(settings::save(file, values), "save creates directories");
     CHECK(!std::filesystem::exists(file.parent_path() / "settings.json.tmp"), "no temporary file left");
 
     auto loaded = settings::load(file);
-    CHECK(loaded && loaded->platformHostUrl == values.platformHostUrl && loaded->platformUsername == values.platformUsername
-        && loaded->platformPassword == values.platformPassword && loaded->autoRunShout && !loaded->runAtStartup, "round trip : UTF-8, escapes");
+    CHECK(
+        loaded && loaded->platformHostUrl == values.platformHostUrl && loaded->platformUsername == values.platformUsername &&
+            loaded->platformPassword == values.platformPassword && loaded->autoRunShout && !loaded->runAtStartup,
+        "round trip : UTF-8, escapes"
+    );
 
     values.runAtStartup = true;
     values.platformHostUrl = "x";
     const auto overwritten = settings::save(file, values) ? settings::load(file) : std::nullopt;
     CHECK(overwritten && overwritten->runAtStartup && overwritten->platformHostUrl == "x", "overwrite");
 
-    { std::ofstream { file, std::ios::binary } << R"({"autoRunShout": true, "platformUsername": 42, "unknown": []})"; }
+    {
+        std::ofstream { file, std::ios::binary } << R"({"autoRunShout": true, "platformUsername": 42, "unknown": []})";
+    }
     loaded = settings::load(file);
-    CHECK(loaded && loaded->autoRunShout && loaded->platformUsername.empty() && !loaded->runAtStartup, "partial file : defaults for missing values and wrong types");
+    CHECK(
+        loaded && loaded->autoRunShout && loaded->platformUsername.empty() && !loaded->runAtStartup,
+        "partial file : defaults for missing values and wrong types"
+    );
 
-    { std::ofstream { file, std::ios::binary } << "{ not json"; }
+    {
+        std::ofstream { file, std::ios::binary } << "{ not json";
+    }
     CHECK(!settings::load(file), "invalid JSON : nothing");
-    { std::ofstream { file, std::ios::binary } << "[1,2]"; }
+    {
+        std::ofstream { file, std::ios::binary } << "[1,2]";
+    }
     CHECK(!settings::load(file), "not an object : nothing");
 
     // AppSettings, under the test identity
@@ -66,10 +82,17 @@ int main(int argc, char** argv) {
     {
         const AppSettings appSettings;
         const auto& imported = appSettings.values();
-        CHECK(imported.platformHostUrl == "https://legacy.example" && imported.platformUsername == "l\xC3\xA9gacy"
-            && imported.platformPassword == "secret" && imported.autoRunShout && !imported.runAtStartup, "previous versions settings imported");
+        CHECK(
+            imported.platformHostUrl == "https://legacy.example" && imported.platformUsername == "l\xC3\xA9gacy" &&
+                imported.platformPassword == "secret" && imported.autoRunShout && !imported.runAtStartup,
+            "previous versions settings imported"
+        );
         CHECK(std::filesystem::exists(dataFile), "settings file created by the import");
-        CHECK(appSettings.getConnectivityInfos().areOK && appSettings.getConnectivityInfos().getPlaformHomeUrl() == "https://legacy.example/u/l\xC3\xA9gacy", "connectivity infos");
+        CHECK(
+            appSettings.getConnectivityInfos().areOK &&
+                appSettings.getConnectivityInfos().getPlaformHomeUrl() == "https://legacy.example/u/l\xC3\xA9gacy",
+            "connectivity infos"
+        );
     }
     {
         QSettings legacy;

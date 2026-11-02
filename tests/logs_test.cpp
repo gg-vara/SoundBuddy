@@ -40,12 +40,15 @@ int main() {
 #endif
     const auto first = readLines(file);
     CHECK(first.size() == expectedLines, "line before start left out, debug line in debug builds only");
-    CHECK(!first.empty() && std::regex_match(first[0], std::regex(R"(\d{4}-\d\d-\d\d \d\d:\d\d:\d\d\.\d{3} \[INFO\] \[Test\] café 42 音)")), "line format, UTF-8");
+    CHECK(
+        !first.empty() && std::regex_match(first[0], std::regex(R"(\d{4}-\d\d-\d\d \d\d:\d\d:\d\d\.\d{3} \[INFO\] \[Test\] café 42 音)")),
+        "line format, UTF-8"
+    );
 
     // 4 threads x 5000 lines of about 90 bytes : 1.8 MB, so one rotation
     std::vector<std::thread> threads;
     threads.reserve(4);
-for (int t = 0; t < 4; ++t) {
+    for (int t = 0; t < 4; ++t) {
         threads.emplace_back([t] {
             for (int i = 0; i < 5000; ++i) logs::warning("Thread", "thread {} line {:05} padding-padding-padding", t, i);
         });
@@ -53,13 +56,19 @@ for (int t = 0; t < 4; ++t) {
     for (auto& thread : threads) thread.join();
 
     CHECK(std::filesystem::exists(rotated), "rotated into soundbuddy.1.log");
-    CHECK(std::filesystem::file_size(file) <= std::uintmax_t { 1024 } * 1024 && std::filesystem::file_size(rotated) <= std::uintmax_t { 1024 } * 1024, "files under 1 MB");
+    CHECK(
+        std::filesystem::file_size(file) <= std::uintmax_t { 1024 } * 1024 &&
+            std::filesystem::file_size(rotated) <= std::uintmax_t { 1024 } * 1024,
+        "files under 1 MB"
+    );
 
     auto all = readLines(rotated);
     const auto current = readLines(file);
     all.insert(all.end(), current.begin(), current.end());
 
-    const std::regex threadLine(R"(\d{4}-\d\d-\d\d \d\d:\d\d:\d\d\.\d{3} \[WARNING\] \[Thread\] thread \d line \d{5} padding-padding-padding)");
+    const std::regex threadLine(
+        R"(\d{4}-\d\d-\d\d \d\d:\d\d:\d\d\.\d{3} \[WARNING\] \[Thread\] thread \d line \d{5} padding-padding-padding)"
+    );
     std::size_t threadLines = 0;
     std::size_t broken = 0;
     for (const auto& line : all) {

@@ -55,15 +55,15 @@
 #include "src/ui/monitor/PreferencesDialog.hpp"
 
 class MainWindow : public QMainWindow {
-   Q_OBJECT
+    Q_OBJECT
 
  public:
     MainWindow();
     void informWarningPresence();
 
  protected:
-    void hideEvent(QHideEvent *event) override;
-    void closeEvent(QCloseEvent *event) override;
+    void hideEvent(QHideEvent* event) override;
+    void closeEvent(QCloseEvent* event) override;
 
  private:
     bool _forceQuitOnMacOs = false;
@@ -75,12 +75,12 @@ class MainWindow : public QMainWindow {
 
     // statusbar
     void _initStatusBar();
-    void _updateStatusBar(const QString &message, const ConnectivityIndicator &indic);
+    void _updateStatusBar(const QString& message, const ConnectivityIndicator& indic);
     QLabel* _statusLabel = nullptr;
     TrafficLightWidget* _statusLight = nullptr;
 
     ///
-    /// UI instantiation 
+    /// UI instantiation
     ///
 
     void _initUI();
@@ -112,10 +112,10 @@ class MainWindow : public QMainWindow {
     void _iconActivated(QSystemTrayIcon::ActivationReason reason);
 
     // update handling
-    QAction *_versionAction = nullptr;
-    QAction *_cfugAction = nullptr;
+    QAction* _versionAction = nullptr;
+    QAction* _cfugAction = nullptr;
     void _setupAutoUpdate();
-    void _onUpdateChecked(const UpdateChecker::CheckResults &checkResults);
+    void _onUpdateChecked(const UpdateChecker::CheckResults& checkResults);
     void _requireUpdateCheckFromUser();
     void _checkForAppUpdates();
     void _updateSearchSwitchUi(bool isSearching);

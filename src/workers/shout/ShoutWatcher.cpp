@@ -69,7 +69,7 @@ void ShoutWatcher::_run(const std::stop_token& stop) {
     if (_callbacks.onFinished) _callbacks.onFinished();
 }
 
-void ShoutWatcher::_processPayload(const ShoutPayload &incomingPayload) {
+void ShoutWatcher::_processPayload(const ShoutPayload& incomingPayload) {
     auto output = _consumer.consume(incomingPayload);
     if (!output.hasMeaningfulChange) return;
 
@@ -81,11 +81,10 @@ void ShoutWatcher::_processPayload(const ShoutPayload &incomingPayload) {
     }
 
     const auto playerState = incomingPayload.playing ? i18n::tr("playing") : i18n::tr("paused");
-    _say(i18n::format(i18n::tr("%1: Shouting -> %2 - %3 - %4 (%5)"), {
-        timestamps::local(),
-        incomingPayload.name,
-        incomingPayload.album,
-        incomingPayload.artist,
-        playerState
-    }));
+    _say(
+        i18n::format(
+            i18n::tr("%1: Shouting -> %2 - %3 - %4 (%5)"),
+            { timestamps::local(), incomingPayload.name, incomingPayload.album, incomingPayload.artist, playerState }
+        )
+    );
 }

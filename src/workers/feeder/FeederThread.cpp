@@ -72,46 +72,51 @@ void FeederThread::_feed(const std::stop_token& stop) {
     //
     _say(tr("Getting XML file location..."));
 
-        // UTF-8 paths, as the library parser takes them
-        const auto musicAppLibPath = platform::toUtf8(platform::musicLibraryFile());
-        const auto outputPath = platform::toUtf8(AppSettings::getFeedOutputFilePath(AppSettings::FeedFormat::Json));
-        const auto warningPath = platform::toUtf8(AppSettings::getFeedWarningFilePath());
-        logs::info("Feeder", "Reading library {}", musicAppLibPath);
+    // UTF-8 paths, as the library parser takes them
+    const auto musicAppLibPath = platform::toUtf8(platform::musicLibraryFile());
+    const auto outputPath = platform::toUtf8(AppSettings::getFeedOutputFilePath(AppSettings::FeedFormat::Json));
+    const auto warningPath = platform::toUtf8(AppSettings::getFeedWarningFilePath());
+    logs::info("Feeder", "Reading library {}", musicAppLibPath);
 
     //
     _say(tr("Collecting tracks infos..."));
-        const ITunesXMLLibrary library { musicAppLibPath.c_str() };
+    const ITunesXMLLibrary library { musicAppLibPath.c_str() };
     _say(tr("Collection done !"));
 
     //
     _say(tr("Parsing infos into JSON..."));
 
-        const JSONLibrary json { library };
-        logs::info("Feeder", "{} tracks, {} left out for missing metadata", json.tracksCount(), json.warningsCount());
+    const JSONLibrary json { library };
+    logs::info("Feeder", "{} tracks, {} left out for missing metadata", json.tracksCount(), json.warningsCount());
 
-        // if has missing fields tracks
-        if (json.warningsCount() != 0U) {
-            _say(i18n::format(
-                i18n::tr("WARNING ! %1 files in your library are missing important "
+    // if has missing fields tracks
+    if (json.warningsCount() != 0U) {
+        _say(
+            i18n::format(
+                i18n::tr(
+                    "WARNING ! %1 files in your library are missing important "
                     "metadata and consequently were removed from the output file ! "
-                    "Please check the \"%2\" file for more informations."),
+                    "Please check the \"%2\" file for more informations."
+                ),
                 { std::to_string(json.warningsCount()), warningPath }
-            ), workers::MessageKind::Warning);
+            ),
+            workers::MessageKind::Warning
+        );
 
-            json.writeWarnings(warningPath.c_str());
-        } else {
-            // else remove warning file
-            std::error_code error;
-            std::filesystem::remove(AppSettings::getFeedWarningFilePath(), error);
-        }
+        json.writeWarnings(warningPath.c_str());
+    } else {
+        // else remove warning file
+        std::error_code error;
+        std::filesystem::remove(AppSettings::getFeedWarningFilePath(), error);
+    }
 
-        //
-        if (json.tracksCount() == 0 && json.warningsCount() == 0) {
-            _say(i18n::format(i18n::tr("No music found in your %1 library. Please feed it some."), { musicApp }), workers::MessageKind::Issue);
-            return;
-        }
+    //
+    if (json.tracksCount() == 0 && json.warningsCount() == 0) {
+        _say(i18n::format(i18n::tr("No music found in your %1 library. Please feed it some."), { musicApp }), workers::MessageKind::Issue);
+        return;
+    }
 
-        json.writeTracks(outputPath.c_str());
+    json.writeTracks(outputPath.c_str());
 
     _say(tr("Parsing done !"));
     _say(tr("OK, output file is ready for breakfast !"));
@@ -121,40 +126,53 @@ void FeederThread::_feed(const std::stop_token& stop) {
 
     _say(tr("Now we try to compress it..."));
 
-        const auto outputJson = json.tracksJSON();
-        const auto compressedData = compression::compress(outputJson);
-        if (compressedData.empty()) {
-            throw std::runtime_error("Library compression failed");
-        }
+    const auto outputJson = json.tracksJSON();
+    const auto compressedData = compression::compress(outputJson);
+    if (compressedData.empty()) {
+        throw std::runtime_error("Library compression failed");
+    }
 
-        // write into file
-        std::ofstream file { AppSettings::getFeedOutputFilePath(AppSettings::FeedFormat::Compressed), std::ios::binary | std::ios::trunc };
-        file.write(compressedData.data(), static_cast<std::streamsize>(compressedData.size()));
-        file.close();
+    // write into file
+    std::ofstream file { AppSettings::getFeedOutputFilePath(AppSettings::FeedFormat::Compressed), std::ios::binary | std::ios::trunc };
+    file.write(compressedData.data(), static_cast<std::streamsize>(compressedData.size()));
+    file.close();
 
-    _say(i18n::format(i18n::tr("Went from %1 to %2"), { i18n::formatDataSize(outputJson.size()), i18n::formatDataSize(compressedData.size()) }));
+    _say(
+        i18n::format(
+            i18n::tr("Went from %1 to %2"), { i18n::formatDataSize(outputJson.size()), i18n::formatDataSize(compressedData.size()) }
+        )
+    );
     if (stop.stop_requested()) return;
 
     _say(tr("Let's try to send now !"));
-        net::HttpClient client(APP_NAME "/" APP_CURRENT_VERSION);
+    net::HttpClient client(APP_NAME "/" APP_CURRENT_VERSION);
 
     _say(tr("Sending... Waiting for response."));
 
-        const auto response = UploadHelper::uploadDataToPlatform(client, {
+    const auto response = UploadHelper::uploadDataToPlatform(
+        client,
+        {
             .connectivityInfos = _connectivityInfos,
             .uploadInfos = AppSettings::getFeederUploadInfos(),
             .dataToUpload = compressedData,
-        }, AppSettings::FeedFormat::Compressed, stop);
+        },
+        AppSettings::FeedFormat::Compressed, stop
+    );
 
-        if (stop.stop_requested()) return;
+    if (stop.stop_requested()) return;
 
-        if (!response.ok()) {
-            _say(i18n::format(i18n::tr("An error occured while sending tracks infos to %1 platform : %2"),
-                { DEST_PLATFORM_PRODUCT_NAME, UploadHelper::describeFailure(response) }), workers::MessageKind::Issue);
-        } else if (!response.body.empty()) {
-            logs::info("Feeder", "Uploaded, HTTP {}", response.status);
-            _say(i18n::format(i18n::tr("Server responded: %1"), { response.body }));
-        } else {
-            _say(tr("No feedback from the server ? Strange... Please check the targeted host."), workers::MessageKind::Warning);
-        }
+    if (!response.ok()) {
+        _say(
+            i18n::format(
+                i18n::tr("An error occured while sending tracks infos to %1 platform : %2"),
+                { DEST_PLATFORM_PRODUCT_NAME, UploadHelper::describeFailure(response) }
+            ),
+            workers::MessageKind::Issue
+        );
+    } else if (!response.body.empty()) {
+        logs::info("Feeder", "Uploaded, HTTP {}", response.status);
+        _say(i18n::format(i18n::tr("Server responded: %1"), { response.body }));
+    } else {
+        _say(tr("No feedback from the server ? Strange... Please check the targeted host."), workers::MessageKind::Warning);
+    }
 }

@@ -34,11 +34,11 @@ namespace platform {
 
 namespace {
 
-std::filesystem::path toPath(NSString * path) {
+std::filesystem::path toPath(NSString* path) {
     return path ? std::filesystem::path(path.fileSystemRepresentation) : std::filesystem::path();
 }
 
-NSString * toNSString(const std::filesystem::path& path) {
+NSString* toNSString(const std::filesystem::path& path) {
     return @(path.c_str());
 }
 
@@ -55,7 +55,8 @@ std::filesystem::path applicationFile() {
 
 std::filesystem::path dataDirectory() {
     @autoreleasepool {
-        NSString * applicationSupport = NSSearchPathForDirectoriesInDomains(NSApplicationSupportDirectory, NSUserDomainMask, YES).firstObject;
+        NSString* applicationSupport =
+            NSSearchPathForDirectoriesInDomains(NSApplicationSupportDirectory, NSUserDomainMask, YES).firstObject;
         const auto directory = toPath(applicationSupport) / APP_PUBLISHER_ORG / APP_NAME;
 
         std::error_code error;
@@ -73,16 +74,16 @@ bool openPath(const std::filesystem::path& path) {
 
 bool openUrl(const std::string& url) {
     @autoreleasepool {
-        NSURL * target = [NSURL URLWithString:@(url.c_str())];
+        NSURL* target = [NSURL URLWithString:@(url.c_str())];
         return target && [NSWorkspace.sharedWorkspace openURL:target];
     }
 }
 
 bool isLaunchingAtStartup() {
     @autoreleasepool {
-        NSURL * file = [NSURL fileURLWithPath:toNSString(launchAgentFile())];
-        NSDictionary * agent = [NSDictionary dictionaryWithContentsOfURL:file error:nil];
-        NSArray * arguments = agent[@"ProgramArguments"];
+        NSURL* file = [NSURL fileURLWithPath:toNSString(launchAgentFile())];
+        NSDictionary* agent = [NSDictionary dictionaryWithContentsOfURL:file error:nil];
+        NSArray* arguments = agent[@"ProgramArguments"];
         if (![arguments isKindOfClass:NSArray.class] || arguments.count == 0) return false;
 
         return [arguments.firstObject isEqual:toNSString(applicationFile())];
@@ -102,13 +103,13 @@ bool setLaunchingAtStartup(bool enabled) {
     if (error) return false;
 
     @autoreleasepool {
-        NSDictionary * agent = @{
-            @"Label": @APP_NAME,
-            @"ProcessType": @"Interactive",
-            @"ExitTimeOut": @0,
-            @"RunAtLoad": @YES,
-            @"LimitLoadToSessionType": @"Aqua",
-            @"ProgramArguments": @[ toNSString(applicationFile()) ],
+        NSDictionary* agent = @{
+            @"Label" : @APP_NAME,
+            @"ProcessType" : @"Interactive",
+            @"ExitTimeOut" : @0,
+            @"RunAtLoad" : @YES,
+            @"LimitLoadToSessionType" : @"Aqua",
+            @"ProgramArguments" : @[ toNSString(applicationFile()) ],
         };
 
         return [agent writeToURL:[NSURL fileURLWithPath:toNSString(file)] error:nil];
@@ -133,7 +134,7 @@ std::filesystem::path musicLibraryFile() {
     @autoreleasepool {
         // last directory chosen in Music.app, where its library lies
         const auto value = CFPreferencesCopyAppValue(CFSTR("NSNavLastRootDirectory"), CFSTR("com.apple.Music"));
-        NSString * root = CFBridgingRelease(value);
+        NSString* root = CFBridgingRelease(value);
 
         if (![root isKindOfClass:NSString.class] || root.length == 0) {
             throw std::runtime_error(i18n::format(i18n::tr("%1 XML library location could not be deduced."), { musicAppName() }));

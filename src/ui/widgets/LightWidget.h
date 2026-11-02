@@ -21,11 +21,7 @@
 
 #include <QtWidgets>
 
-enum class ConnectivityIndicator {
-    NOK = 0,
-    ONGOING = 1,
-    OK = 2
-};
+enum class ConnectivityIndicator { NOK = 0, ONGOING = 1, OK = 2 };
 
 Q_DECLARE_METATYPE(ConnectivityIndicator)
 
@@ -34,7 +30,7 @@ class LightWidget : public QWidget {
     Q_PROPERTY(bool on READ isOn WRITE setOn)
 
  public:
-    explicit LightWidget(const QColor &color, QWidget* parent = nullptr);
+    explicit LightWidget(const QColor& color, QWidget* parent = nullptr);
     bool isOn() const;
     void setOn(bool on);
 

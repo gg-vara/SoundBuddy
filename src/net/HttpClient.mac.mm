@@ -28,49 +28,50 @@
 
 // receives a single task events, on the session delegate queue
 @interface SBTaskDelegate : NSObject <NSURLSessionDataDelegate>
-@property (nonatomic, assign) net::Response * response;
-@property (nonatomic, assign) const net::OnBodyChunk * onChunk;
-@property (nonatomic, strong) dispatch_semaphore_t done;
-@property (nonatomic, assign) BOOL stoppedByCallback;
+@property(nonatomic, assign) net::Response* response;
+@property(nonatomic, assign) const net::OnBodyChunk* onChunk;
+@property(nonatomic, strong) dispatch_semaphore_t done;
+@property(nonatomic, assign) BOOL stoppedByCallback;
 @end
 
 @implementation SBTaskDelegate
 
-- (void)URLSession:(NSURLSession *)session dataTask:(NSURLSessionDataTask *)dataTask
-    didReceiveResponse:(NSURLResponse *)response
+- (void)URLSession:(NSURLSession*)session
+              dataTask:(NSURLSessionDataTask*)dataTask
+    didReceiveResponse:(NSURLResponse*)response
      completionHandler:(void (^)(NSURLSessionResponseDisposition))completionHandler {
-    auto http = (NSHTTPURLResponse *)response;
+    auto http = (NSHTTPURLResponse*)response;
     self.response->status = static_cast<int>(http.statusCode);
 
-    [http.allHeaderFields enumerateKeysAndObjectsUsingBlock:^(id key, id value, BOOL *) {
-        self.response->headers.push_back({ [[key description] UTF8String], [[value description] UTF8String] });
+    [http.allHeaderFields enumerateKeysAndObjectsUsingBlock:^(id key, id value, BOOL*) {
+      self.response->headers.push_back({ [[key description] UTF8String], [[value description] UTF8String] });
     }];
 
     completionHandler(NSURLSessionResponseAllow);
 }
 
-- (void)URLSession:(NSURLSession *)session dataTask:(NSURLSessionDataTask *)dataTask didReceiveData:(NSData *)data {
-    [data enumerateByteRangesUsingBlock:^(const void * bytes, NSRange range, BOOL * stop) {
-        const std::string_view chunk { static_cast<const char *>(bytes), range.length };
+- (void)URLSession:(NSURLSession*)session dataTask:(NSURLSessionDataTask*)dataTask didReceiveData:(NSData*)data {
+    [data enumerateByteRangesUsingBlock:^(const void* bytes, NSRange range, BOOL* stop) {
+      const std::string_view chunk { static_cast<const char*>(bytes), range.length };
 
-        if (self.onChunk) {
-            if (!(*self.onChunk)(chunk)) {
-                *stop = YES;
-                self.stoppedByCallback = YES;
-                [dataTask cancel];
-            }
-        } else {
-            self.response->body += chunk;
-        }
+      if (self.onChunk) {
+          if (!(*self.onChunk)(chunk)) {
+              *stop = YES;
+              self.stoppedByCallback = YES;
+              [dataTask cancel];
+          }
+      } else {
+          self.response->body += chunk;
+      }
     }];
 }
 
-- (void)URLSession:(NSURLSession *)session task:(NSURLSessionTask *)task didCompleteWithError:(NSError *)error {
+- (void)URLSession:(NSURLSession*)session task:(NSURLSessionTask*)task didCompleteWithError:(NSError*)error {
     // a task cancelled because the chunk callback asked to stop is not an error
     if (error && !(error.code == NSURLErrorCancelled && self.stoppedByCallback)) {
         self.response->error = error.code == NSURLErrorCancelled
-            ? std::string { "Request cancelled" }
-            : std::string { error.localizedDescription.UTF8String } + " (" + std::to_string(error.code) + ")";
+                                   ? std::string { "Request cancelled" }
+                                   : std::string { error.localizedDescription.UTF8String } + " (" + std::to_string(error.code) + ")";
     }
 
     dispatch_semaphore_signal(self.done);
@@ -82,9 +83,10 @@ namespace net {
 
 class HttpClient::Impl {
  public:
-    explicit Impl(const std::string& userAgent) : _userAgent(userAgent) {}
+    explicit Impl(const std::string& userAgent) :
+        _userAgent(userAgent) {}
 
-    Response perform(const Request& request, const OnBodyChunk * onChunk, const std::stop_token& stop) {
+    Response perform(const Request& request, const OnBodyChunk* onChunk, const std::stop_token& stop) {
         Response response;
 
         if (stop.stop_requested()) {
@@ -92,7 +94,7 @@ class HttpClient::Impl {
             return response;
         }
 
-        NSURL * url = [NSURL URLWithString:@(request.url.c_str())];
+        NSURL* url = [NSURL URLWithString:@(request.url.c_str())];
         if (!url) {
             response.error = "Invalid URL";
             return response;
@@ -101,8 +103,9 @@ class HttpClient::Impl {
         // zero means no limit
         const NSTimeInterval timeout = request.timeout.count() ? request.timeout.count() / 1000.0 : 365 * 24 * 3600.0;
 
-        NSMutableURLRequest * urlRequest = [NSMutableURLRequest requestWithURL:url
-            cachePolicy:NSURLRequestReloadIgnoringLocalCacheData timeoutInterval:timeout];
+        NSMutableURLRequest* urlRequest = [NSMutableURLRequest requestWithURL:url
+                                                                  cachePolicy:NSURLRequestReloadIgnoringLocalCacheData
+                                                              timeoutInterval:timeout];
         urlRequest.HTTPMethod = @(request.method.c_str());
         [urlRequest setValue:@(_userAgent.c_str()) forHTTPHeaderField:@"User-Agent"];
 
@@ -115,14 +118,15 @@ class HttpClient::Impl {
         }
 
         // one session per request : its delegate is the task's one
-        SBTaskDelegate * delegate = [SBTaskDelegate new];
+        SBTaskDelegate* delegate = [SBTaskDelegate new];
         delegate.response = &response;
         delegate.onChunk = onChunk;
         delegate.done = dispatch_semaphore_create(0);
 
-        NSURLSession * session = [NSURLSession sessionWithConfiguration:NSURLSessionConfiguration.ephemeralSessionConfiguration
-            delegate:delegate delegateQueue:nil];
-        NSURLSessionDataTask * task = [session dataTaskWithRequest:urlRequest];
+        NSURLSession* session = [NSURLSession sessionWithConfiguration:NSURLSessionConfiguration.ephemeralSessionConfiguration
+                                                              delegate:delegate
+                                                         delegateQueue:nil];
+        NSURLSessionDataTask* task = [session dataTaskWithRequest:urlRequest];
 
         {
             std::lock_guard lock { _mutex };
@@ -154,10 +158,11 @@ class HttpClient::Impl {
     std::string _userAgent;
 
     std::mutex _mutex;
-    NSURLSessionDataTask * _task = nil;
+    NSURLSessionDataTask* _task = nil;
 };
 
-HttpClient::HttpClient(const std::string& userAgent) : _impl(std::make_unique<Impl>(userAgent)) {}
+HttpClient::HttpClient(const std::string& userAgent) :
+    _impl(std::make_unique<Impl>(userAgent)) {}
 HttpClient::~HttpClient() = default;
 
 Response HttpClient::send(const Request& request, const std::stop_token& stop) {

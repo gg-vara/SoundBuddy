@@ -39,9 +39,8 @@ namespace platform {
 namespace {
 
 // programs started at login, for the current user
-constexpr const wchar_t * runKey = LR"(Software\Microsoft\Windows\CurrentVersion\Run)";
-constexpr const wchar_t * runValue = L"" APP_NAME;
-
+constexpr const wchar_t* runKey = LR"(Software\Microsoft\Windows\CurrentVersion\Run)";
+constexpr const wchar_t* runValue = L"" APP_NAME;
 
 std::filesystem::path knownFolder(REFKNOWNFOLDERID id) {
     PWSTR path = nullptr;
@@ -169,8 +168,9 @@ bool isLaunchingAtStartup() {
     const auto expected = startupCommand();
 
     // paths are case-insensitive
-    return CompareStringOrdinal(registered.c_str(), static_cast<int>(registered.size()),
-        expected.c_str(), static_cast<int>(expected.size()), TRUE) == CSTR_EQUAL;
+    return CompareStringOrdinal(
+               registered.c_str(), static_cast<int>(registered.size()), expected.c_str(), static_cast<int>(expected.size()), TRUE
+           ) == CSTR_EQUAL;
 }
 
 bool setLaunchingAtStartup(bool enabled) {
@@ -180,8 +180,9 @@ bool setLaunchingAtStartup(bool enabled) {
     }
 
     const auto command = startupCommand();
-    return RegSetKeyValueW(HKEY_CURRENT_USER, runKey, runValue, REG_SZ,
-        command.c_str(), static_cast<DWORD>((command.size() + 1) * sizeof(wchar_t))) == ERROR_SUCCESS;
+    return RegSetKeyValueW(
+               HKEY_CURRENT_USER, runKey, runValue, REG_SZ, command.c_str(), static_cast<DWORD>((command.size() + 1) * sizeof(wchar_t))
+           ) == ERROR_SUCCESS;
 }
 
 std::string_view musicAppName() {

@@ -44,16 +44,25 @@ namespace {
 void logResults(const UpdateChecker::CheckResults& results) {
     using Result = UpdateChecker::Result;
     switch (results.result) {
-        case Result::UpdateReady: logs::info("Updates", "Version {} downloaded", results.version); break;
-        case Result::NoUpdate: logs::info("Updates", "Up to date"); break;
-        case Result::NotInstalled: logs::info("Updates", "Not checked, not running from an installation"); break;
-        case Result::Failed: logs::warning("Updates", "Check failed : {}", results.error); break;
+        case Result::UpdateReady:
+            logs::info("Updates", "Version {} downloaded", results.version);
+            break;
+        case Result::NoUpdate:
+            logs::info("Updates", "Up to date");
+            break;
+        case Result::NotInstalled:
+            logs::info("Updates", "Not checked, not running from an installation");
+            break;
+        case Result::Failed:
+            logs::warning("Updates", "Check failed : {}", results.error);
+            break;
     }
 }
 
 }  // namespace
 
-UpdateChecker::UpdateChecker() : _state(std::make_shared<State>()) {}
+UpdateChecker::UpdateChecker() :
+    _state(std::make_shared<State>()) {}
 
 UpdateChecker::~UpdateChecker() {
     const std::scoped_lock lock { _state->mutex };
@@ -74,9 +83,7 @@ bool UpdateChecker::check(OnChecked onChecked) {
         std::optional<Velopack::UpdateInfo> update;
 
         try {
-            manager = std::make_unique<Velopack::UpdateManager>(
-                std::make_unique<Velopack::GithubSource>(APP_UPDATES_REPOSITORY_URL)
-            );
+            manager = std::make_unique<Velopack::UpdateManager>(std::make_unique<Velopack::GithubSource>(APP_UPDATES_REPOSITORY_URL));
 
             update = manager->CheckForUpdates();
             if (update) {

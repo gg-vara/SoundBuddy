@@ -21,17 +21,15 @@
 
 #include "src/ui/WorkerBridge.hpp"
 
-TemplateTab::TemplateTab(QWidget* parent) : QWidget(parent),
+TemplateTab::TemplateTab(QWidget* parent) :
+    QWidget(parent),
     _button(new QPushButton(this)),
     _logArea(new QScrollArea(this)) {
-        //
-        QObject::connect(
-            this->_logArea->verticalScrollBar(), &QScrollBar::rangeChanged,
-            this, &TemplateTab::_scrollUpdate
-        );
+    //
+    QObject::connect(this->_logArea->verticalScrollBar(), &QScrollBar::rangeChanged, this, &TemplateTab::_scrollUpdate);
 
-        this->setLayout(new QBoxLayout(QBoxLayout::TopToBottom, this));
-        this->_logArea->setWidgetResizable(true);
+    this->setLayout(new QBoxLayout(QBoxLayout::TopToBottom, this));
+    this->_logArea->setWidgetResizable(true);
 }
 
 // the scroll area deletes the previous log
@@ -60,7 +58,7 @@ workers::MessageSink TemplateTab::messageSink() {
     };
 }
 
-void TemplateTab::_printLog(const QString &text, workers::MessageKind kind, workers::LineMode line) {
+void TemplateTab::_printLog(const QString& text, workers::MessageKind kind, workers::LineMode line) {
     // no log until a worker started
     if (!this->_lsv) return;
 

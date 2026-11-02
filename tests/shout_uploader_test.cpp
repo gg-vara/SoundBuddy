@@ -39,7 +39,8 @@ int main() {
     // refused connection : the failure is reported, then the queue is drained
     {
         Messages messages;
-        ShoutUploader uploader { { .platformHostUrl = "http://127.0.0.1:9", .username = "user", .password = "password", .areOK = true }, messages.sink() };
+        ShoutUploader uploader { { .platformHostUrl = "http://127.0.0.1:9", .username = "user", .password = "password", .areOK = true },
+                                 messages.sink() };
 
         uploader.upload("{}");
         uploader.upload("{}");
@@ -47,7 +48,10 @@ int main() {
 
         const auto received = messages.get();
         CHECK(received.size() == 2, "one message per failed upload");
-        CHECK(!received.empty() && received[0].kind == workers::MessageKind::Issue && received[0].line == workers::LineMode::Append, "reported as an issue");
+        CHECK(
+            !received.empty() && received[0].kind == workers::MessageKind::Issue && received[0].line == workers::LineMode::Append,
+            "reported as an issue"
+        );
         CHECK(!received.empty() && received[0].text.find("SoundVitrine") != std::string::npos, "message names the platform");
     }
 
@@ -56,7 +60,9 @@ int main() {
         Messages messages;
         auto start = std::chrono::steady_clock::now();
         {
-            ShoutUploader uploader { { .platformHostUrl = "http://10.255.255.1", .username = "user", .password = "password", .areOK = true }, messages.sink() };
+            ShoutUploader uploader {
+                { .platformHostUrl = "http://10.255.255.1", .username = "user", .password = "password", .areOK = true }, messages.sink()
+            };
             uploader.upload("{}");
             uploader.upload("{}");
             CHECK(!uploader.waitForDrain(300ms), "upload still in progress");
@@ -71,7 +77,9 @@ int main() {
     // nothing queued : destruction right away
     {
         const auto start = std::chrono::steady_clock::now();
-        { const ShoutUploader uploader { {}, {} }; }
+        {
+            const ShoutUploader uploader { {}, {} };
+        }
         CHECK(millisecondsSince(start) < 500, "idle uploader stopped right away");
     }
 

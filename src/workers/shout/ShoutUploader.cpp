@@ -39,9 +39,7 @@ ShoutUploader::~ShoutUploader() = default;
 bool ShoutUploader::waitForDrain(std::chrono::milliseconds timeout) {
     std::unique_lock lock { _mutex };
 
-    const auto drained = _queueChanged.wait_for(lock, timeout, [this] {
-        return _queue.empty() && !_uploading;
-    });
+    const auto drained = _queueChanged.wait_for(lock, timeout, [this] { return _queue.empty() && !_uploading; });
 
     if (drained) {
         logs::debug("ShoutUploader", "Successfully drained");
@@ -80,20 +78,22 @@ void ShoutUploader::_uploadQueuedShouts(const std::stop_token& stop) {
         }
 
         //
-        const auto response = UploadHelper::uploadDataToPlatform(_client, {
-            .connectivityInfos = _connectivityInfos,
-            .uploadInfos = AppSettings::getShoutUploadInfos(),
-            .dataToUpload = shout
-        }, AppSettings::FeedFormat::Json, stop);
+        const auto response = UploadHelper::uploadDataToPlatform(
+            _client, { .connectivityInfos = _connectivityInfos, .uploadInfos = AppSettings::getShoutUploadInfos(), .dataToUpload = shout },
+            AppSettings::FeedFormat::Json, stop
+        );
 
         if (response.ok()) {
             logs::debug("ShoutUploader", "Uploaded, HTTP {}", response.status);
         } else if (!stop.stop_requested()) {
-            workers::report(_onMessage, "ShoutUploader", {
-                .text = i18n::format(i18n::tr("An error occured while shouting tracks infos to %1 platform : %2"),
-                    { DEST_PLATFORM_PRODUCT_NAME, UploadHelper::describeFailure(response) }),
-                .kind = workers::MessageKind::Issue
-            });
+            workers::report(
+                _onMessage, "ShoutUploader",
+                { .text = i18n::format(
+                      i18n::tr("An error occured while shouting tracks infos to %1 platform : %2"),
+                      { DEST_PLATFORM_PRODUCT_NAME, UploadHelper::describeFailure(response) }
+                  ),
+                  .kind = workers::MessageKind::Issue }
+            );
         }
 
         {

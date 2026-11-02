@@ -31,9 +31,7 @@ std::string compress(std::string_view data) {
     std::string compressed(size, '\0');
 
     const auto result = compress2(
-        reinterpret_cast<Bytef *>(compressed.data()), &size,
-        reinterpret_cast<const Bytef *>(data.data()), data.size(),
-        Z_DEFAULT_COMPRESSION
+        reinterpret_cast<Bytef*>(compressed.data()), &size, reinterpret_cast<const Bytef*>(data.data()), data.size(), Z_DEFAULT_COMPRESSION
     );
     if (result != Z_OK) return {};
 

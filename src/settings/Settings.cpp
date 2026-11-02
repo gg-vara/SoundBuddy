@@ -29,21 +29,21 @@ namespace settings {
 
 namespace {
 
-constexpr const char * platformHostUrl = "platformHostUrl";
-constexpr const char * platformUsername = "platformUsername";
-constexpr const char * platformPassword = "platformPassword";
-constexpr const char * autoRunShout = "autoRunShout";
-constexpr const char * runAtStartup = "runAtStartup";
+constexpr const char* platformHostUrl = "platformHostUrl";
+constexpr const char* platformUsername = "platformUsername";
+constexpr const char* platformPassword = "platformPassword";
+constexpr const char* autoRunShout = "autoRunShout";
+constexpr const char* runAtStartup = "runAtStartup";
 
-std::string readString(yyjson_val * object, const char * key, const std::string& fallback) {
+std::string readString(yyjson_val* object, const char* key, const std::string& fallback) {
     return std::string { json::string(yyjson_obj_get(object, key), fallback) };
 }
 
-bool readBool(yyjson_val * object, const char * key, bool fallback) {
+bool readBool(yyjson_val* object, const char* key, bool fallback) {
     return json::boolean(yyjson_obj_get(object, key), fallback);
 }
 
-void addString(yyjson_mut_doc * doc, yyjson_mut_val * object, const char * key, const std::string& value) {
+void addString(yyjson_mut_doc* doc, yyjson_mut_val* object, const char* key, const std::string& value) {
     yyjson_mut_obj_add_strncpy(doc, object, key, value.data(), value.size());
 }
 
