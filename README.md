@@ -63,6 +63,11 @@ On Windows, if installer is not signed, Chrome + Windows Defender will ring alar
 Builds are described by CMake presets (`CMakePresets.json`), also used by the VS Code tasks. On Windows, run them from the CLANG64 shell :
 - `cmake --preset windows-debug`, then `cmake --build --preset windows-debug`
 - `cmake --list-presets=all` lists the available presets (`macos-*` on macOS)
+- `cmake --workflow --preset windows-ci` builds and tests as the CI does : clang-tidy runs while compiling (`SOUNDBUDDY_LINT`), any warning failing the build
+
+### Continuous integration
+
+GitHub Actions (`.github/workflows/ci.yml`) builds and tests every push to `main` and every pull request, with the prerequisites and presets above : on Windows in MSYS2 CLANG64 (`msys2/setup-msys2`, then `prerequisites/msys2/*.txt`) through `windows-ci`, on macOS with Homebrew (`prerequisites/Brewfile`) through `macos-test`.
 
 ### Visual Studio Code
 

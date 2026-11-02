@@ -21,6 +21,8 @@ list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 option(SOUNDBUDDY_BUILD_TESTS "Build the unit tests" OFF)
 # signs the Windows packages (see cmake/Velopack.cmake) : disabled for local development builds
 option(SOUNDBUDDY_CODESIGN "Sign the Windows packages" ON)
+# clang-tidy while compiling the app and its tests, its warnings failing the build (see .clang-tidy, and the CI)
+option(SOUNDBUDDY_LINT "Lint the sources while compiling them" OFF)
 
 if(SOUNDBUDDY_BUILD_TESTS)
     enable_testing()
@@ -63,10 +65,17 @@ configure_file(${PROJECT_SOURCE_DIR}/templates/_version.h ${PROJECT_BINARY_DIR}/
 include(yyjson)
 
 # music library export
-add_subdirectory(deps/ITunesLibraryParser)
+add_subdirectory(deps/ItunesLibraryParser)
 
 # core sources, shared with the tests
 include(SoundBuddyCore)
+
+# the targets defined from here on are linted, the dependencies above are not
+if(SOUNDBUDDY_LINT)
+    find_program(CLANG_TIDY_EXECUTABLE clang-tidy REQUIRED)
+    set(CMAKE_CXX_CLANG_TIDY ${CLANG_TIDY_EXECUTABLE} --quiet --warnings-as-errors=*)
+    set(CMAKE_OBJCXX_CLANG_TIDY ${CMAKE_CXX_CLANG_TIDY})
+endif()
 
 #######
 # App #

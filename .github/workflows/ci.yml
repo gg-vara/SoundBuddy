@@ -1,0 +1,67 @@
+# Builds SoundBuddy and runs its tests, on Windows and macOS, with the prerequisites and the presets
+# a developer uses (see README.md). Windows also lints : clang-tidy (SOUNDBUDDY_LINT) and Biome (page-lint test).
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+# a newer push replaces the run in progress
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  windows:
+    name: Windows (MSYS2 CLANG64)
+    runs-on: windows-latest
+    timeout-minutes: 45
+    defaults:
+      run:
+        shell: msys2 {0}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+
+      - uses: msys2/setup-msys2@v2
+        with:
+          msystem: CLANG64
+          update: true
+          cache: true
+          # Bun and .NET, installed for Windows, stay reachable
+          path-type: inherit
+
+      - name: Prerequisites (prerequisites/msys2, as README.md)
+        run: pacman -S --needed --noconfirm $(sed 's/#.*//' prerequisites/msys2/*.txt)
+
+      - uses: oven-sh/setup-bun@v2
+
+      - name: MSYS2 location, for the CMake presets
+        run: echo "MSYS2_ROOT=$(cygpath -w /)" >> "$GITHUB_ENV"
+
+      - name: Linted build, then unit tests
+        run: cmake --workflow --preset windows-ci
+
+  macos:
+    name: macOS (Homebrew LLVM)
+    runs-on: macos-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+
+      - name: Prerequisites (prerequisites/Brewfile, as README.md)
+        # .NET comes with the runner
+        env:
+          HOMEBREW_BUNDLE_CASK_SKIP: dotnet-sdk
+        run: brew bundle --file prerequisites/Brewfile
+
+      - name: Homebrew LLVM first, as README.md
+        run: echo "$(brew --prefix llvm)/bin" >> "$GITHUB_PATH"
+
+      - name: Build, then unit tests
+        run: cmake --workflow --preset macos-test

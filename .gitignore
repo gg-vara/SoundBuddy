@@ -1,6 +1,7 @@
 /build_debug/
 /build_release/
 /build_release_unsigned/
+/build_ci/
 .vscode/ipch
 .DS_Store
 /certs/
