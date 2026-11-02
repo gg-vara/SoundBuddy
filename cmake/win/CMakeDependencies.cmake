@@ -53,12 +53,6 @@ function(DeployPEDependencies target component)
         COMMAND ${CMAKE_COMMAND} -E copy_directory_if_different ${CMAKE_CURRENT_BINARY_DIR}/PEDeps_${component} $<TARGET_FILE_DIR:${target}>
     )
 
-    # install
-    install(DIRECTORY ${CMAKE_BINARY_DIR}/PEDeps_${component}/
-        TYPE BIN
-        COMPONENT ${component}
-    )
-
 endfunction()
 
 ##

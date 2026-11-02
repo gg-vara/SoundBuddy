@@ -47,7 +47,6 @@ project(${GITHUB_REPO_NAME} VERSION 0.11.0
 # compiler requirements
 include(CheckToolchain)
 
-# https://cmake.org/cmake/help/v3.2/module/CPackBundle.html#variable:CPACK_BUNDLE_APPLE_CERT_APP
 # https://github.com/ziglang/zig/issues/6971
 # Since recent SDK, if not signed, any executable will silently crash
 if(APPLE)
@@ -328,17 +327,3 @@ configure_file(
     ${CMAKE_CURRENT_SOURCE_DIR}/templates/_version.h
     ${CMAKE_CURRENT_BINARY_DIR}/generated/version.h
 )
-
-#
-install(TARGETS appExec
-    COMPONENT "App"
-    BUNDLE DESTINATION "."
-)
-
-if(WIN32)
-    install(FILES ${VELOPACK_LIB}
-        RENAME velopack_libc.dll
-        TYPE BIN
-        COMPONENT "AppRuntime"
-    )
-endif()
