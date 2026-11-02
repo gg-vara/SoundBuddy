@@ -27,6 +27,7 @@
 #include <QWindow>
 #include <QStyle>
 
+#include "src/workers/base/Message.h"
 #include "src/workers/base/MessengerThread.hpp"
 
 #include "LogScrollView.hpp"
@@ -40,6 +41,9 @@ class TemplateTab : public QWidget {
 
     void bindWithWorker(MessengerThread *bThread);
     void bindWithMessenger(IMessenger *bMessenger);
+
+    // prints the messages of a worker in this tab's log, from any thread
+    workers::MessageSink messageSink();
 
  protected:
     MessengerThread* bThread = nullptr;

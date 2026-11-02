@@ -22,8 +22,8 @@ class UploadHelper {
         }
     };
 
-    // blocking
-    static net::Response uploadDataToPlatform(net::HttpClient &client, const UploadInstructions &instructions, const bool isCompressed) {
+    // blocking; a stop requested on "stop" aborts the upload
+    static net::Response uploadDataToPlatform(net::HttpClient &client, const UploadInstructions &instructions, const bool isCompressed, std::stop_token stop = {}) {
         //
         const auto& fileName = instructions.uploadInfos.outputFileName;
         const auto fileExtension = AppSettings::getFeedOutputExtension(isCompressed);
@@ -43,7 +43,7 @@ class UploadHelper {
         request.headers.push_back({ "Accept-Language", std::string { i18n::languageCode() } });
         form.applyTo(request);
 
-        return client.send(request);
+        return client.send(request, stop);
     }
 
     // why an upload failed, for logs : transport error or HTTP status, followed by the platform explanations if any

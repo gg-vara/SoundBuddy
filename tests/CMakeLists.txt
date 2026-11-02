@@ -15,11 +15,15 @@ add_library(soundbuddy_tested_core STATIC
     ${PROJECT_SOURCE_DIR}/src/helpers/Platform.cpp
     ${PROJECT_SOURCE_DIR}/src/i18n/Translations.cpp
     ${PROJECT_SOURCE_DIR}/src/logs/Logs.cpp
+    ${PROJECT_SOURCE_DIR}/src/net/HttpClient.cpp
     ${PROJECT_SOURCE_DIR}/src/settings/Settings.cpp
+    ${PROJECT_SOURCE_DIR}/src/workers/base/Message.cpp
     $<$<PLATFORM_ID:Windows>:${PROJECT_SOURCE_DIR}/src/helpers/Compression.win.cpp>
     $<$<PLATFORM_ID:Windows>:${PROJECT_SOURCE_DIR}/src/helpers/Platform.win.cpp>
+    $<$<PLATFORM_ID:Windows>:${PROJECT_SOURCE_DIR}/src/net/HttpClient.win.cpp>
     $<$<PLATFORM_ID:Darwin>:${PROJECT_SOURCE_DIR}/src/helpers/Compression.mac.cpp>
     $<$<PLATFORM_ID:Darwin>:${PROJECT_SOURCE_DIR}/src/helpers/Platform.mac.mm>
+    $<$<PLATFORM_ID:Darwin>:${PROJECT_SOURCE_DIR}/src/net/HttpClient.mac.mm>
 )
 
 target_include_directories(soundbuddy_tested_core PUBLIC
@@ -32,7 +36,7 @@ target_link_libraries(soundbuddy_tested_core PUBLIC yyjson)
 
 if(WIN32)
     target_compile_definitions(soundbuddy_tested_core PUBLIC UNICODE _UNICODE)
-    target_link_libraries(soundbuddy_tested_core PUBLIC bcrypt cabinet shell32 ole32 uuid advapi32)
+    target_link_libraries(soundbuddy_tested_core PUBLIC bcrypt cabinet shell32 ole32 uuid advapi32 winhttp)
 elseif(APPLE)
     target_compile_options(soundbuddy_tested_core PRIVATE $<$<COMPILE_LANGUAGE:OBJCXX>:-fobjc-arc>)
     target_link_libraries(soundbuddy_tested_core PUBLIC "-framework Foundation" "-framework AppKit" z)
@@ -80,10 +84,11 @@ soundbuddy_test(json)
 soundbuddy_test(logs)
 soundbuddy_test(platform)
 
+soundbuddy_test(upload)
+
 # Qt : translation bridge, and import of the settings of previous versions
 soundbuddy_test(i18n LIBRARIES Qt6::Core)
-soundbuddy_test(settings LIBRARIES Qt6::Core)
-soundbuddy_test(upload LIBRARIES Qt6::Core)
+soundbuddy_test(settings SOURCES ${PROJECT_SOURCE_DIR}/src/helpers/AppSettings.cpp LIBRARIES Qt6::Core)
 
 soundbuddy_test(shout SOURCES
     ${PROJECT_SOURCE_DIR}/src/workers/shout/ShoutPayload.cpp
@@ -92,13 +97,11 @@ soundbuddy_test(shout SOURCES
 
 soundbuddy_test(sse SOURCES ${PROJECT_SOURCE_DIR}/src/net/SseParser.cpp)
 
+# workers, against unreachable platforms : local closed port, unroutable address
+soundbuddy_test(shout_uploader SOURCES ${PROJECT_SOURCE_DIR}/src/workers/shout/ShoutUploader.cpp)
+
 # against public test services (httpbin.org, stream.wikimedia.org) : left out of the default test runs
 soundbuddy_test(network
-    SOURCES
-        ${PROJECT_SOURCE_DIR}/src/net/HttpClient.cpp
-        ${PROJECT_SOURCE_DIR}/src/net/SseParser.cpp
-        $<$<PLATFORM_ID:Windows>:${PROJECT_SOURCE_DIR}/src/net/HttpClient.win.cpp>
-        $<$<PLATFORM_ID:Darwin>:${PROJECT_SOURCE_DIR}/src/net/HttpClient.mac.mm>
-    LIBRARIES $<$<PLATFORM_ID:Windows>:winhttp>
+    SOURCES ${PROJECT_SOURCE_DIR}/src/net/SseParser.cpp
     LABELS network
 )

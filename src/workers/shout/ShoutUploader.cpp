@@ -17,38 +17,29 @@
 // for further details. Resources without explicit references to a
 // different license and copyright still refer to this GPL.
 
-
 #include "ShoutUploader.h"
 
-#include "src/logs/Logs.h"
-
-#include <chrono>
+#include <utility>
 
 #include "src/helpers/UploadHelper.hpp"
+#include "src/i18n/Translations.h"
+#include "src/logs/Logs.h"
 
 #include "version.h"
 
-ShoutUploader::ShoutUploader(const AppSettings::ConnectivityInfos connectivityInfos) :
-    _connectivityInfos(connectivityInfos),
+ShoutUploader::ShoutUploader(AppSettings::ConnectivityInfos connectivityInfos, workers::MessageSink onMessage) :
+    _connectivityInfos(std::move(connectivityInfos)),
+    _onMessage(std::move(onMessage)),
     _client(APP_NAME "/" APP_CURRENT_VERSION),
-    _worker(&ShoutUploader::_uploadQueuedShouts, this) {}
+    _worker([this](std::stop_token stop) { _uploadQueuedShouts(stop); }) {}
 
-ShoutUploader::~ShoutUploader() {
-    {
-        std::lock_guard lock { _mutex };
-        _stopping = true;
-    }
+// the worker thread, destroyed first, is asked to stop (which aborts the upload in progress) and joined
+ShoutUploader::~ShoutUploader() = default;
 
-    _queueChanged.notify_all();
-    _client.cancel();
-    _worker.join();
-}
-
-//
-void ShoutUploader::waitForDrain(unsigned long timeout) {
+bool ShoutUploader::waitForDrain(std::chrono::milliseconds timeout) {
     std::unique_lock lock { _mutex };
 
-    const auto drained = _queueChanged.wait_for(lock, std::chrono::milliseconds { timeout }, [this] {
+    const auto drained = _queueChanged.wait_for(lock, timeout, [this] {
         return _queue.empty() && !_uploading;
     });
 
@@ -57,30 +48,31 @@ void ShoutUploader::waitForDrain(unsigned long timeout) {
     } else {
         logs::warning("ShoutUploader", "Drain timed out, {} shout(s) not uploaded", _queue.size() + (_uploading ? 1 : 0));
     }
+
+    return drained;
 }
 
-//
-void ShoutUploader::uploadAsShout(const std::string &shoutAsJson) {
-    //
+void ShoutUploader::upload(std::string shoutAsJson) {
     logs::debug("ShoutUploader", "Shout received, uploading");
 
     {
         std::lock_guard lock { _mutex };
-        _queue.push_back(shoutAsJson);
+        _queue.push_back(std::move(shoutAsJson));
     }
 
     _queueChanged.notify_all();
 }
 
 // runs on the worker thread
-void ShoutUploader::_uploadQueuedShouts() {
+void ShoutUploader::_uploadQueuedShouts(std::stop_token stop) {
     while (true) {
         std::string shout;
 
         {
             std::unique_lock lock { _mutex };
-            _queueChanged.wait(lock, [this] { return _stopping || !_queue.empty(); });
-            if (_stopping) return;
+
+            // false once a stop is requested
+            if (!_queueChanged.wait(lock, stop, [this] { return !_queue.empty(); })) return;
 
             shout = std::move(_queue.front());
             _queue.pop_front();
@@ -88,23 +80,20 @@ void ShoutUploader::_uploadQueuedShouts() {
         }
 
         //
-        const auto uploadInfos = AppSettings::getShoutUploadInfos();
         const auto response = UploadHelper::uploadDataToPlatform(_client, {
             _connectivityInfos,
-            uploadInfos,
+            AppSettings::getShoutUploadInfos(),
             shout
-        }, false);
+        }, false, stop);
 
         if (response.ok()) {
             logs::debug("ShoutUploader", "Uploaded, HTTP {}", response.status);
-        } else {
-            logs::warning("ShoutUploader", "Upload failed : {}", UploadHelper::describeFailure(response));
-            emit forwardMessage(
-                tr("An error occured while shouting tracks infos to %1 platform : %2")
-                    .arg(DEST_PLATFORM_PRODUCT_NAME)
-                    .arg(QString::fromStdString(UploadHelper::describeFailure(response))),
-                MessageType::ISSUE
-            );
+        } else if (!stop.stop_requested()) {
+            workers::report(_onMessage, "ShoutUploader", {
+                i18n::format(i18n::tr("An error occured while shouting tracks infos to %1 platform : %2"),
+                    { DEST_PLATFORM_PRODUCT_NAME, UploadHelper::describeFailure(response) }),
+                workers::MessageKind::Issue
+            });
         }
 
         {

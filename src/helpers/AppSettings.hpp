@@ -1,7 +1,5 @@
 #pragma once
 
-#include <QSettings>
-
 #include <filesystem>
 #include <optional>
 #include <string>
@@ -15,14 +13,7 @@
 class AppSettings {
  public:
     // loads the settings file, or imports the settings of the previous versions on first launch
-    AppSettings() : _file(platform::dataDirectory() / "settings.json") {
-        if (auto stored = settings::load(_file)) {
-            _values = std::move(*stored);
-        } else if (auto legacy = _readLegacySettings()) {
-            _values = std::move(*legacy);
-            save();
-        }
-    }
+    AppSettings();
 
     settings::Settings& values() {
         return _values;
@@ -103,20 +94,8 @@ class AppSettings {
     std::filesystem::path _file;
     settings::Settings _values;
 
-    // previous versions stored their settings with QSettings (registry on Windows, plist on macOS) : read once, to create the settings file.
-    // To remove with Qt.
-    static std::optional<settings::Settings> _readLegacySettings() {
-        const QSettings legacy;  // organization and application names are set in main()
-        if (legacy.allKeys().isEmpty()) return std::nullopt;
-
-        return settings::Settings {
-            .platformHostUrl = legacy.value("PlatformHostUrl").toString().toStdString(),
-            .platformUsername = legacy.value("PlatformUsername").toString().toStdString(),
-            .platformPassword = legacy.value("PlatformPassword").toString().toStdString(),
-            .autoRunShout = legacy.value("AutoRunShout").toBool(),
-            .runAtStartup = legacy.value("MustRunAtStartup").toBool(),
-        };
-    }
+    // previous versions stored their settings with QSettings (registry on Windows, plist on macOS) : read once, to create the settings file
+    static std::optional<settings::Settings> _readLegacySettings();
 
     static inline const char * _FeedWarningFileName = "warnings.json";
 

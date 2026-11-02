@@ -17,57 +17,47 @@
 // for further details. Resources without explicit references to a
 // different license and copyright still refer to this GPL.
 
-
 #pragma once
 
-#include <QObject>
-
+#include <chrono>
 #include <condition_variable>
 #include <deque>
 #include <mutex>
+#include <stop_token>
 #include <string>
 #include <thread>
 
-#include "src/workers/base/IMessenger.hpp"
 #include "src/helpers/AppSettings.hpp"
 #include "src/net/HttpClient.h"
+#include "src/workers/base/Message.h"
 
 // Uploads shouts on its own thread, one at a time and in order
-class ShoutUploader : public QObject, public IMessenger {
-    Q_OBJECT
-    Q_INTERFACES(IMessenger)
-
+class ShoutUploader {
  public:
-    ShoutUploader(const AppSettings::ConnectivityInfos connectivityInfos);
+    // "onMessage" receives upload failures, on the uploader's thread
+    ShoutUploader(AppSettings::ConnectivityInfos connectivityInfos, workers::MessageSink onMessage);
 
-    // aborts the upload in progress, if any
+    // aborts the upload in progress, if any, and drops the queued shouts
     ~ShoutUploader();
 
-    // queues the shout for upload
-    void uploadAsShout(const std::string &shoutAsJson);
+    // queues the shout (JSON) for upload
+    void upload(std::string shoutAsJson);
 
-    /** waits until either timeout or all queued shouts are uploaded */
-    void waitForDrain(unsigned long timeout = 1000);
+    // waits until all queued shouts are uploaded, or "timeout" : false if some remain
+    bool waitForDrain(std::chrono::milliseconds timeout);
 
  private:
     const AppSettings::ConnectivityInfos _connectivityInfos;
+    const workers::MessageSink _onMessage;
     net::HttpClient _client;
 
     std::mutex _mutex;
-    std::condition_variable _queueChanged;
+    std::condition_variable_any _queueChanged;
     std::deque<std::string> _queue;
     bool _uploading = false;
-    bool _stopping = false;
 
-    // declared last : started once the members it uses are initialized
-    std::thread _worker;
+    // declared last : started once the members it uses are initialized, stopped and joined first
+    std::jthread _worker;
 
-    void _uploadQueuedShouts();
-
- signals:
-    void forwardMessage(
-      const QString &message,
-      const MessageType msgType = MessageType::STANDARD,
-      const bool replacePreviousLine = false
-   );
+    void _uploadQueuedShouts(std::stop_token stop);
 };

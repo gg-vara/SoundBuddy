@@ -84,8 +84,13 @@ class HttpClient::Impl {
  public:
     explicit Impl(const std::string& userAgent) : _userAgent(userAgent) {}
 
-    Response perform(const Request& request, const OnBodyChunk * onChunk) {
+    Response perform(const Request& request, const OnBodyChunk * onChunk, std::stop_token stop) {
         Response response;
+
+        if (stop.stop_requested()) {
+            response.error = "Request cancelled";
+            return response;
+        }
 
         NSURL * url = [NSURL URLWithString:@(request.url.c_str())];
         if (!url) {
@@ -124,8 +129,12 @@ class HttpClient::Impl {
             _task = task;
         }
 
-        [task resume];
-        dispatch_semaphore_wait(delegate.done, DISPATCH_TIME_FOREVER);
+        {
+            // once the task is registered : a stop already requested cancels it right away
+            std::stop_callback cancelOnStop(stop, [this] { cancel(); });
+            [task resume];
+            dispatch_semaphore_wait(delegate.done, DISPATCH_TIME_FOREVER);
+        }
 
         {
             std::lock_guard lock { _mutex };
@@ -151,12 +160,12 @@ class HttpClient::Impl {
 HttpClient::HttpClient(std::string userAgent) : _impl(std::make_unique<Impl>(userAgent)) {}
 HttpClient::~HttpClient() = default;
 
-Response HttpClient::send(const Request& request) {
-    return _impl->perform(request, nullptr);
+Response HttpClient::send(const Request& request, std::stop_token stop) {
+    return _impl->perform(request, nullptr, stop);
 }
 
-Response HttpClient::stream(const Request& request, const OnBodyChunk& onChunk) {
-    return _impl->perform(request, &onChunk);
+Response HttpClient::stream(const Request& request, const OnBodyChunk& onChunk, std::stop_token stop) {
+    return _impl->perform(request, &onChunk, stop);
 }
 
 void HttpClient::cancel() {

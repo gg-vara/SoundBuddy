@@ -23,6 +23,7 @@
 #include <functional>
 #include <memory>
 #include <optional>
+#include <stop_token>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -61,7 +62,7 @@ using OnBodyChunk = std::function<bool(std::string_view chunk)>;
 
 // Blocking HTTP(S) client, relying on the platform network stack (WinHTTP, NSURLSession) :
 // TLS certificates and proxy settings are the system ones.
-// A client sends one request at a time; cancel() may be called from any thread.
+// A client sends one request at a time. A stop requested on the request's token, or cancel(), aborts it from any thread.
 class HttpClient {
  public:
     explicit HttpClient(std::string userAgent);
@@ -70,11 +71,11 @@ class HttpClient {
     HttpClient(const HttpClient&) = delete;
     void operator=(const HttpClient&) = delete;
 
-    // response body is fully read before returning
-    Response send(const Request& request);
+    // response body is fully read before returning; a stop requested on "stop", even before sending, aborts the request
+    Response send(const Request& request, std::stop_token stop = {});
 
     // response body is given to "onChunk" as it arrives (event streams, large downloads)
-    Response stream(const Request& request, const OnBodyChunk& onChunk);
+    Response stream(const Request& request, const OnBodyChunk& onChunk, std::stop_token stop = {});
 
     // aborts the ongoing request, if any, which then returns with an error
     void cancel();

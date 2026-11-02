@@ -302,8 +302,8 @@ void MainWindow::runShouts() {
 
     //
     if (this->shoutUploader) {
-        this->shoutUploader->waitForDrain();
-        this->shoutUploader->deleteLater();
+        this->shoutUploader->waitForDrain(std::chrono::seconds { 1 });
+        this->shoutUploader.reset();
     }
 
     //
@@ -311,11 +311,14 @@ void MainWindow::runShouts() {
     //
 
     thread = new ShoutWatcher();
-    this->shoutUploader = new ShoutUploader(this->appSettings.getConnectivityInfos());
+    this->shoutUploader = std::make_unique<ShoutUploader>(this->appSettings.getConnectivityInfos(), this->shoutTab->messageSink());
 
+    // handed to the uploader from the user interface thread, which owns it
     QObject::connect(
         thread, &ShoutWatcher::shoutReadyToSend,
-        this->shoutUploader, &ShoutUploader::uploadAsShout,
+        this, [this](const std::string &shoutAsJson) {
+            if (this->shoutUploader) this->shoutUploader->upload(shoutAsJson);
+        },
         Qt::QueuedConnection
     );
 
@@ -326,7 +329,6 @@ void MainWindow::runShouts() {
 
     //
     this->shoutTab->bindWithWorker(thread);
-    this->shoutTab->bindWithMessenger(this->shoutUploader);
 
     //
     // START !
@@ -602,7 +604,7 @@ void MainWindow::closeEvent(QCloseEvent *event) {
             this->shoutWorker->wait();
 
             //
-            shoutUploader->waitForDrain();
+            shoutUploader->waitForDrain(std::chrono::seconds { 1 });
         } else {
             event->ignore();
             return;

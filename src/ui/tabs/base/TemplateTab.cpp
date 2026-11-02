@@ -19,6 +19,8 @@
 
 #include "TemplateTab.h"
 
+#include "src/ui/WorkerBridge.hpp"
+
 TemplateTab::TemplateTab(QWidget* parent) : QWidget(parent),
     tButton(new QPushButton(this)),
     scrollArea(new QScrollArea(this)) {
@@ -36,6 +38,19 @@ void TemplateTab::createNewLog() {
     if(!this->lsv) delete this->lsv;
     this->lsv = new LogScrollView(nullptr);
     this->scrollArea->setWidget(this->lsv);
+}
+
+workers::MessageSink TemplateTab::messageSink() {
+    return [this](const workers::Message& message) {
+        const auto type =
+            message.kind == workers::MessageKind::Issue ? MessageType::ISSUE :
+            message.kind == workers::MessageKind::Warning ? MessageType::WARNING :
+            MessageType::STANDARD;
+
+        ui::post(this, [this, text = QString::fromStdString(message.text), type, replace = message.line == workers::LineMode::ReplaceLast] {
+            this->printLog(text, type, replace);
+        });
+    };
 }
 
 void TemplateTab::printLog(const QString &message, const MessageType &msgType, const bool replacePreviousLine) {

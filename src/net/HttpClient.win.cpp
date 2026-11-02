@@ -108,8 +108,13 @@ class HttpClient::Impl {
         if (_session) WinHttpCloseHandle(_session);
     }
 
-    Response perform(const Request& request, const OnBodyChunk * onChunk) {
+    Response perform(const Request& request, const OnBodyChunk * onChunk, std::stop_token stop) {
         Response response;
+
+        if (stop.stop_requested()) {
+            response.error = "Request cancelled";
+            return response;
+        }
 
         if (!_session) {
             response.error = lastError("Cannot initialize WinHTTP");
@@ -157,7 +162,11 @@ class HttpClient::Impl {
             _cancelled = false;
         }
 
-        _exchange(handle, request, onChunk, response);
+        {
+            // once the request is registered : a stop already requested cancels it right away
+            std::stop_callback cancelOnStop(stop, [this] { cancel(); });
+            _exchange(handle, request, onChunk, response);
+        }
 
         {
             // the handle may already have been closed by cancel()
@@ -260,12 +269,12 @@ class HttpClient::Impl {
 HttpClient::HttpClient(std::string userAgent) : _impl(std::make_unique<Impl>(userAgent)) {}
 HttpClient::~HttpClient() = default;
 
-Response HttpClient::send(const Request& request) {
-    return _impl->perform(request, nullptr);
+Response HttpClient::send(const Request& request, std::stop_token stop) {
+    return _impl->perform(request, nullptr, stop);
 }
 
-Response HttpClient::stream(const Request& request, const OnBodyChunk& onChunk) {
-    return _impl->perform(request, &onChunk);
+Response HttpClient::stream(const Request& request, const OnBodyChunk& onChunk, std::stop_token stop) {
+    return _impl->perform(request, &onChunk, stop);
 }
 
 void HttpClient::cancel() {

@@ -37,6 +37,8 @@
 #include <QIcon>
 #include <QStatusBar>
 
+#include <memory>
+
 #include "src/helpers/Platform.h"
 
 #include "src/workers/shout/ShoutUploader.h"
@@ -121,7 +123,7 @@ class MainWindow : public QMainWindow {
 
     // workers
     ShoutWatcher* shoutWorker = nullptr;
-    ShoutUploader* shoutUploader = nullptr;
+    std::unique_ptr<ShoutUploader> shoutUploader;
     FeederThread* feederWorker = nullptr;
     MBeatThread* mbeatWorker = nullptr;
     UpdateCheckerThread updateCheckerWorker;
