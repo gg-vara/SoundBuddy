@@ -65,17 +65,17 @@ using OnBodyChunk = std::function<bool(std::string_view chunk)>;
 // A client sends one request at a time. A stop requested on the request's token, or cancel(), aborts it from any thread.
 class HttpClient {
  public:
-    explicit HttpClient(std::string userAgent);
+    explicit HttpClient(const std::string& userAgent);
     ~HttpClient();
 
     HttpClient(const HttpClient&) = delete;
     void operator=(const HttpClient&) = delete;
 
     // response body is fully read before returning; a stop requested on "stop", even before sending, aborts the request
-    Response send(const Request& request, std::stop_token stop = {});
+    Response send(const Request& request, const std::stop_token& stop = {});
 
     // response body is given to "onChunk" as it arrives (event streams, large downloads)
-    Response stream(const Request& request, const OnBodyChunk& onChunk, std::stop_token stop = {});
+    Response stream(const Request& request, const OnBodyChunk& onChunk, const std::stop_token& stop = {});
 
     // aborts the ongoing request, if any, which then returns with an error
     void cancel();

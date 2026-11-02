@@ -100,7 +100,7 @@ void reportMissing(std::string_view source) {
     static std::mutex mutex;
     static std::set<std::string, std::less<>> reported;
 
-    std::scoped_lock lock { mutex };
+    const std::scoped_lock lock { mutex };
     if (reported.insert(std::string { source }).second) {
         logs::debug("i18n", "Missing translation : \"{}\"", source);
     }

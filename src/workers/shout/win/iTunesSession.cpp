@@ -32,10 +32,10 @@ iTunesSession::iTunesSession() :
         }
     }) {}
 
-void iTunesSession::run(std::stop_token stop, const OnSnapshot& onSnapshot) {
+void iTunesSession::run(const std::stop_token& stop, const OnSnapshot& onSnapshot) {
     // a stop wakes the wait for messages up, with an empty message to this thread
     const auto threadId = GetCurrentThreadId();
-    std::stop_callback wakeUp(stop, [threadId] { PostThreadMessageW(threadId, WM_NULL, 0, 0); });
+    const std::stop_callback wakeUp(stop, [threadId] { PostThreadMessageW(threadId, WM_NULL, 0, 0); });
 
     onSnapshot(_client.snapshot());
 

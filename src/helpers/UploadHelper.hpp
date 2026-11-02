@@ -3,6 +3,7 @@
 #include <format>
 #include <string>
 #include <string_view>
+#include <utility>
 
 #include "src/helpers/AppSettings.h"
 #include "src/i18n/Translations.h"
@@ -23,7 +24,7 @@ class UploadHelper {
     };
 
     // blocking; a stop requested on "stop" aborts the upload
-    static net::Response uploadDataToPlatform(net::HttpClient &client, const UploadInstructions &instructions, AppSettings::FeedFormat format, std::stop_token stop = {}) {
+    static net::Response uploadDataToPlatform(net::HttpClient &client, const UploadInstructions &instructions, AppSettings::FeedFormat format, const std::stop_token& stop = {}) {
         //
         const auto& fileName = instructions.uploadInfos.outputFileName;
         const auto fileExtension = AppSettings::getFeedOutputExtension(format);

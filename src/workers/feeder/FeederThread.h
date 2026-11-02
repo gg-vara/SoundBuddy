@@ -54,7 +54,7 @@ class FeederThread {
     // declared last : started once the members it uses are initialized, stopped and joined first
     std::jthread _worker;
 
-    void _run(std::stop_token stop);
-    void _feed(std::stop_token stop);
+    void _run(const std::stop_token& stop);
+    void _feed(const std::stop_token& stop);
     void _say(std::string text, workers::MessageKind kind = workers::MessageKind::Standard);
 };

@@ -18,13 +18,13 @@ struct Messages {
 
     workers::MessageSink sink() {
         return [this](const workers::Message& message) {
-            std::scoped_lock lock { mutex };
+            const std::scoped_lock lock { mutex };
             received.push_back(message);
         };
     }
 
     std::vector<workers::Message> get() {
-        std::scoped_lock lock { mutex };
+        const std::scoped_lock lock { mutex };
         return received;
     }
 };
@@ -71,7 +71,7 @@ int main() {
     // nothing queued : destruction right away
     {
         const auto start = std::chrono::steady_clock::now();
-        { ShoutUploader uploader { {}, {} }; }
+        { const ShoutUploader uploader { {}, {} }; }
         CHECK(millisecondsSince(start) < 500, "idle uploader stopped right away");
     }
 

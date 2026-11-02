@@ -38,7 +38,7 @@ class iTunesSession {
     iTunesSession();
 
     // blocks until iTunes is about to quit, or a stop is requested on "stop" (which wakes it up right away)
-    void run(std::stop_token stop, const OnSnapshot& onSnapshot);
+    void run(const std::stop_token& stop, const OnSnapshot& onSnapshot);
 
  private:
     static constexpr const unsigned int pollingIntervalMs = 1000;

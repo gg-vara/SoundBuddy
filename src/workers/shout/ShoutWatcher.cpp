@@ -28,7 +28,7 @@
 
 ShoutWatcher::ShoutWatcher(Callbacks callbacks) :
     _callbacks(std::move(callbacks)),
-    _worker([this](std::stop_token stop) { _run(stop); }) {}
+    _worker([this](const std::stop_token& stop) { _run(stop); }) {}
 
 // the worker thread, destroyed first, is asked to stop (which ends the session in progress) and joined
 ShoutWatcher::~ShoutWatcher() = default;
@@ -42,7 +42,7 @@ void ShoutWatcher::_say(std::string text, workers::MessageKind kind) {
 }
 
 // runs on the worker thread
-void ShoutWatcher::_run(std::stop_token stop) {
+void ShoutWatcher::_run(const std::stop_token& stop) {
     const auto musicApp = platform::musicAppName();
 
     _say(i18n::format(i18n::tr("Waiting for %1 to launch..."), { musicApp }));

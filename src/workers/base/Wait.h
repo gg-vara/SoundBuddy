@@ -27,7 +27,7 @@
 namespace workers {
 
 // waits "duration", unless a stop is requested on "stop" meanwhile, which wakes it up right away : false then
-inline bool waitFor(std::stop_token stop, std::chrono::milliseconds duration) {
+inline bool waitFor(const std::stop_token& stop, std::chrono::milliseconds duration) {
     std::mutex mutex;
     std::condition_variable_any wakeUp;
 

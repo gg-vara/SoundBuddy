@@ -26,6 +26,7 @@
 
 #include <mutex>
 #include <string>
+#include <utility>
 
 namespace net {
 
@@ -111,7 +112,7 @@ class HttpClient::Impl {
         if (_session) WinHttpCloseHandle(_session);
     }
 
-    Response perform(const Request& request, const OnBodyChunk * onChunk, std::stop_token stop) {
+    Response perform(const Request& request, const OnBodyChunk * onChunk, const std::stop_token& stop) {
         Response response;
 
         if (stop.stop_requested()) {
@@ -160,20 +161,20 @@ class HttpClient::Impl {
         }
 
         {
-            std::scoped_lock lock { _mutex };
+            const std::scoped_lock lock { _mutex };
             _request = handle;
             _cancelled = false;
         }
 
         {
             // once the request is registered : a stop already requested cancels it right away
-            std::stop_callback cancelOnStop(stop, [this] { cancel(); });
+            const std::stop_callback cancelOnStop(stop, [this] { cancel(); });
             _exchange(handle, request, onChunk, response);
         }
 
         {
             // the handle may already have been closed by cancel()
-            std::scoped_lock lock { _mutex };
+            const std::scoped_lock lock { _mutex };
             if (_request) WinHttpCloseHandle(_request);
             _request = nullptr;
         }
@@ -183,7 +184,7 @@ class HttpClient::Impl {
     }
 
     void cancel() {
-        std::scoped_lock lock { _mutex };
+        const std::scoped_lock lock { _mutex };
         _cancelled = true;
 
         // closing the handle aborts the blocking call in progress on it
@@ -201,7 +202,7 @@ class HttpClient::Impl {
     bool _cancelled = false;
 
     bool _isCancelled() {
-        std::scoped_lock lock { _mutex };
+        const std::scoped_lock lock { _mutex };
         return _cancelled;
     }
 
@@ -269,14 +270,14 @@ class HttpClient::Impl {
     }
 };
 
-HttpClient::HttpClient(std::string userAgent) : _impl(std::make_unique<Impl>(userAgent)) {}
+HttpClient::HttpClient(const std::string& userAgent) : _impl(std::make_unique<Impl>(userAgent)) {}
 HttpClient::~HttpClient() = default;
 
-Response HttpClient::send(const Request& request, std::stop_token stop) {
+Response HttpClient::send(const Request& request, const std::stop_token& stop) {
     return _impl->perform(request, nullptr, stop);
 }
 
-Response HttpClient::stream(const Request& request, const OnBodyChunk& onChunk, std::stop_token stop) {
+Response HttpClient::stream(const Request& request, const OnBodyChunk& onChunk, const std::stop_token& stop) {
     return _impl->perform(request, &onChunk, stop);
 }
 

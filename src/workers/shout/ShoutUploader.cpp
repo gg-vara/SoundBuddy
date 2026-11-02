@@ -31,7 +31,7 @@ ShoutUploader::ShoutUploader(AppSettings::ConnectivityInfos connectivityInfos, w
     _connectivityInfos(std::move(connectivityInfos)),
     _onMessage(std::move(onMessage)),
     _client(APP_NAME "/" APP_CURRENT_VERSION),
-    _worker([this](std::stop_token stop) { _uploadQueuedShouts(stop); }) {}
+    _worker([this](const std::stop_token& stop) { _uploadQueuedShouts(stop); }) {}
 
 // the worker thread, destroyed first, is asked to stop (which aborts the upload in progress) and joined
 ShoutUploader::~ShoutUploader() = default;
@@ -56,7 +56,7 @@ void ShoutUploader::upload(std::string shoutAsJson) {
     logs::debug("ShoutUploader", "Shout received, uploading");
 
     {
-        std::scoped_lock lock { _mutex };
+        const std::scoped_lock lock { _mutex };
         _queue.push_back(std::move(shoutAsJson));
     }
 
@@ -64,7 +64,7 @@ void ShoutUploader::upload(std::string shoutAsJson) {
 }
 
 // runs on the worker thread
-void ShoutUploader::_uploadQueuedShouts(std::stop_token stop) {
+void ShoutUploader::_uploadQueuedShouts(const std::stop_token& stop) {
     while (true) {
         std::string shout;
 
@@ -97,7 +97,7 @@ void ShoutUploader::_uploadQueuedShouts(std::stop_token stop) {
         }
 
         {
-            std::scoped_lock lock { _mutex };
+            const std::scoped_lock lock { _mutex };
             _uploading = false;
         }
 

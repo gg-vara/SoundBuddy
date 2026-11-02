@@ -110,7 +110,7 @@ class PreferencesDialog : public QDialog {
     }
 
  protected:
-    void closeEvent(QCloseEvent *event) override {
+    void closeEvent(QCloseEvent * /*event*/) override {
         //
         auto& values = this->_appSettings->values();
         values.platformHostUrl = this->_platformUrlEdit->text().toStdString();

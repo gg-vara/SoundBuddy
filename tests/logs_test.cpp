@@ -44,7 +44,8 @@ int main() {
 
     // 4 threads x 5000 lines of about 90 bytes : 1.8 MB, so one rotation
     std::vector<std::thread> threads;
-    for (int t = 0; t < 4; ++t) {
+    threads.reserve(4);
+for (int t = 0; t < 4; ++t) {
         threads.emplace_back([t] {
             for (int i = 0; i < 5000; ++i) logs::warning("Thread", "thread {} line {:05} padding-padding-padding", t, i);
         });

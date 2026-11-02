@@ -37,11 +37,11 @@ std::string toString(yyjson_val * value) {
 }  // namespace
 
 // consider the session always available on OSX since we do not depend on the app beeing ran to request for shout states
-bool ShoutWatcher::_waitForAvailableSession(std::stop_token stop) {
+bool ShoutWatcher::_waitForAvailableSession(const std::stop_token& stop) {
     return !stop.stop_requested();
 }
 
-void ShoutWatcher::_execWatchSession(std::stop_token stop) {
+void ShoutWatcher::_execWatchSession(const std::stop_token& stop) {
     // define applescript to get shout values
     const auto scriptContent = QFile(":/mac/CurrentlyPlaying.applescript").readAll();
 

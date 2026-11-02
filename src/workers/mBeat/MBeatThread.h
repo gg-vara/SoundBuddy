@@ -70,6 +70,6 @@ class MBeatThread {
     // declared last : started once the members it uses are initialized, stopped and joined first
     std::jthread _worker;
 
-    void _run(std::stop_token stop);
+    void _run(const std::stop_token& stop);
     net::Request _createRequest() const;
 };

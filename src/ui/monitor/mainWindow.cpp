@@ -52,7 +52,7 @@ void MainWindow::informWarningPresence() {
 // updates the menu depending on the config values filled or not
 void MainWindow::_onAppSettingsChanged() {
     //
-    bool shouldActivateLink = !this->_appSettings.getConnectivityInfos().getPlaformHomeUrl().empty();
+    const bool shouldActivateLink = !this->_appSettings.getConnectivityInfos().getPlaformHomeUrl().empty();
     this->_myPlatformAction->setEnabled(shouldActivateLink);
 
     // restart threads ?
@@ -67,7 +67,7 @@ void MainWindow::_onAppSettingsChanged() {
 
 void MainWindow::_updateWarningsMenuItem() {
     std::error_code error;
-    bool hasFeederWarnings = std::filesystem::exists(AppSettings::getFeedWarningFilePath(), error);
+    const bool hasFeederWarnings = std::filesystem::exists(AppSettings::getFeedWarningFilePath(), error);
     this->_openWarningsAction->setEnabled(hasFeederWarnings);
 }
 
@@ -124,7 +124,7 @@ void MainWindow::_openWarnings() {
         std::size_t index = 0;
         std::size_t count = 0;
         yyjson_val* key = nullptr;
-        yyjson_val* value = nullptr;
+        const yyjson_val* value = nullptr;
         yyjson_obj_foreach(yyjson_arr_get_first(rows), index, count, key, value) {
             columns.push_back(json::string(key));
             headers << QString::fromUtf8(columns.back().data(), static_cast<qsizetype>(columns.back().size()));
@@ -141,7 +141,7 @@ void MainWindow::_openWarnings() {
     howMany = 0;
     std::size_t rowIndex = 0;
     std::size_t rowCount = 0;
-    yyjson_val* cellsData = nullptr;
+    const yyjson_val* cellsData = nullptr;
     yyjson_arr_foreach(rows, rowIndex, rowCount, cellsData) {
         // each cell
         int col = 0;
@@ -171,9 +171,9 @@ void MainWindow::_openWarnings() {
 
 
     // Get the screen size (Qt5)
-    QRect screenGeometry = this->screen()->geometry();
-    int screenWidth = screenGeometry.width();
-    int screenHeight = screenGeometry.height();
+    const QRect screenGeometry = this->screen()->geometry();
+    const int screenWidth = screenGeometry.width();
+    const int screenHeight = screenGeometry.height();
 
     // Set the dialog size to be at least half the size of the screen
     display.resize(screenWidth / 2, screenHeight / 2);
@@ -322,7 +322,7 @@ void MainWindow::_runFeeder() {
 void MainWindow::_initUI() {
     // values specific to this
     #ifdef _DEBUG
-        QString stdTitle = QString("DEBUG - ") + APP_NAME;
+        const QString stdTitle = QString("DEBUG - ") + APP_NAME;
     #else
         QString stdTitle = APP_NAME;
     #endif

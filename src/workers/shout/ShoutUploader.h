@@ -59,5 +59,5 @@ class ShoutUploader {
     // declared last : started once the members it uses are initialized, stopped and joined first
     std::jthread _worker;
 
-    void _uploadQueuedShouts(std::stop_token stop);
+    void _uploadQueuedShouts(const std::stop_token& stop);
 };

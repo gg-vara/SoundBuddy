@@ -34,6 +34,8 @@
 #include "logs/Logs.h"
 #include "ui/monitor/mainWindow.h"
 
+namespace {
+
 QString getResourcesPath() {
     #if defined(Q_OS_OSX)
         return QApplication::applicationDirPath() + QDir::separator() + ".." + QDir::separator() + "Resources" + QDir::separator();
@@ -41,8 +43,6 @@ QString getResourcesPath() {
         return QApplication::applicationDirPath() + QDir::separator();
     #endif
 }
-
-namespace {
 
 logs::Level toLevel(std::string_view velopackLevel) {
     if (velopackLevel.starts_with("err") || velopackLevel.starts_with("Err")) return logs::Level::Error;
@@ -115,7 +115,7 @@ int run(int argc, char** argv) {
     app.setApplicationDisplayName(APP_NAME);
 
     // fetch main window
-    MainWindow mw;
+    const MainWindow mw;
 
     // wait for the app to close
     const auto exitCode = app.exec();

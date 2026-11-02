@@ -25,7 +25,7 @@
 
 namespace workers {
 
-void report(const MessageSink& sink, std::string_view source, Message message) {
+void report(const MessageSink& sink, std::string_view source, const Message& message) {
     const auto level =
         message.kind == MessageKind::Issue ? logs::Level::Error :
         message.kind == MessageKind::Warning ? logs::Level::Warning :

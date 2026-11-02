@@ -48,13 +48,13 @@ MBeatThread::MBeatThread(AppSettings::ConnectivityInfos connectivityInfos, mbeat
     _connectivityInfos(std::move(connectivityInfos)),
     _onStatus(std::move(onStatus)),
     _client(APP_NAME "/" APP_CURRENT_VERSION),
-    _worker([this](std::stop_token stop) { _run(stop); }) {}
+    _worker([this](const std::stop_token& stop) { _run(stop); }) {}
 
 // the worker thread, destroyed first, is asked to stop (which aborts the request in progress) and joined
 MBeatThread::~MBeatThread() = default;
 
 // runs on the worker thread
-void MBeatThread::_run(std::stop_token stop) {
+void MBeatThread::_run(const std::stop_token& stop) {
     const auto notify = [this](std::string text, mbeat::Connectivity connectivity) {
         if (_onStatus) _onStatus({ .text = std::move(text), .connectivity = connectivity });
     };

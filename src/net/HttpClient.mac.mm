@@ -84,7 +84,7 @@ class HttpClient::Impl {
  public:
     explicit Impl(const std::string& userAgent) : _userAgent(userAgent) {}
 
-    Response perform(const Request& request, const OnBodyChunk * onChunk, std::stop_token stop) {
+    Response perform(const Request& request, const OnBodyChunk * onChunk, const std::stop_token& stop) {
         Response response;
 
         if (stop.stop_requested()) {
@@ -157,14 +157,14 @@ class HttpClient::Impl {
     NSURLSessionDataTask * _task = nil;
 };
 
-HttpClient::HttpClient(std::string userAgent) : _impl(std::make_unique<Impl>(userAgent)) {}
+HttpClient::HttpClient(const std::string& userAgent) : _impl(std::make_unique<Impl>(userAgent)) {}
 HttpClient::~HttpClient() = default;
 
-Response HttpClient::send(const Request& request, std::stop_token stop) {
+Response HttpClient::send(const Request& request, const std::stop_token& stop) {
     return _impl->perform(request, nullptr, stop);
 }
 
-Response HttpClient::stream(const Request& request, const OnBodyChunk& onChunk, std::stop_token stop) {
+Response HttpClient::stream(const Request& request, const OnBodyChunk& onChunk, const std::stop_token& stop) {
     return _impl->perform(request, &onChunk, stop);
 }
 

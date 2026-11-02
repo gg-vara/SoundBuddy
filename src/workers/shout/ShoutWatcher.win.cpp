@@ -28,11 +28,12 @@
 #include <combaseapi.h>
 
 #include <exception>
+#include <utility>
 
 #include "win/iTunesSession.h"
 
 //
-bool ShoutWatcher::_waitForAvailableSession(std::stop_token stop) {
+bool ShoutWatcher::_waitForAvailableSession(const std::stop_token& stop) {
     using namespace std::chrono_literals;
     const auto windowName = platform::widen(platform::musicAppName());
 
@@ -100,7 +101,7 @@ ShoutPayload toPayload(const iTunesCOMClient::Snapshot& snapshot) {
 
 }  // namespace
 
-void ShoutWatcher::_execWatchSession(std::stop_token stop) {
+void ShoutWatcher::_execWatchSession(const std::stop_token& stop) {
     // log..
     _say(i18n::format(i18n::tr("Connecting to %1 ..."), { platform::musicAppName() }));
 

@@ -62,15 +62,15 @@ class ShoutWatcher {
     // declared last : started once the members it uses are initialized, stopped and joined first
     std::jthread _worker;
 
-    void _run(std::stop_token stop);
+    void _run(const std::stop_token& stop);
     void _say(std::string text, workers::MessageKind kind = workers::MessageKind::Standard);
     void _processPayload(const ShoutPayload &incomingPayload);
 
     // platform specific
 
     // waits for a session to be available : false once a stop is requested
-    bool _waitForAvailableSession(std::stop_token stop);
+    bool _waitForAvailableSession(const std::stop_token& stop);
 
     // watches until the session ends or a stop is requested
-    void _execWatchSession(std::stop_token stop);
+    void _execWatchSession(const std::stop_token& stop);
 };

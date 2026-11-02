@@ -48,6 +48,6 @@ struct Message {
 using MessageSink = std::function<void(const Message&)>;
 
 // writes "message" to the logs, under "source", then passes it to "sink" if any
-void report(const MessageSink& sink, std::string_view source, Message message);
+void report(const MessageSink& sink, std::string_view source, const Message& message);
 
 }  // namespace workers

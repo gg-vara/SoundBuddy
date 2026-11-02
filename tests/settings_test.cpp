@@ -47,7 +47,7 @@ int main(int argc, char** argv) {
     CHECK(!settings::load(file), "not an object : nothing");
 
     // AppSettings, under the test identity
-    QCoreApplication app(argc, argv);
+    const QCoreApplication app(argc, argv);
     app.setOrganizationName(APP_PUBLISHER_ORG);
     app.setApplicationName(APP_NAME);
 

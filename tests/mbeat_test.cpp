@@ -19,13 +19,13 @@ struct Statuses {
 
     mbeat::OnStatus sink() {
         return [this](const mbeat::Status& status) {
-            std::scoped_lock lock { mutex };
+            const std::scoped_lock lock { mutex };
             received.push_back(status);
         };
     }
 
     std::vector<mbeat::Status> get() {
-        std::scoped_lock lock { mutex };
+        const std::scoped_lock lock { mutex };
         return received;
     }
 
@@ -57,7 +57,7 @@ int main() {
     // no credentials : refused right away, then the thread ends
     {
         Statuses statuses;
-        MBeatThread heartbeat { {}, statuses.sink() };
+        const MBeatThread heartbeat { {}, statuses.sink() };
         CHECK(statuses.waitFor(1, 2s), "status without credentials");
         const auto received = statuses.get();
         CHECK(received.size() == 1 && received[0].connectivity == mbeat::Connectivity::Refused, "refused for lack of credentials");
@@ -68,7 +68,7 @@ int main() {
         Statuses statuses;
         auto start = std::chrono::steady_clock::now();
         {
-            MBeatThread heartbeat { { .platformHostUrl = "http://127.0.0.1:9", .username = "user", .password = "password", .areOK = true }, statuses.sink() };
+            const MBeatThread heartbeat { { .platformHostUrl = "http://127.0.0.1:9", .username = "user", .password = "password", .areOK = true }, statuses.sink() };
             CHECK(statuses.waitFor(2, 10s), "two statuses");
             start = std::chrono::steady_clock::now();
         }
@@ -85,7 +85,7 @@ int main() {
         Statuses statuses;
         auto start = std::chrono::steady_clock::now();
         {
-            MBeatThread heartbeat { { .platformHostUrl = "http://10.255.255.1", .username = "user", .password = "password", .areOK = true }, statuses.sink() };
+            const MBeatThread heartbeat { { .platformHostUrl = "http://10.255.255.1", .username = "user", .password = "password", .areOK = true }, statuses.sink() };
             CHECK(statuses.waitFor(1, 2s), "checking");
             std::this_thread::sleep_for(300ms);
             start = std::chrono::steady_clock::now();

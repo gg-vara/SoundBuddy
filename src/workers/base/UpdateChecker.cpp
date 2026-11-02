@@ -56,13 +56,13 @@ void logResults(const UpdateChecker::CheckResults& results) {
 UpdateChecker::UpdateChecker() : _state(std::make_shared<State>()) {}
 
 UpdateChecker::~UpdateChecker() {
-    std::scoped_lock lock { _state->mutex };
+    const std::scoped_lock lock { _state->mutex };
     _state->abandoned = true;
 }
 
 bool UpdateChecker::check(OnChecked onChecked) {
     {
-        std::scoped_lock lock { _state->mutex };
+        const std::scoped_lock lock { _state->mutex };
         if (_state->checking) return false;
         _state->checking = true;
     }
@@ -95,7 +95,7 @@ bool UpdateChecker::check(OnChecked onChecked) {
         logResults(results);
 
         // under the lock : the checker cannot be destroyed meanwhile, nor its owner before the callback returns
-        std::scoped_lock lock { state->mutex };
+        const std::scoped_lock lock { state->mutex };
         state->checking = false;
         state->manager = std::move(manager);
         state->update = std::move(update);
@@ -107,7 +107,7 @@ bool UpdateChecker::check(OnChecked onChecked) {
 }
 
 void UpdateChecker::applyUpdateOnExit() {
-    std::scoped_lock lock { _state->mutex };
+    const std::scoped_lock lock { _state->mutex };
     if (_state->manager && _state->update) {
         _state->manager->WaitExitThenApplyUpdates(*_state->update);
     }
