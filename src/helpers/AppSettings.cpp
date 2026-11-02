@@ -19,8 +19,6 @@
 
 #include "AppSettings.h"
 
-#include <QSettings>
-
 AppSettings::AppSettings() :
     _file(platform::dataDirectory() / "settings.json") {
     if (auto stored = settings::load(_file)) {
@@ -29,18 +27,4 @@ AppSettings::AppSettings() :
         _values = std::move(*legacy);
         save();
     }
-}
-
-// To remove with Qt
-std::optional<settings::Settings> AppSettings::_readLegacySettings() {
-    const QSettings legacy;  // organization and application names are set in main()
-    if (legacy.allKeys().isEmpty()) return std::nullopt;
-
-    return settings::Settings {
-        .platformHostUrl = legacy.value("PlatformHostUrl").toString().toStdString(),
-        .platformUsername = legacy.value("PlatformUsername").toString().toStdString(),
-        .platformPassword = legacy.value("PlatformPassword").toString().toStdString(),
-        .autoRunShout = legacy.value("AutoRunShout").toBool(),
-        .runAtStartup = legacy.value("MustRunAtStartup").toBool(),
-    };
 }

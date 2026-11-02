@@ -2,9 +2,14 @@
 
 #include <fstream>
 #include <iterator>
+#include <string>
 
+#ifdef _WIN32
+#include <windows.h>
+#else
 #include <QCoreApplication>
 #include <QSettings>
+#endif
 
 #include "Check.h"
 #include "TestData.h"
@@ -17,9 +22,52 @@ std::string readAll(const std::filesystem::path& file) {
     return { std::istreambuf_iterator<char>(stream), std::istreambuf_iterator<char>() };
 }
 
+// settings of previous versions, as QSettings stored them : texts, and booleans as "true" / "false"
+namespace legacy {
+
+#ifdef _WIN32
+const wchar_t* const organizationKey = L"Software\\" APP_PUBLISHER_ORG;
+const wchar_t* const applicationKey = L"Software\\" APP_PUBLISHER_ORG "\\" APP_NAME;
+
+void write(const wchar_t* name, const std::string& value) {
+    HKEY key = nullptr;
+    if (RegCreateKeyExW(HKEY_CURRENT_USER, applicationKey, 0, nullptr, 0, KEY_SET_VALUE, nullptr, &key, nullptr) != ERROR_SUCCESS) return;
+    const auto wide = platform::widen(value);
+    RegSetValueExW(
+        key, name, 0, REG_SZ, reinterpret_cast<const BYTE*>(wide.c_str()), static_cast<DWORD>((wide.size() + 1) * sizeof(wchar_t))
+    );
+    RegCloseKey(key);
+}
+
+void clear() {
+    RegDeleteTreeW(HKEY_CURRENT_USER, organizationKey);
+    RegDeleteKeyW(HKEY_CURRENT_USER, organizationKey);
+}
+#else
+void write(const char* name, const std::string& value) {
+    QSettings settings;
+    settings.setValue(name, value == "true" || value == "false" ? QVariant(value == "true") : QVariant(QString::fromStdString(value)));
+    settings.sync();
+}
+
+void clear() {
+    QSettings settings;
+    settings.clear();
+    settings.sync();
+}
+#endif
+
+}  // namespace legacy
+
+#ifdef _WIN32
+#define LEGACY_NAME(name) L##name
+#else
+#define LEGACY_NAME(name) name
+#endif
+
 }  // namespace
 
-int main(int argc, char** argv) {
+int main([[maybe_unused]] int argc, [[maybe_unused]] char** argv) {
     const auto file = testdata::scratchDirectory("settings é") / "sub" / "settings.json";
 
     CHECK(!settings::load(file), "missing file : nothing");
@@ -63,22 +111,26 @@ int main(int argc, char** argv) {
     CHECK(!settings::load(file), "not an object : nothing");
 
     // AppSettings, under the test identity
+#ifndef _WIN32
     const QCoreApplication app(argc, argv);
     QCoreApplication::setOrganizationName(APP_PUBLISHER_ORG);
     QCoreApplication::setApplicationName(APP_NAME);
+#endif
 
     testdata::removeDataDirectory();
     const auto dataFile = platform::dataDirectory() / "settings.json";
+
+    legacy::clear();
     {
-        QSettings legacy;
-        legacy.clear();
-        legacy.setValue("PlatformHostUrl", "https://legacy.example");
-        legacy.setValue("PlatformUsername", QString::fromUtf8("l\xC3\xA9gacy"));
-        legacy.setValue("PlatformPassword", "secret");
-        legacy.setValue("AutoRunShout", true);
-        legacy.setValue("MustRunAtStartup", false);
-        legacy.sync();
+        const AppSettings appSettings;
+        CHECK(appSettings.values().platformHostUrl.empty() && !std::filesystem::exists(dataFile), "nothing to import : defaults");
     }
+
+    legacy::write(LEGACY_NAME("PlatformHostUrl"), "https://legacy.example");
+    legacy::write(LEGACY_NAME("PlatformUsername"), "l\xC3\xA9gacy");
+    legacy::write(LEGACY_NAME("PlatformPassword"), "secret");
+    legacy::write(LEGACY_NAME("AutoRunShout"), "true");
+    legacy::write(LEGACY_NAME("MustRunAtStartup"), "false");
     {
         const AppSettings appSettings;
         const auto& imported = appSettings.values();
@@ -95,9 +147,7 @@ int main(int argc, char** argv) {
         );
     }
     {
-        QSettings legacy;
-        legacy.setValue("PlatformHostUrl", "https://changed.example");
-        legacy.sync();
+        legacy::write(LEGACY_NAME("PlatformHostUrl"), "https://changed.example");
 
         AppSettings appSettings;
         CHECK(appSettings.values().platformHostUrl == "https://legacy.example", "the settings file wins once created");
@@ -106,16 +156,14 @@ int main(int argc, char** argv) {
         CHECK(appSettings.save() && !AppSettings().values().autoRunShout, "saved, then reloaded");
     }
 
-    // previous versions settings, under the test identity
-    {
-        QSettings legacy;
-        legacy.clear();
-        legacy.sync();
-    }
 #ifdef _WIN32
-    QSettings(R"(HKEY_CURRENT_USER\Software)", QSettings::NativeFormat).remove(APP_PUBLISHER_ORG);
+    // QSettings doubles the '@' starting a text
+    std::filesystem::remove(dataFile);
+    legacy::write(L"PlatformPassword", "@@pass");
+    CHECK(AppSettings().values().platformPassword == "@pass", "escaped '@' of QSettings");
 #endif
 
+    legacy::clear();
     testdata::removeDataDirectory();
     testdata::removeScratchDirectories();
     return check::summary();

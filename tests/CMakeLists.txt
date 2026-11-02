@@ -86,9 +86,17 @@ soundbuddy_test(platform)
 
 soundbuddy_test(upload)
 
-# Qt : translation bridge, and import of the settings of previous versions
+# Qt : translation bridge
 soundbuddy_test(i18n LIBRARIES Qt6::Core)
-soundbuddy_test(settings SOURCES ${PROJECT_SOURCE_DIR}/src/helpers/AppSettings.cpp LIBRARIES Qt6::Core)
+
+# import of the settings of previous versions : from the registry on Windows, with QSettings on macOS
+soundbuddy_test(settings
+    SOURCES
+        ${PROJECT_SOURCE_DIR}/src/helpers/AppSettings.cpp
+        $<$<PLATFORM_ID:Windows>:${PROJECT_SOURCE_DIR}/src/helpers/AppSettings.win.cpp>
+        $<$<PLATFORM_ID:Darwin>:${PROJECT_SOURCE_DIR}/src/helpers/AppSettings.mac.cpp>
+    LIBRARIES $<$<PLATFORM_ID:Darwin>:Qt6::Core>
+)
 
 soundbuddy_test(shout SOURCES
     ${PROJECT_SOURCE_DIR}/src/workers/shout/ShoutPayload.cpp
