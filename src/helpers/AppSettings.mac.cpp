@@ -23,7 +23,7 @@
 
 #include <QSettings>
 
-// stored by QSettings, with the organization and application names set in main()
+// stored by QSettings, with the organization and application names set in ui::run()
 std::optional<settings::Settings> AppSettings::_readLegacySettings() {
     const QSettings legacy;
     if (legacy.allKeys().isEmpty()) return std::nullopt;

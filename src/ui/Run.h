@@ -19,28 +19,10 @@
 
 #pragma once
 
-#include <QTranslator>
-#include <QString>
+// User interface, in Qt widgets (src/ui/qt)
+namespace ui {
 
-#include <string_view>
+// shows the user interface (in the tray) until the user quits : returns the exit code
+int run(int argc, char** argv);
 
-#include "Translations.h"
-
-// Serves Qt's tr() calls from the i18n tables, until the UI no longer relies on Qt
-class QtTranslatorBridge : public QTranslator {
- public:
-    using QTranslator::QTranslator;
-
-    QString translate(const char* /*context*/, const char* sourceText, const char* /*disambiguation*/, int /*n*/) const override {
-        if (sourceText == nullptr || i18n::language() == i18n::Language::English) return {};
-
-        const std::string_view source { sourceText };
-        const auto translation = i18n::tr(source);
-
-        // a null string lets Qt fall back to the source text
-        if (translation.data() == source.data()) return {};
-        return QString::fromUtf8(translation.data(), static_cast<qsizetype>(translation.size()));
-    }
-
-    bool isEmpty() const override { return false; }
-};
+}  // namespace ui

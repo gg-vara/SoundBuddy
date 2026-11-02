@@ -19,7 +19,7 @@
 
 #include "TemplateTab.h"
 
-#include "src/ui/WorkerBridge.hpp"
+#include "src/ui/qt/WorkerBridge.hpp"
 
 TemplateTab::TemplateTab(QWidget* parent) :
     QWidget(parent),

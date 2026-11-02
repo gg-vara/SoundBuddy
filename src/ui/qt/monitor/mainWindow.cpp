@@ -28,7 +28,7 @@
 #include <vector>
 
 #include "src/helpers/Json.hpp"
-#include "src/ui/WorkerBridge.hpp"
+#include "src/ui/qt/WorkerBridge.hpp"
 
 MainWindow::MainWindow() {
     // generate the UI

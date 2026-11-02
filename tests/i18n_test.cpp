@@ -3,7 +3,7 @@
 #include <QCoreApplication>
 
 #include "Check.h"
-#include "src/i18n/QtTranslatorBridge.hpp"
+#include "src/ui/qt/QtTranslatorBridge.hpp"
 #include "src/i18n/Translations.h"
 
 int main(int argc, char** argv) {

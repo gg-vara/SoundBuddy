@@ -17,32 +17,18 @@
 // for further details. Resources without explicit references to a
 // different license and copyright still refer to this GPL.
 
-#include <QString>
-#include <QApplication>
-#include <QStyleFactory>
-#include <QDir>
-#include <QDebug>
-
 #include <Velopack.hpp>
 
 #include <cstdlib>
 #include <exception>
 #include <string_view>
 
-#include "helpers/Platform.h"
-#include "i18n/QtTranslatorBridge.hpp"
-#include "logs/Logs.h"
-#include "ui/monitor/mainWindow.h"
+#include "src/helpers/Platform.h"
+#include "src/logs/Logs.h"
+#include "src/ui/Run.h"
+#include "version.h"
 
 namespace {
-
-QString getResourcesPath() {
-#ifdef Q_OS_OSX
-    return QApplication::applicationDirPath() + QDir::separator() + ".." + QDir::separator() + "Resources" + QDir::separator();
-#else
-    return QApplication::applicationDirPath() + QDir::separator();
-#endif
-}
 
 logs::Level toLevel(std::string_view velopackLevel) {
     if (velopackLevel.starts_with("err") || velopackLevel.starts_with("Err")) return logs::Level::Error;
@@ -54,26 +40,6 @@ logs::Level toLevel(std::string_view velopackLevel) {
 // installer and updates
 void logVelopackMessage(void* /*userData*/, const char* level, const char* message) {
     logs::write(toLevel(level ? level : ""), "Velopack", message ? message : "");
-}
-
-// Qt own messages, until the app no longer relies on Qt
-logs::Level toLevel(QtMsgType type) {
-    switch (type) {
-        case QtDebugMsg:
-            return logs::Level::Debug;
-        case QtInfoMsg:
-            return logs::Level::Info;
-        case QtWarningMsg:
-            return logs::Level::Warning;
-        case QtCriticalMsg:
-        case QtFatalMsg:
-            break;
-    }
-    return logs::Level::Error;
-}
-
-void logQtMessage(QtMsgType type, const QMessageLogContext& /*context*/, const QString& message) {
-    logs::write(toLevel(type), "Qt", message.toStdString());
 }
 
 // last words before quitting on an unhandled exception : never throws
@@ -92,7 +58,6 @@ int run(int argc, char** argv) {
     Velopack::VelopackApp::Build().SetLogger(&logVelopackMessage, nullptr).Run();
 
     logs::info("App", "{} {} started", APP_NAME, APP_CURRENT_VERSION);
-    qInstallMessageHandler(&logQtMessage);
 
     // prevent multiples instances
     if (!platform::claimSingleInstance()) {
@@ -100,33 +65,7 @@ int run(int argc, char** argv) {
         return 1;
     }
 
-    // setup app
-    const QApplication app(argc, argv);
-
-    // activate translations, in the user interface language of the system...
-    const auto locale = i18n::language() == i18n::Language::French ? QLocale(QLocale::French) : QLocale(QLocale::English);
-
-    // Qt own texts (standard buttons...)
-    QTranslator qtTranslator;
-    if (qtTranslator.load(locale, "qt", "_", getResourcesPath() + "translations")) {
-        QApplication::installTranslator(&qtTranslator);
-    }
-
-    // app
-    QtTranslatorBridge appTranslator;
-    QApplication::installTranslator(&appTranslator);
-
-    //
-    QApplication::setQuitOnLastWindowClosed(false);
-    QApplication::setApplicationName(APP_NAME);
-    QApplication::setOrganizationName(APP_PUBLISHER_ORG);
-    QApplication::setApplicationDisplayName(APP_NAME);
-
-    // fetch main window
-    const MainWindow mw;
-
-    // wait for the app to close
-    const auto exitCode = QApplication::exec();
+    const auto exitCode = ui::run(argc, argv);
     logs::info("App", "Exiting with code {}", exitCode);
     logs::stop();
     return exitCode;

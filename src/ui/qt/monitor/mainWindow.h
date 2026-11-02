@@ -44,15 +44,15 @@
 #include "src/workers/feeder/FeederThread.h"
 #include "src/workers/shout/ShoutUploader.h"
 #include "src/workers/shout/ShoutWatcher.h"
-#include "src/ui/tabs/ShoutTab.hpp"
-#include "src/ui/tabs/FeederTab.hpp"
+#include "src/ui/qt/tabs/ShoutTab.hpp"
+#include "src/ui/qt/tabs/FeederTab.hpp"
 #include "src/workers/mBeat/MBeatThread.h"
 #include "src/workers/base/UpdateChecker.h"
 
-#include "src/ui/widgets/TraficLight.hpp"
+#include "src/ui/qt/widgets/TraficLight.hpp"
 
 #include "src/helpers/AppSettings.h"
-#include "src/ui/monitor/PreferencesDialog.hpp"
+#include "src/ui/qt/monitor/PreferencesDialog.hpp"
 
 class MainWindow : public QMainWindow {
     Q_OBJECT
