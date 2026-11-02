@@ -15,6 +15,7 @@ export function Sheet(props: { open: boolean; wide?: boolean; onClose: () => voi
   );
 
   return (
+    // biome-ignore lint/a11y/useKeyWithClickEvents: the keyboard closes it natively, with Escape
     <dialog
       class={['sheet', { wide: props.wide }]}
       ref={dialog}

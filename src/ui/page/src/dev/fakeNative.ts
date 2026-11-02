@@ -3,9 +3,25 @@ import type { Native } from '../native';
 import type { LogMessage, NativeEvent, NativeState, Shout, Tab } from '../state';
 
 const tracks: Shout[] = [
-  { name: 'Teardrop', artist: 'Massive Attack', album: 'Mezzanine', year: 1998, duration: 330, playerPositionMS: 42_000, playerState: true },
+  {
+    name: 'Teardrop',
+    artist: 'Massive Attack',
+    album: 'Mezzanine',
+    year: 1998,
+    duration: 330,
+    playerPositionMS: 42_000,
+    playerState: true,
+  },
   { name: 'Roads', artist: 'Portishead', album: 'Dummy', year: 1994, duration: 305, playerPositionMS: 0, playerState: true },
-  { name: 'Unfinished Sympathy', artist: 'Massive Attack', album: 'Blue Lines', year: 1991, duration: 308, playerPositionMS: 120_000, playerState: false },
+  {
+    name: 'Unfinished Sympathy',
+    artist: 'Massive Attack',
+    album: 'Blue Lines',
+    year: 1991,
+    duration: 308,
+    playerPositionMS: 120_000,
+    playerState: false,
+  },
 ];
 
 export function fakeNative(): Native {
@@ -14,12 +30,25 @@ export function fakeNative(): Native {
     send({ type: 'log', tab, message: { text, kind, time: Date.now() }, replaceLast });
 
   const state: NativeState = {
-    app: { name: 'SoundBuddy', version: 'dev', platformName: 'SoundVitrine', musicApp: 'iTunes', language: navigator.language, debug: true },
+    app: {
+      name: 'SoundBuddy',
+      version: 'dev',
+      platformName: 'SoundVitrine',
+      musicApp: 'iTunes',
+      language: navigator.language,
+      debug: true,
+    },
     translations: {},
     status: { text: 'Waiting for appropriate credentials.', connectivity: 'refused' },
     tabs: { shout: { running: false, log: [] }, feeder: { running: false, log: [] } },
     nowPlaying: null,
-    settings: { platformHostUrl: 'https://soundvitrine.test', platformUsername: 'dev', platformPassword: 'dev', autoRunShout: false, runAtStartup: false },
+    settings: {
+      platformHostUrl: 'https://soundvitrine.test',
+      platformUsername: 'dev',
+      platformPassword: 'dev',
+      autoRunShout: false,
+      runAtStartup: false,
+    },
     canOpenPlatform: true,
     hasWarnings: true,
     searchingUpdates: false,
@@ -80,7 +109,10 @@ export function fakeNative(): Native {
           state.settings = { ...state.settings, ...(argument as object) };
           send({ type: 'settings', settings: state.settings, canOpenPlatform: state.settings.platformHostUrl !== '' });
           send({ type: 'status', status: { text: 'Asking for credentials validation...', connectivity: 'checking' } });
-          setTimeout(() => send({ type: 'status', status: { text: `Logged as "${state.settings.platformUsername}"`, connectivity: 'connected' } }), 1200);
+          setTimeout(
+            () => send({ type: 'status', status: { text: `Logged as "${state.settings.platformUsername}"`, connectivity: 'connected' } }),
+            1200,
+          );
           break;
         case 'checkUpdates':
           send({ type: 'update', searching: true });

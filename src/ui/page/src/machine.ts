@@ -1,12 +1,12 @@
 // States of the page : loading, then in parallel the two workers, the menu and the panels.
 // The data shown comes from the application (see state.ts); the regions only follow what the user asked for meanwhile,
 // so that a click is not repeated while the application has not answered yet. Tested in tests/machine.test.ts
-import { assign, fromPromise, setup, type SnapshotFrom } from 'xstate';
+import { assign, fromPromise, type SnapshotFrom, setup } from 'xstate';
 import type { CommandName, Native } from './native';
 import {
   applyEvent,
-  fromNativeState,
   type Credentials,
+  fromNativeState,
   type NativeEvent,
   type NativeState,
   type PageData,

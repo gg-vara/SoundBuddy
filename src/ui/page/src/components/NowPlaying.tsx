@@ -2,7 +2,7 @@
 import { createEffect, createMemo, createSignal } from 'solid-js';
 import { animate, bouncy } from '../animations';
 import { t } from '../i18n';
-import { isTrack, trackProgress, type Shout } from '../state';
+import { isTrack, type Shout, trackProgress } from '../state';
 
 export function NowPlaying(props: { shout: Shout | null }) {
   const title = createMemo(() => (isTrack(props.shout) ? props.shout.name : t('Nothing playing')));
@@ -32,7 +32,14 @@ export function NowPlaying(props: { shout: Shout | null }) {
   createEffect(
     title,
     () => {
-      animate(meta, [{ opacity: 0, transform: 'translateY(10px)' }, { opacity: 1, transform: 'none' }], bouncy);
+      animate(
+        meta,
+        [
+          { opacity: 0, transform: 'translateY(10px)' },
+          { opacity: 1, transform: 'none' },
+        ],
+        bouncy,
+      );
       animate(cover, [{ transform: 'scale(.8) rotate(-8deg)' }, { transform: 'none' }], bouncy);
     },
     { defer: true },

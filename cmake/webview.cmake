@@ -3,7 +3,7 @@
 # - webview::core : header-only C++ API; on Windows, WebView2 headers are fetched and its loader is built in,
 #   the WebView2 runtime itself being part of the system
 # - generated/page.h : the page, built by Bun and Vite into a single HTML file, as a C++ string (see templates/page.h.in)
-# - "page" test : the page's own tests (bun test), with the unit tests
+# - "page" and "page-lint" tests : the page's own tests (bun test) and its lint (Biome), with the unit tests
 
 include(FetchContent)
 
@@ -79,4 +79,6 @@ target_sources(appExec PRIVATE ${PAGE_HEADER})
 
 if(SOUNDBUDDY_BUILD_TESTS)
     add_test(NAME page COMMAND ${BUN_EXECUTABLE} test WORKING_DIRECTORY ${PAGE_DIR})
+    # lint and format, as checked by Biome (biome.json) : "bun run format" fixes what it can
+    add_test(NAME page-lint COMMAND ${BUN_EXECUTABLE} x biome ci . WORKING_DIRECTORY ${PAGE_DIR})
 endif()

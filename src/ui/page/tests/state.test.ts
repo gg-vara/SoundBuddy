@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { appendLog, applyEvent, fromNativeState, maxLogEntries, trackProgress, type LogMessage } from '../src/state';
+import { appendLog, applyEvent, fromNativeState, type LogMessage, maxLogEntries, trackProgress } from '../src/state';
 import { nativeState } from './fixtures';
 
 const message = (text: string): LogMessage => ({ text, kind: 'standard', time: 0 });

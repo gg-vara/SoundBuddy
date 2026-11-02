@@ -6,7 +6,9 @@
         "ms-vscode.cmake-tools",
         // debuggers : CodeLLDB, and the C/C++ extension for gdb ("cppdbg")
         "vadimcn.vscode-lldb",
-        "ms-vscode.cpptools"
+        "ms-vscode.cpptools",
+        // lint and format of the user interface page (src/ui/page/biome.json)
+        "biomejs.biome"
     ],
     "unwantedRecommendations": [
         // replaced by CMake Tools, which needs no Python language server

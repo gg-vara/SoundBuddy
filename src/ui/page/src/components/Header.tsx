@@ -29,6 +29,7 @@ export function Header(props: { view: View }) {
         <span class="pill-text">{status().text}</span>
       </div>
       <button
+        type="button"
         class="icon-button"
         title={t('My %1', data().app.platformName)}
         disabled={!data().canOpenPlatform}
@@ -36,7 +37,12 @@ export function Header(props: { view: View }) {
       >
         <Icon name="external" />
       </button>
-      <button class="icon-button" title={t('Preferences')} onClick={() => props.view.send({ type: 'ui.openPanel', panel: 'preferences' })}>
+      <button
+        type="button"
+        class="icon-button"
+        title={t('Preferences')}
+        onClick={() => props.view.send({ type: 'ui.openPanel', panel: 'preferences' })}
+      >
         <Icon name="gear" />
       </button>
       <Menu view={props.view} />
@@ -57,12 +63,13 @@ function Menu(props: { view: View }) {
 
   const version = () => {
     const { app, searchingUpdates } = data();
-    return `${app.name} ${app.version}` + (searchingUpdates ? ` — ${t('Searching for updates...')}` : '');
+    const searching = searchingUpdates ? ` — ${t('Searching for updates...')}` : '';
+    return `${app.name} ${app.version}${searching}`;
   };
 
   return (
     <>
-      <button class="icon-button menu-button" title={t('More')} popovertarget="menu" aria-haspopup="menu">
+      <button type="button" class="icon-button menu-button" title={t('More')} popovertarget="menu" aria-haspopup="menu">
         <Icon name="more" />
       </button>
       <div
@@ -73,19 +80,29 @@ function Menu(props: { view: View }) {
         ref={menu}
         onToggle={event => props.view.send(event.newState === 'open' ? { type: 'ui.openMenu' } : { type: 'ui.closeMenu' })}
       >
-        <button role="menuitem" disabled={!data().hasWarnings} onClick={() => props.view.send({ type: 'ui.openPanel', panel: 'warnings' })}>
+        <button
+          type="button"
+          role="menuitem"
+          disabled={!data().hasWarnings}
+          onClick={() => props.view.send({ type: 'ui.openPanel', panel: 'warnings' })}
+        >
           {t('Read latest upload warnings report')}
         </button>
-        <button role="menuitem" onClick={() => props.view.send({ type: 'ui.command', name: 'openDataFolder' })}>
+        <button type="button" role="menuitem" onClick={() => props.view.send({ type: 'ui.command', name: 'openDataFolder' })}>
           {t('Access upload data folder')}
         </button>
         <hr />
-        <button role="menuitem" disabled={data().searchingUpdates} onClick={() => props.view.send({ type: 'ui.command', name: 'checkUpdates' })}>
+        <button
+          type="button"
+          role="menuitem"
+          disabled={data().searchingUpdates}
+          onClick={() => props.view.send({ type: 'ui.command', name: 'checkUpdates' })}
+        >
           {t('Check for updates')}
         </button>
         <div class="menu-note">{version()}</div>
         <hr />
-        <button role="menuitem" onClick={() => props.view.send({ type: 'ui.command', name: 'quit' })}>
+        <button type="button" role="menuitem" onClick={() => props.view.send({ type: 'ui.command', name: 'quit' })}>
           {t('Quit')}
         </button>
       </div>

@@ -38,6 +38,16 @@
     "cmake.configureOnOpen": false,
     "cmake.cmakePath": "${env:MSYS2_ROOT}/clang64/bin/cmake.exe",
 
+    // user interface page : Biome formats and fixes on save (src/ui/page/biome.json)
+    "[typescript][typescriptreact][css][json]": {
+        "editor.defaultFormatter": "biomejs.biome",
+        "editor.formatOnSave": true,
+        "editor.codeActionsOnSave": {
+            "source.fixAll.biome": "explicit",
+            "source.organizeImports.biome": "explicit"
+        }
+    },
+
     // extension-less headers : the C++ standard library, Qt
     "files.associations": {
         "**/include/c++/v1/**": "cpp",

@@ -14,13 +14,23 @@ export function ShoutPanel(props: { view: View }) {
   const stoppable = () => worker() === 'running' || worker() === 'stopping';
 
   let panel!: HTMLElement;
-  onSettled(() => animate(panel, [{ opacity: 0, transform: 'translateY(6px)' }, { opacity: 1, transform: 'none' }], { duration: 220, easing: 'ease-out' }));
+  onSettled(() =>
+    animate(
+      panel,
+      [
+        { opacity: 0, transform: 'translateY(6px)' },
+        { opacity: 1, transform: 'none' },
+      ],
+      { duration: 220, easing: 'ease-out' },
+    ),
+  );
 
   return (
     <section class="panel" role="tabpanel" ref={panel}>
       <NowPlaying shout={data().nowPlaying} />
       <div class="toolbar">
         <button
+          type="button"
           class={['button', { primary: !stoppable(), busy: waiting() }]}
           disabled={waiting()}
           onClick={() => props.view.send(worker() === 'running' ? { type: 'ui.stop', tab: 'shout' } : { type: 'ui.start', tab: 'shout' })}

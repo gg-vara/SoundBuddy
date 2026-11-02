@@ -30,11 +30,12 @@ export function Tabs(props: { view: View; selected: Tab; onSelect: (tab: Tab) =>
   const isBusy = (tab: Tab) => regionState(props.view.snapshot(), tab) !== 'idle';
 
   return (
-    <nav role="tablist">
+    <div class="tabs" role="tablist">
       <div class="indicator" ref={indicator} />
       <For each={tabs}>
         {entry => (
           <button
+            type="button"
             role="tab"
             ref={element => (buttons[entry.tab] = element)}
             aria-selected={props.selected === entry.tab ? 'true' : 'false'}
@@ -46,6 +47,6 @@ export function Tabs(props: { view: View; selected: Tab; onSelect: (tab: Tab) =>
           </button>
         )}
       </For>
-    </nav>
+    </div>
   );
 }

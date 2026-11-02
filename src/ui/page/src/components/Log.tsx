@@ -31,14 +31,25 @@ function Entry(props: { message: LogMessage; time: string; container: HTMLDivEle
   let entry!: HTMLDivElement;
 
   onSettled(() => {
-    const { animated, container, kind } = untrack(() => ({ animated: props.animated, container: props.container, kind: props.message.kind }));
+    const { animated, container, kind } = untrack(() => ({
+      animated: props.animated,
+      container: props.container,
+      kind: props.message.kind,
+    }));
     if (!animated) return;
 
     // follows the end of the log, unless scrolled up
     const following = container.scrollHeight - entry.offsetHeight - container.scrollTop - container.clientHeight < 80;
     if (following) container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
 
-    animate(entry, [{ opacity: 0, transform: 'translateY(14px) scale(.96)' }, { opacity: 1, transform: 'none' }], bouncy);
+    animate(
+      entry,
+      [
+        { opacity: 0, transform: 'translateY(14px) scale(.96)' },
+        { opacity: 1, transform: 'none' },
+      ],
+      bouncy,
+    );
     if (kind === 'issue') {
       animate(
         entry,

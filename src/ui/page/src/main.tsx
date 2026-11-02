@@ -1,8 +1,8 @@
 // Entry point : the page's state machine, fed by the application, shown by <App>
 import { render } from '@solidjs/web';
 import { createActor } from 'xstate';
-import { bouncy, snappy } from './animations';
 import { App } from './App';
+import { bouncy, snappy } from './animations';
 import { texts } from './i18n';
 import { pageMachine } from './machine';
 import { hostNative, listenToNative, type Native } from './native';
@@ -30,4 +30,6 @@ const view = createView(page);
 listenToNative(event => page.send({ type: 'native.event', event }));
 page.start();
 
-render(() => <App view={view} />, document.getElementById('root')!);
+const container = document.getElementById('root');
+if (!container) throw new Error('No root element in the page');
+render(() => <App view={view} />, container);

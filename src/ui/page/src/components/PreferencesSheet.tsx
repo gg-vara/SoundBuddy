@@ -41,8 +41,21 @@ export function PreferencesSheet(props: { view: View }) {
         <h2>{t('Preferences')}</h2>
         <fieldset>
           <legend>{t('%1 connectivity', data().app.platformName)}</legend>
-          <input type="url" placeholder={t('Host URL')} spellcheck="false" autofocus value={host()} onInput={event => setHost(event.currentTarget.value)} />
-          <input type="text" placeholder={t('Username')} spellcheck="false" value={username()} onInput={event => setUsername(event.currentTarget.value)} />
+          <input
+            type="url"
+            placeholder={t('Host URL')}
+            spellcheck="false"
+            autofocus
+            value={host()}
+            onInput={event => setHost(event.currentTarget.value)}
+          />
+          <input
+            type="text"
+            placeholder={t('Username')}
+            spellcheck="false"
+            value={username()}
+            onInput={event => setUsername(event.currentTarget.value)}
+          />
           <div class="password">
             <input
               type={revealed() ? 'text' : 'password'}
@@ -50,7 +63,12 @@ export function PreferencesSheet(props: { view: View }) {
               value={password()}
               onInput={event => setPassword(event.currentTarget.value)}
             />
-            <button type="button" class="icon-button" title={t(revealed() ? 'Hide password' : 'Show password')} onClick={() => setRevealed(!revealed())}>
+            <button
+              type="button"
+              class="icon-button"
+              title={t(revealed() ? 'Hide password' : 'Show password')}
+              onClick={() => setRevealed(!revealed())}
+            >
               <Icon name="eye" />
             </button>
           </div>

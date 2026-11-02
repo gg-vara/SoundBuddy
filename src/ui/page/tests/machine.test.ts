@@ -2,7 +2,7 @@ import { describe, expect, test } from 'bun:test';
 import { createActor, waitFor } from 'xstate';
 import { pageMachine, regionState } from '../src/machine';
 import type { NativeEvent, NativeState } from '../src/state';
-import { fakeNative, nativeState, type FakeNative } from './fixtures';
+import { type FakeNative, fakeNative, nativeState } from './fixtures';
 
 // the page, loaded with "state"
 async function loadedPage(state: NativeState = nativeState(), native: FakeNative = fakeNative()) {
@@ -21,7 +21,10 @@ describe('loading', () => {
     const native = fakeNative();
     const page = createActor(pageMachine, { input: { native, texts: [] } }).start();
     page.send({ type: 'native.event', event: { type: 'run', tab: 'shout', running: true, newLog: true } });
-    page.send({ type: 'native.event', event: { type: 'log', tab: 'shout', message: { text: 'Listening', kind: 'standard', time: 1 }, replaceLast: false } });
+    page.send({
+      type: 'native.event',
+      event: { type: 'log', tab: 'shout', message: { text: 'Listening', kind: 'standard', time: 1 }, replaceLast: false },
+    });
     expect(page.getSnapshot().matches('loading')).toBe(true);
 
     native.answerReady(nativeState());

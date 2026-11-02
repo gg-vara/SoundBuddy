@@ -37,6 +37,7 @@ export const texts = [
 export type Text = (typeof texts)[number];
 
 const [translations, setTranslations] = createSignal<Record<string, string>>({});
+
 export { setTranslations };
 
 // "text" in the user interface language, with %1, %2... replaced by "args"

@@ -97,6 +97,7 @@ On Windows, the user interface is a web page shown in the system webview (WebVie
 - `src/ui/page` : the page, in TypeScript with [Solid](https://www.solidjs.com), its states in an [XState](https://stately.ai/docs/xstate) machine (`src/machine.ts`), built by [Vite](https://vite.dev) into a single HTML file embedded in the executable
 - `bun run dev` (from `src/ui/page`) : the page in a browser, with live reload, against a stand-in of the application (`src/dev/fakeNative.ts`)
 - `bun test` : the page's tests (state machine, state changes), also run by `ctest` as the `page` test
+- `bun run lint`, `bun run format` : lint and formatting by [Biome](https://biomejs.dev) (`biome.json`), also checked by `ctest` as the `page-lint` test; VS Code formats on save with its extension
 
 Its dependencies are locked in `src/ui/page/bun.lock`; CMake installs them and builds the page with the app.
 
