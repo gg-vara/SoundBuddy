@@ -101,6 +101,14 @@ soundbuddy_test(sse SOURCES ${PROJECT_SOURCE_DIR}/src/net/SseParser.cpp)
 soundbuddy_test(shout_uploader SOURCES ${PROJECT_SOURCE_DIR}/src/workers/shout/ShoutUploader.cpp)
 soundbuddy_test(mbeat SOURCES ${PROJECT_SOURCE_DIR}/src/workers/mBeat/MBeatThread.cpp)
 soundbuddy_test(feeder SOURCES ${PROJECT_SOURCE_DIR}/src/workers/feeder/FeederThread.cpp LIBRARIES itunes-library-parser)
+
+soundbuddy_test(update_checker SOURCES ${PROJECT_SOURCE_DIR}/src/workers/base/UpdateChecker.cpp LIBRARIES velopack)
+if(WIN32)
+    # the import library refers to "velopack_libc.dll" (see cmake/Velopack.cmake)
+    add_custom_command(TARGET test_update_checker POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${VELOPACK_LIB} $<TARGET_FILE_DIR:test_update_checker>/velopack_libc.dll
+    )
+endif()
 soundbuddy_test(shout_watcher
     SOURCES
         ${PROJECT_SOURCE_DIR}/src/workers/shout/ShoutPayload.cpp

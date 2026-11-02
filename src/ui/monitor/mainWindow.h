@@ -47,7 +47,7 @@
 #include "src/ui/tabs/ShoutTab.hpp"
 #include "src/ui/tabs/FeederTab.hpp"
 #include "src/workers/mBeat/MBeatThread.h"
-#include "src/workers/base/UpdateCheckerThread.hpp"
+#include "src/workers/base/UpdateChecker.h"
 
 #include "src/ui/widgets/TraficLight.hpp"
 
@@ -113,7 +113,7 @@ class MainWindow : public QMainWindow {
     QAction *versionAction = nullptr;
     QAction *cfugAction = nullptr;
     void setupAutoUpdate();
-    void onUpdateChecked(const UpdateCheckerThread::CheckResults checkResults);
+    void onUpdateChecked(const UpdateChecker::CheckResults &checkResults);
     void requireUpdateCheckFromUser();
     void checkForAppUpdates();
     void UpdateSearch_switchUI(bool isSearching);
@@ -128,7 +128,7 @@ class MainWindow : public QMainWindow {
     std::unique_ptr<ShoutWatcher> shoutWorker;
     std::unique_ptr<FeederThread> feederWorker;
     std::unique_ptr<MBeatThread> mbeatWorker;
-    UpdateCheckerThread updateCheckerWorker;
+    UpdateChecker updateChecker;
 
     void runMBeat();
     void runShouts();

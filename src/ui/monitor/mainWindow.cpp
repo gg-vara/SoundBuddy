@@ -178,16 +178,11 @@ void MainWindow::openWarnings() {
 }
 
 void MainWindow::setupAutoUpdate() {
-    QObject::connect(
-        &this->updateCheckerWorker, &UpdateCheckerThread::checked,
-        this, &MainWindow::onUpdateChecked
-    );
-
     // start the update check
     this->checkForAppUpdates();
 }
 
-void MainWindow::onUpdateChecked(const UpdateCheckerThread::CheckResults checkResults) {
+void MainWindow::onUpdateChecked(const UpdateChecker::CheckResults &checkResults) {
     // if the user asks directly to check updates
     const bool userAsked = this->userNotificationOnUpdateCheck;
 
@@ -197,10 +192,10 @@ void MainWindow::onUpdateChecked(const UpdateCheckerThread::CheckResults checkRe
     this->UpdateSearch_switchUI(false);
 
     switch (checkResults.result) {
-        case UpdateCheckerThread::Result::UpdateReady:
+        case UpdateChecker::Result::UpdateReady:
             break;
 
-        case UpdateCheckerThread::Result::NoUpdate:
+        case UpdateChecker::Result::NoUpdate:
             if (userAsked) {
                 QMessageBox::information(this,
                     tr("Checking updates"),
@@ -210,7 +205,7 @@ void MainWindow::onUpdateChecked(const UpdateCheckerThread::CheckResults checkRe
             }
             return;
 
-        case UpdateCheckerThread::Result::NotInstalled:
+        case UpdateChecker::Result::NotInstalled:
             if (userAsked) {
                 QMessageBox::information(this,
                     tr("Checking updates"),
@@ -220,7 +215,7 @@ void MainWindow::onUpdateChecked(const UpdateCheckerThread::CheckResults checkRe
             }
             return;
 
-        case UpdateCheckerThread::Result::Failed:
+        case UpdateChecker::Result::Failed:
             if (userAsked) {
                 QMessageBox::critical(this,
                     tr("Error while checking updates"),
@@ -241,7 +236,7 @@ void MainWindow::onUpdateChecked(const UpdateCheckerThread::CheckResults checkRe
         QMessageBox::Yes);
 
     if (msgboxRslt == QMessageBox::Yes) {
-        this->updateCheckerWorker.applyUpdateOnExit();
+        this->updateChecker.applyUpdateOnExit();
         this->forcedClose();
     }
 }
@@ -253,7 +248,10 @@ void MainWindow::requireUpdateCheckFromUser() {
 
 void MainWindow::checkForAppUpdates() {
     this->UpdateSearch_switchUI(true);
-    this->updateCheckerWorker.start();
+    // a check already in progress will end the search the same way
+    this->updateChecker.check([this](const UpdateChecker::CheckResults &results) {
+        ui::post(this, [this, results] { this->onUpdateChecked(results); });
+    });
 }
 
 void MainWindow::updateStatusBar(const QString &message, const ConnectivityIndicator &indic) {

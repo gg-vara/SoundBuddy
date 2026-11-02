@@ -1,0 +1,114 @@
+// SoundBuddy
+// Small companion app that feeds SoundVitrine with ITunes / Music library metadata
+// Copyright (C) 2019-2023 Guillaume Vara <guillaume.vara@gmail.com>
+
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+
+// Any graphical or audio resources available within the source code may
+// use a different license and copyright : please refer to their metadata
+// for further details. Resources without explicit references to a
+// different license and copyright still refer to this GPL.
+
+#include "UpdateChecker.h"
+
+#include <exception>
+#include <mutex>
+#include <optional>
+#include <thread>
+#include <utility>
+
+#include <Velopack.hpp>
+
+#include "src/logs/Logs.h"
+#include "version.h"
+
+struct UpdateChecker::State {
+    std::mutex mutex;
+    bool checking = false;
+    bool abandoned = false;  // the checker is destroyed
+
+    std::unique_ptr<Velopack::UpdateManager> manager;
+    std::optional<Velopack::UpdateInfo> update;
+};
+
+namespace {
+
+void logResults(const UpdateChecker::CheckResults& results) {
+    using Result = UpdateChecker::Result;
+    switch (results.result) {
+        case Result::UpdateReady: logs::info("Updates", "Version {} downloaded", results.version); break;
+        case Result::NoUpdate: logs::info("Updates", "Up to date"); break;
+        case Result::NotInstalled: logs::info("Updates", "Not checked, not running from an installation"); break;
+        case Result::Failed: logs::warning("Updates", "Check failed : {}", results.error); break;
+    }
+}
+
+}  // namespace
+
+UpdateChecker::UpdateChecker() : _state(std::make_shared<State>()) {}
+
+UpdateChecker::~UpdateChecker() {
+    std::lock_guard lock { _state->mutex };
+    _state->abandoned = true;
+}
+
+bool UpdateChecker::check(OnChecked onChecked) {
+    {
+        std::lock_guard lock { _state->mutex };
+        if (_state->checking) return false;
+        _state->checking = true;
+    }
+
+    // detached : a download cannot be interrupted, and must not delay quitting
+    std::thread([state = _state, onChecked = std::move(onChecked)] {
+        CheckResults results;
+        std::unique_ptr<Velopack::UpdateManager> manager;
+        std::optional<Velopack::UpdateInfo> update;
+
+        try {
+            manager = std::make_unique<Velopack::UpdateManager>(
+                std::make_unique<Velopack::GithubSource>(APP_UPDATES_REPOSITORY_URL)
+            );
+
+            update = manager->CheckForUpdates();
+            if (update) {
+                manager->DownloadUpdates(*update);
+                results = { Result::UpdateReady, update->TargetFullRelease.Version };
+            } else {
+                results.result = Result::NoUpdate;
+            }
+        } catch (const std::exception& e) {
+            // the manager cannot be created outside of an installation
+            results.result = manager ? Result::Failed : Result::NotInstalled;
+            results.error = e.what();
+            update.reset();
+        }
+
+        logResults(results);
+
+        // under the lock : the checker cannot be destroyed meanwhile, nor its owner before the callback returns
+        std::lock_guard lock { state->mutex };
+        state->checking = false;
+        state->manager = std::move(manager);
+        state->update = std::move(update);
+
+        if (!state->abandoned && onChecked) onChecked(results);
+    }).detach();
+
+    return true;
+}
+
+void UpdateChecker::applyUpdateOnExit() {
+    std::lock_guard lock { _state->mutex };
+    if (_state->manager && _state->update) {
+        _state->manager->WaitExitThenApplyUpdates(*_state->update);
+    }
+}
