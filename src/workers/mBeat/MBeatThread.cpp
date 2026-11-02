@@ -56,7 +56,7 @@ MBeatThread::~MBeatThread() = default;
 // runs on the worker thread
 void MBeatThread::_run(std::stop_token stop) {
     const auto notify = [this](std::string text, mbeat::Connectivity connectivity) {
-        if (_onStatus) _onStatus({ std::move(text), connectivity });
+        if (_onStatus) _onStatus({ .text = std::move(text), .connectivity = connectivity });
     };
 
     logs::debug("MBeat", "Start");
@@ -106,12 +106,12 @@ void MBeatThread::_run(std::stop_token stop) {
 }
 
 net::Request MBeatThread::_createRequest() const {
-    net::Request request { "POST", mbeat::credentialsUrl(_connectivityInfos) };
+    net::Request request { .method = "POST", .url = mbeat::credentialsUrl(_connectivityInfos) };
     request.timeout = requestTimeout;  // setup an earlier timeout
     request.headers = {
-        { "Accept-Language", std::string { i18n::languageCode() } },
-        { "X-Client-Id", APP_NAME },
-        { "X-Client-Version", APP_CURRENT_VERSION },
+        { .name = "Accept-Language", .value = std::string { i18n::languageCode() } },
+        { .name = "X-Client-Id", .value = APP_NAME },
+        { .name = "X-Client-Version", .value = APP_CURRENT_VERSION },
     };
 
     // credentials

@@ -42,9 +42,9 @@ int main() {
     auto start = std::chrono::steady_clock::now();
     {
         ShoutWatcher watcher { {
-            .onMessage = [&](const workers::Message& message) { std::lock_guard lock { mutex }; messages.push_back(message); },
-            .onShout = [&](std::string shout) { std::lock_guard lock { mutex }; shouts.push_back(std::move(shout)); },
-            .onFinished = [&] { std::lock_guard lock { mutex }; finished = true; },
+            .onMessage = [&](const workers::Message& message) { std::scoped_lock lock { mutex }; messages.push_back(message); },
+            .onShout = [&](std::string shout) { std::scoped_lock lock { mutex }; shouts.push_back(std::move(shout)); },
+            .onFinished = [&] { std::scoped_lock lock { mutex }; finished = true; },
         } };
 
         // waits for the music app, polled every second
@@ -54,7 +54,7 @@ int main() {
     }
     CHECK(millisecondsSince(start) < 500, "stopped right away while waiting");
 
-    std::lock_guard lock { mutex };
+    std::scoped_lock lock { mutex };
     CHECK(messages.size() == 1 && messages[0].text.find("iTunes") != std::string::npos, "waiting message, naming the music app");
     CHECK(shouts.empty(), "nothing shouted without a session");
     CHECK(finished, "finished callback");

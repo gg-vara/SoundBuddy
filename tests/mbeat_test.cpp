@@ -19,13 +19,13 @@ struct Statuses {
 
     mbeat::OnStatus sink() {
         return [this](const mbeat::Status& status) {
-            std::lock_guard lock { mutex };
+            std::scoped_lock lock { mutex };
             received.push_back(status);
         };
     }
 
     std::vector<mbeat::Status> get() {
-        std::lock_guard lock { mutex };
+        std::scoped_lock lock { mutex };
         return received;
     }
 
@@ -48,7 +48,7 @@ long long millisecondsSince(std::chrono::steady_clock::time_point start) {
 
 int main() {
     // credentials URL
-    const auto url = [](const char * host) { return mbeat::credentialsUrl({ host, "user", "password", true }); };
+    const auto url = [](const char * host) { return mbeat::credentialsUrl({ .platformHostUrl = host, .username = "user", .password = "password", .areOK = true }); };
     CHECK(url("https://soundvitrine.com") == "https://soundvitrine.com/hb/creds", "HTTPS kept");
     CHECK(url("http://soundvitrine.com") == "https://soundvitrine.com/hb/creds", "HTTP upgraded to HTTPS");
     CHECK(url("soundvitrine.com") == "https://soundvitrine.com/hb/creds", "HTTPS added");
@@ -68,7 +68,7 @@ int main() {
         Statuses statuses;
         auto start = std::chrono::steady_clock::now();
         {
-            MBeatThread heartbeat { { "http://127.0.0.1:9", "user", "password", true }, statuses.sink() };
+            MBeatThread heartbeat { { .platformHostUrl = "http://127.0.0.1:9", .username = "user", .password = "password", .areOK = true }, statuses.sink() };
             CHECK(statuses.waitFor(2, 10s), "two statuses");
             start = std::chrono::steady_clock::now();
         }
@@ -85,7 +85,7 @@ int main() {
         Statuses statuses;
         auto start = std::chrono::steady_clock::now();
         {
-            MBeatThread heartbeat { { "http://10.255.255.1", "user", "password", true }, statuses.sink() };
+            MBeatThread heartbeat { { .platformHostUrl = "http://10.255.255.1", .username = "user", .password = "password", .areOK = true }, statuses.sink() };
             CHECK(statuses.waitFor(1, 2s), "checking");
             std::this_thread::sleep_for(300ms);
             start = std::chrono::steady_clock::now();

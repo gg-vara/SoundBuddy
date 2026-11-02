@@ -19,7 +19,7 @@ int main() {
     {
         UpdateChecker checker;
         CHECK(checker.check([&](const UpdateChecker::CheckResults& r) {
-            std::lock_guard lock { mutex };
+            std::scoped_lock lock { mutex };
             results = r;
             done = true;
             checked.notify_all();

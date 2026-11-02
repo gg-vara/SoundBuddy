@@ -84,7 +84,7 @@ std::string systemLanguageTag() {
 
 Language detectLanguage() {
     const auto tag = systemLanguageTag();
-    if (tag.rfind("fr", 0) == 0) return Language::French;
+    if (tag.starts_with("fr")) return Language::French;
     return Language::English;
 }
 
@@ -100,7 +100,7 @@ void reportMissing(std::string_view source) {
     static std::mutex mutex;
     static std::set<std::string, std::less<>> reported;
 
-    std::lock_guard lock { mutex };
+    std::scoped_lock lock { mutex };
     if (reported.insert(std::string { source }).second) {
         logs::debug("i18n", "Missing translation : \"{}\"", source);
     }
@@ -143,7 +143,7 @@ std::string formatDataSize(std::uint64_t bytes) {
     }
 
     auto text = unit == 0 ? std::to_string(bytes) : std::format("{:.2f}", value);
-    if (french) std::replace(text.begin(), text.end(), '.', ',');
+    if (french) std::ranges::replace(text, '.', ',');
 
     return std::format("{} {}", text, french ? frenchUnits[unit] : englishUnits[unit]);
 }

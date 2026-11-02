@@ -56,7 +56,7 @@ void ShoutUploader::upload(std::string shoutAsJson) {
     logs::debug("ShoutUploader", "Shout received, uploading");
 
     {
-        std::lock_guard lock { _mutex };
+        std::scoped_lock lock { _mutex };
         _queue.push_back(std::move(shoutAsJson));
     }
 
@@ -81,23 +81,23 @@ void ShoutUploader::_uploadQueuedShouts(std::stop_token stop) {
 
         //
         const auto response = UploadHelper::uploadDataToPlatform(_client, {
-            _connectivityInfos,
-            AppSettings::getShoutUploadInfos(),
-            shout
+            .connectivityInfos = _connectivityInfos,
+            .uploadInfos = AppSettings::getShoutUploadInfos(),
+            .dataToUpload = shout
         }, AppSettings::FeedFormat::Json, stop);
 
         if (response.ok()) {
             logs::debug("ShoutUploader", "Uploaded, HTTP {}", response.status);
         } else if (!stop.stop_requested()) {
             workers::report(_onMessage, "ShoutUploader", {
-                i18n::format(i18n::tr("An error occured while shouting tracks infos to %1 platform : %2"),
+                .text = i18n::format(i18n::tr("An error occured while shouting tracks infos to %1 platform : %2"),
                     { DEST_PLATFORM_PRODUCT_NAME, UploadHelper::describeFailure(response) }),
-                workers::MessageKind::Issue
+                .kind = workers::MessageKind::Issue
             });
         }
 
         {
-            std::lock_guard lock { _mutex };
+            std::scoped_lock lock { _mutex };
             _uploading = false;
         }
 

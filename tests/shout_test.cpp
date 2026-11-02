@@ -19,7 +19,7 @@ int main() {
     const auto file = testdata::scratchDirectory("shout é") / platform::fromUtf8("caf\xC3\xA9.mp3");
     { std::ofstream { file, std::ios::binary } << "abc"; }
 
-    const ShoutPayload payload { true, 12000, 215, 1999, platform::toUtf8(file), "Caf\xC3\xA9 \"Live\"", "Album", "Artist", "Genre", "2026-01-01", "2026-02-01" };
+    const ShoutPayload payload { .playing = true, .positionMs = 12000, .duration = 215, .year = 1999, .fileLocation = platform::toUtf8(file), .name = "Caf\xC3\xA9 \"Live\"", .album = "Album", .artist = "Artist", .genre = "Genre", .skippedDate = "2026-01-01", .playedDate = "2026-02-01" };
     const auto result = payload.toJSON();
     const auto doc = json::parse(result.json);
     const auto root = json::root(doc);

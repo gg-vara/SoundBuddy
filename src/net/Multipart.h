@@ -46,7 +46,7 @@ class Multipart {
 
     // fills the request content type and body
     void applyTo(Request& request) const {
-        request.headers.push_back({ "Content-Type", "multipart/form-data; boundary=" + _boundary });
+        request.headers.push_back({ .name = "Content-Type", .value = "multipart/form-data; boundary=" + _boundary });
         request.body = _body + "--" + _boundary + "--\r\n";
     }
 

@@ -38,7 +38,7 @@ bool ShoutWatcher::isRunning() const {
 }
 
 void ShoutWatcher::_say(std::string text, workers::MessageKind kind) {
-    workers::report(_callbacks.onMessage, "ShoutWatcher", { std::move(text), kind });
+    workers::report(_callbacks.onMessage, "ShoutWatcher", { .text = std::move(text), .kind = kind });
 }
 
 // runs on the worker thread

@@ -45,7 +45,7 @@ void SseParser::_processLine(std::string_view line) {
     if (_firstLine) {
         _firstLine = false;
         static constexpr const std::string_view bom = "\xEF\xBB\xBF";
-        if (line.substr(0, bom.size()) == bom) line.remove_prefix(bom.size());
+        if (line.starts_with(bom)) line.remove_prefix(bom.size());
     }
 
     // an empty line dispatches the event
@@ -79,7 +79,7 @@ void SseParser::_processField(std::string_view field, std::string_view value) {
         if (value.find('\0') == std::string_view::npos) _lastEventId = value;
     } else if (field == "retry") {
         const bool digitsOnly = !value.empty() && value.size() <= 12
-            && std::all_of(value.begin(), value.end(), [](char c) { return c >= '0' && c <= '9'; });
+            && std::ranges::all_of(value, [](char c) { return c >= '0' && c <= '9'; });
         if (digitsOnly) _retry = std::chrono::milliseconds { std::stoll(std::string { value }) };
     }
 }

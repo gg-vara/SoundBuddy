@@ -48,7 +48,7 @@ bool FeederThread::isRunning() const {
 }
 
 void FeederThread::_say(std::string text, workers::MessageKind kind) {
-    workers::report(_callbacks.onMessage, "Feeder", { std::move(text), kind });
+    workers::report(_callbacks.onMessage, "Feeder", { .text = std::move(text), .kind = kind });
 }
 
 // runs on the worker thread
@@ -141,9 +141,9 @@ void FeederThread::_feed(std::stop_token stop) {
     _say(tr("Sending... Waiting for response."));
 
         const auto response = UploadHelper::uploadDataToPlatform(client, {
-            _connectivityInfos,
-            AppSettings::getFeederUploadInfos(),
-            compressedData,
+            .connectivityInfos = _connectivityInfos,
+            .uploadInfos = AppSettings::getFeederUploadInfos(),
+            .dataToUpload = compressedData,
         }, AppSettings::FeedFormat::Compressed, stop);
 
         if (stop.stop_requested()) return;

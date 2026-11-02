@@ -26,7 +26,7 @@ int main() {
 
     // GET
     {
-        const auto response = client.send({ "GET", "https://httpbin.org/get?x=1", { { "Accept-Language", "fr" } } });
+        const auto response = client.send({ .method = "GET", .url = "https://httpbin.org/get?x=1", .headers = { { .name = "Accept-Language", .value = "fr" } } });
         CHECK(response.ok() && response.status == 200, "GET : status 200");
         CHECK(response.body.find("\"x\": \"1\"") != std::string::npos, "query string sent");
         CHECK(response.body.find("SoundBuddy-network-test/1.0") != std::string::npos, "user agent sent");
@@ -37,7 +37,7 @@ int main() {
 
     // POST multipart
     {
-        net::Request request { "POST", "https://httpbin.org/post" };
+        net::Request request { .method = "POST", .url = "https://httpbin.org/post" };
         net::Multipart form;
         form.addFile("shout_file", "shout_file.json", "application/json", "{\"name\":\"\xC3\xA9t\xC3\xA9\"}");
         form.addField("password", "not-a-real-password");
@@ -53,13 +53,13 @@ int main() {
 
     // errors
     {
-        auto response = client.send({ "GET", "https://httpbin.org/status/403" });
+        auto response = client.send({ .method = "GET", .url = "https://httpbin.org/status/403" });
         CHECK(response.error.empty() && response.status == 403 && !response.ok(), "HTTP 403 is a response, not a transport error");
 
-        response = client.send({ "GET", "https://nonexistent.invalid/" });
+        response = client.send({ .method = "GET", .url = "https://nonexistent.invalid/" });
         CHECK(!response.error.empty() && response.status == 0, "unresolvable host");
 
-        net::Request slow { "GET", "https://httpbin.org/delay/5" };
+        net::Request slow { .method = "GET", .url = "https://httpbin.org/delay/5" };
         slow.timeout = 1500ms;
         const auto start = std::chrono::steady_clock::now();
         response = client.send(slow);
@@ -73,19 +73,19 @@ int main() {
             client.cancel();
         });
         const auto start = std::chrono::steady_clock::now();
-        auto response = client.send({ "GET", "https://httpbin.org/delay/5" });
+        auto response = client.send({ .method = "GET", .url = "https://httpbin.org/delay/5" });
         const auto elapsed = millisecondsSince(start);
         canceller.join();
         CHECK(response.error == "Request cancelled" && elapsed < 3000, "cancelled quickly");
 
-        response = client.send({ "GET", "https://httpbin.org/get" });
+        response = client.send({ .method = "GET", .url = "https://httpbin.org/get" });
         CHECK(response.ok(), "client reusable after cancel");
     }
 
     // streamed body
     {
         std::string all;
-        const auto response = client.stream({ "GET", "https://httpbin.org/stream/5" }, [&all](std::string_view chunk) {
+        const auto response = client.stream({ .method = "GET", .url = "https://httpbin.org/stream/5" }, [&all](std::string_view chunk) {
             all += chunk;
             return true;
         });
@@ -100,7 +100,7 @@ int main() {
         int events = 0;
         net::SseParser parser([&events](const net::SseEvent&) { ++events; });
 
-        net::Request request { "GET", "https://stream.wikimedia.org/v2/stream/recentchange", { { "Accept", "text/event-stream" } } };
+        net::Request request { .method = "GET", .url = "https://stream.wikimedia.org/v2/stream/recentchange", .headers = { { .name = "Accept", .value = "text/event-stream" } } };
         request.timeout = 0ms;  // no limit for a stream
 
         const auto start = std::chrono::steady_clock::now();

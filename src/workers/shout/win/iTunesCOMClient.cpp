@@ -22,8 +22,8 @@
 #include "iTunesCOMClient.h"
 
 #include <oleauto.h>
-#include <stdio.h>
 
+#include <format>
 #include <stdexcept>
 #include <string>
 #include <utility>
@@ -36,9 +36,7 @@ using Microsoft::WRL::ComPtr;
 namespace {
 
 std::runtime_error comError(const char * what, const HRESULT hr) {
-    char message[160];
-    snprintf(message, sizeof(message), "%s (HRESULT 0x%08lX)", what, static_cast<unsigned long>(hr));
-    return std::runtime_error(message);
+    return std::runtime_error(std::format("{} (HRESULT 0x{:08X})", what, static_cast<unsigned long>(hr)));
 }
 
 struct Variant : public VARIANT {
@@ -76,10 +74,8 @@ std::wstring toISODate(VARIANT * value) {
     SYSTEMTIME time;
     if (!VariantTimeToSystemTime(value->date, &time)) return {};
 
-    wchar_t formatted[32];
-    swprintf(formatted, 32, L"%04u-%02u-%02uT%02u:%02u:%02u",
+    return std::format(L"{:04}-{:02}-{:02}T{:02}:{:02}:{:02}",
         time.wYear, time.wMonth, time.wDay, time.wHour, time.wMinute, time.wSecond);
-    return formatted;
 }
 
 }  // namespace

@@ -39,8 +39,8 @@ class UploadHelper {
         form.addField("headless", "1");
 
         // build request
-        net::Request request { "POST", instructions.getUploadUrl() };
-        request.headers.push_back({ "Accept-Language", std::string { i18n::languageCode() } });
+        net::Request request { .method = "POST", .url = instructions.getUploadUrl() };
+        request.headers.push_back({ .name = "Accept-Language", .value = std::string { i18n::languageCode() } });
         form.applyTo(request);
 
         return client.send(request, stop);

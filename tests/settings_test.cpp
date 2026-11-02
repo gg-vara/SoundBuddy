@@ -24,7 +24,7 @@ int main(int argc, char** argv) {
 
     CHECK(!settings::load(file), "missing file : nothing");
 
-    settings::Settings values { "https://host.example", "j\xC3\xA9r\xC3\xB4me \"q\"", "p\\w\n", true, false };
+    settings::Settings values { .platformHostUrl = "https://host.example", .platformUsername = "j\xC3\xA9r\xC3\xB4me \"q\"", .platformPassword = "p\\w\n", .autoRunShout = true, .runAtStartup = false };
     CHECK(settings::save(file, values), "save creates directories");
     CHECK(!std::filesystem::exists(file.parent_path() / "settings.json.tmp"), "no temporary file left");
 

@@ -322,7 +322,7 @@ void MainWindow::_runFeeder() {
 void MainWindow::_initUI() {
     // values specific to this
     #ifdef _DEBUG
-        QString stdTitle = (QString)"DEBUG - " + APP_NAME;
+        QString stdTitle = QString("DEBUG - ") + APP_NAME;
     #else
         QString stdTitle = APP_NAME;
     #endif
@@ -429,7 +429,7 @@ void MainWindow::_initUIMenu() {
 //////////////////////
 
 QMenu* MainWindow::_getOptionsMenu() {
-    QMenu *optionsMenuItem = new QMenu(tr("Options"));
+    auto *optionsMenuItem = new QMenu(tr("Options"));
 
     // for checking available updates
     this->_cfugAction = new QAction(tr("Check for updates"), optionsMenuItem);

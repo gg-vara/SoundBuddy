@@ -57,8 +57,8 @@ ShoutJSONParsingResult ShoutPayload::toJSON() const
     }
 
     return {
-        json::write(doc),
-        std::move(audioFileHash),
-        isEmptyShout
+        .json = json::write(doc),
+        .audioFileHash = std::move(audioFileHash),
+        .isEmpty = isEmptyShout
     };
 }

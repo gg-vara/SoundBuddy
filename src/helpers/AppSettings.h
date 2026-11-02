@@ -59,19 +59,19 @@ class AppSettings {
             return {};
 
         return {
-            _values.platformHostUrl,
-            _values.platformUsername,
-            _values.platformPassword,
-            true
+            .platformHostUrl = _values.platformHostUrl,
+            .username = _values.platformUsername,
+            .password = _values.platformPassword,
+            .areOK = true
         };
     }
 
     static UploadInfos getShoutUploadInfos() {
-        return { "/uploadShout", "shout_file" };
+        return { .path = "/uploadShout", .outputFileName = "shout_file" };
     }
 
     static UploadInfos getFeederUploadInfos() {
-        return { "/uploadMusicLibrary", DEST_PLATFORM_PRODUCT_NAME "_file" };
+        return { .path = "/uploadMusicLibrary", .outputFileName = DEST_PLATFORM_PRODUCT_NAME "_file" };
     }
 
     static std::filesystem::path getFeedWarningFilePath() {

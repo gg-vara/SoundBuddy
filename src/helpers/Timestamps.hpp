@@ -20,6 +20,7 @@
 
 #pragma once
 
+#include <array>
 #include <chrono>
 #include <ctime>
 #include <format>
@@ -45,9 +46,9 @@ inline std::string local(std::chrono::system_clock::time_point point) {
     if (!localtime_r(&now, &time)) return {};
 #endif
 
-    char text[32];
-    const auto length = std::strftime(text, sizeof(text), "%Y-%m-%d %H:%M:%S", &time);
-    return { text, length };
+    std::array<char, 32> text {};
+    const auto length = std::strftime(text.data(), text.size(), "%Y-%m-%d %H:%M:%S", &time);
+    return { text.data(), length };
 }
 
 }  // namespace detail

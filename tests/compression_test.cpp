@@ -1,5 +1,6 @@
 // src/helpers/Compression.h : compressed by the system, decompressed by the system again
 
+#include <format>
 #include <string>
 
 #ifdef _WIN32
@@ -38,7 +39,7 @@ int main() {
     // JSON alike, larger than the 32 KB blocks of MSZIP
     std::string library = "[";
     for (int i = 0; i < 20000; ++i) {
-        library += "{\"Name\":\"Track " + std::to_string(i) + " caf\xC3\xA9\",\"Artist\":\"Artist " + std::to_string(i % 97) + "\",\"Year\":\"" + std::to_string(1960 + i % 60) + "\"},";
+        library += std::format(R"({{"Name":"Track {} café","Artist":"Artist {}","Year":"{}"}},)", i, i % 97, 1960 + i % 60);
     }
     library.back() = ']';
 

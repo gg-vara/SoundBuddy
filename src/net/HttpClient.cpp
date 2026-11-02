@@ -32,7 +32,7 @@ std::optional<std::string> Response::header(std::string_view name) const {
             [](char a, char b) { return std::tolower(static_cast<unsigned char>(a)) == std::tolower(static_cast<unsigned char>(b)); });
     };
 
-    const auto found = std::find_if(headers.begin(), headers.end(), sameName);
+    const auto found = std::ranges::find_if(headers, sameName);
     if (found == headers.end()) return std::nullopt;
     return found->value;
 }

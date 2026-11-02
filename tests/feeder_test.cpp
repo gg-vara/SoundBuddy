@@ -24,9 +24,9 @@ struct Report {
 
     FeederThread::Callbacks callbacks() {
         return {
-            .onMessage = [this](const workers::Message& message) { std::lock_guard lock { mutex }; messages.push_back(message); },
-            .onFilesGenerated = [this] { std::lock_guard lock { mutex }; filesGenerated = true; },
-            .onFinished = [this] { std::lock_guard lock { mutex }; finished = true; },
+            .onMessage = [this](const workers::Message& message) { std::scoped_lock lock { mutex }; messages.push_back(message); },
+            .onFilesGenerated = [this] { std::scoped_lock lock { mutex }; filesGenerated = true; },
+            .onFinished = [this] { std::scoped_lock lock { mutex }; finished = true; },
         };
     }
 
@@ -36,7 +36,7 @@ struct Report {
         const auto deadline = std::chrono::steady_clock::now() + timeout;
         while (std::chrono::steady_clock::now() < deadline) {
             {
-                std::lock_guard lock { mutex };
+                std::scoped_lock lock { mutex };
                 if (predicate()) return true;
             }
             std::this_thread::sleep_for(10ms);
@@ -63,12 +63,12 @@ int main() {
     // full run, against a closed port
     {
         Report report;
-        FeederThread feeder { { "http://127.0.0.1:9", "user", "password", true }, report.callbacks() };
+        FeederThread feeder { { .platformHostUrl = "http://127.0.0.1:9", .username = "user", .password = "password", .areOK = true }, report.callbacks() };
 
         CHECK(report.waitUntil([&] { return report.finished; }, 60s), "run finished");
         CHECK(!feeder.isRunning(), "no longer running");
 
-        std::lock_guard lock { report.mutex };
+        std::scoped_lock lock { report.mutex };
         CHECK(!report.messages.empty() && report.messages.back().kind == workers::MessageKind::Issue, "ends on an issue : no library, or platform unreachable");
         if (hasLibrary) {
             CHECK(report.filesGenerated, "library export written");
@@ -82,7 +82,7 @@ int main() {
         Report report;
         auto start = std::chrono::steady_clock::now();
         {
-            FeederThread feeder { { "http://10.255.255.1", "user", "password", true }, report.callbacks() };
+            FeederThread feeder { { .platformHostUrl = "http://10.255.255.1", .username = "user", .password = "password", .areOK = true }, report.callbacks() };
             const auto sending = std::string { i18n::tr("Sending... Waiting for response.") };
             CHECK(report.waitUntil([&] { return !report.messages.empty() && report.messages.back().text == sending; }, 60s), "upload started");
             std::this_thread::sleep_for(200ms);
@@ -90,7 +90,7 @@ int main() {
         }
         CHECK(millisecondsSince(start) < 1000, "stopped quickly during the upload");
 
-        std::lock_guard lock { report.mutex };
+        std::scoped_lock lock { report.mutex };
         CHECK(report.finished && report.messages.back().kind != workers::MessageKind::Issue, "finished, an aborted upload is not reported as a failure");
     }
 

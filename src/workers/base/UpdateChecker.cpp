@@ -56,13 +56,13 @@ void logResults(const UpdateChecker::CheckResults& results) {
 UpdateChecker::UpdateChecker() : _state(std::make_shared<State>()) {}
 
 UpdateChecker::~UpdateChecker() {
-    std::lock_guard lock { _state->mutex };
+    std::scoped_lock lock { _state->mutex };
     _state->abandoned = true;
 }
 
 bool UpdateChecker::check(OnChecked onChecked) {
     {
-        std::lock_guard lock { _state->mutex };
+        std::scoped_lock lock { _state->mutex };
         if (_state->checking) return false;
         _state->checking = true;
     }
@@ -81,7 +81,7 @@ bool UpdateChecker::check(OnChecked onChecked) {
             update = manager->CheckForUpdates();
             if (update) {
                 manager->DownloadUpdates(*update);
-                results = { Result::UpdateReady, update->TargetFullRelease.Version };
+                results = { .result = Result::UpdateReady, .version = update->TargetFullRelease.Version };
             } else {
                 results.result = Result::NoUpdate;
             }
@@ -95,7 +95,7 @@ bool UpdateChecker::check(OnChecked onChecked) {
         logResults(results);
 
         // under the lock : the checker cannot be destroyed meanwhile, nor its owner before the callback returns
-        std::lock_guard lock { state->mutex };
+        std::scoped_lock lock { state->mutex };
         state->checking = false;
         state->manager = std::move(manager);
         state->update = std::move(update);
@@ -107,7 +107,7 @@ bool UpdateChecker::check(OnChecked onChecked) {
 }
 
 void UpdateChecker::applyUpdateOnExit() {
-    std::lock_guard lock { _state->mutex };
+    std::scoped_lock lock { _state->mutex };
     if (_state->manager && _state->update) {
         _state->manager->WaitExitThenApplyUpdates(*_state->update);
     }

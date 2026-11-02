@@ -80,7 +80,7 @@ std::vector<Header> parseHeaders(std::wstring_view raw) {
         if (colon != std::wstring_view::npos) {
             auto value = line.substr(colon + 1);
             while (!value.empty() && value.front() == L' ') value.remove_prefix(1);
-            headers.push_back({ narrow(line.substr(0, colon)), narrow(value) });
+            headers.push_back({ .name = narrow(line.substr(0, colon)), .value = narrow(value) });
         }
 
         lineStart = lineEnd;
@@ -160,7 +160,7 @@ class HttpClient::Impl {
         }
 
         {
-            std::lock_guard lock { _mutex };
+            std::scoped_lock lock { _mutex };
             _request = handle;
             _cancelled = false;
         }
@@ -173,7 +173,7 @@ class HttpClient::Impl {
 
         {
             // the handle may already have been closed by cancel()
-            std::lock_guard lock { _mutex };
+            std::scoped_lock lock { _mutex };
             if (_request) WinHttpCloseHandle(_request);
             _request = nullptr;
         }
@@ -183,7 +183,7 @@ class HttpClient::Impl {
     }
 
     void cancel() {
-        std::lock_guard lock { _mutex };
+        std::scoped_lock lock { _mutex };
         _cancelled = true;
 
         // closing the handle aborts the blocking call in progress on it
@@ -201,7 +201,7 @@ class HttpClient::Impl {
     bool _cancelled = false;
 
     bool _isCancelled() {
-        std::lock_guard lock { _mutex };
+        std::scoped_lock lock { _mutex };
         return _cancelled;
     }
 

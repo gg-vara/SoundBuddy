@@ -105,7 +105,7 @@ void ShoutWatcher::_execWatchSession(std::stop_token stop) {
     _say(i18n::format(i18n::tr("Connecting to %1 ..."), { platform::musicAppName() }));
 
     // initiate COM
-    CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+    CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
 
     try {
         // log..

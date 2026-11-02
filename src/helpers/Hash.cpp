@@ -104,7 +104,7 @@ std::string md5File(const std::filesystem::path& file) {
     const auto digest = md5(file);
     if (!digest) return {};
 
-    constexpr char digits[] = "0123456789abcdef";
+    constexpr std::string_view digits = "0123456789abcdef";
     std::string hex;
     hex.reserve(digest->size() * 2);
     for (const auto byte : *digest) {

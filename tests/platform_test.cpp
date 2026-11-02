@@ -1,6 +1,7 @@
 // src/helpers/Platform.h : data directory, UTF-8 paths, launch at login, single instance, music library.
 // Writes only under the test identity (tests/support/version.h).
 
+#include <array>
 #include <cstdio>
 #include <stdexcept>
 #include <string>
@@ -18,11 +19,11 @@ namespace {
 #ifdef _WIN32
 // exit code of this test program, run again with the "claim" argument
 int runClaimingChild() {
-    wchar_t executable[MAX_PATH];
-    GetModuleFileNameW(nullptr, executable, MAX_PATH);
+    std::array<wchar_t, MAX_PATH> executable {};
+    GetModuleFileNameW(nullptr, executable.data(), MAX_PATH);
 
-    std::wstring command = std::wstring(L"\"") + executable + L"\" claim";
-    STARTUPINFOW startup { sizeof(startup) };
+    std::wstring command = std::wstring(L"\"") + executable.data() + L"\" claim";
+    STARTUPINFOW startup { .cb = sizeof(startup) };
     PROCESS_INFORMATION process {};
     if (!CreateProcessW(nullptr, command.data(), nullptr, nullptr, FALSE, 0, nullptr, nullptr, &startup, &process)) return -1;
 
@@ -35,11 +36,11 @@ int runClaimingChild() {
 }
 
 std::wstring registeredStartupCommand() {
-    wchar_t value[1024];
-    DWORD size = sizeof(value);
+    std::array<wchar_t, 1024> value {};
+    auto size = static_cast<DWORD>(value.size() * sizeof(wchar_t));
     if (RegGetValueW(HKEY_CURRENT_USER, LR"(Software\Microsoft\Windows\CurrentVersion\Run)", L"" APP_NAME,
-            RRF_RT_REG_SZ, nullptr, value, &size) != ERROR_SUCCESS) return {};
-    return value;
+            RRF_RT_REG_SZ, nullptr, value.data(), &size) != ERROR_SUCCESS) return {};
+    return value.data();
 }
 #endif
 
@@ -68,9 +69,9 @@ int main(int argc, char** argv) {
     CHECK(platform::setLaunchingAtStartup(false) && !platform::isLaunchingAtStartup(), "not launching at startup");
     CHECK(platform::setLaunchingAtStartup(true) && platform::isLaunchingAtStartup(), "enable startup launch");
 #ifdef _WIN32
-    wchar_t executable[MAX_PATH];
-    GetModuleFileNameW(nullptr, executable, MAX_PATH);
-    CHECK(registeredStartupCommand() == std::wstring(L"\"") + executable + L"\"", "registered command : the quoted executable path");
+    std::array<wchar_t, MAX_PATH> executable {};
+    GetModuleFileNameW(nullptr, executable.data(), MAX_PATH);
+    CHECK(registeredStartupCommand() == std::wstring(L"\"") + executable.data() + L"\"", "registered command : the quoted executable path");
 #endif
     CHECK(platform::setLaunchingAtStartup(true) && platform::isLaunchingAtStartup(), "enable twice");
     CHECK(platform::setLaunchingAtStartup(false) && !platform::isLaunchingAtStartup(), "disable startup launch");

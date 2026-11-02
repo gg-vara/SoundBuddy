@@ -101,7 +101,7 @@ void rotate(LogFile& log) {
 
 void start(const std::filesystem::path& file) {
     auto& log = logFile();
-    std::lock_guard lock { log.mutex };
+    std::scoped_lock lock { log.mutex };
 
     std::error_code error;
     std::filesystem::create_directories(file.parent_path(), error);
@@ -113,7 +113,7 @@ void start(const std::filesystem::path& file) {
 
 void stop() {
     auto& log = logFile();
-    std::lock_guard lock { log.mutex };
+    std::scoped_lock lock { log.mutex };
     log.stream.close();
 }
 
@@ -125,7 +125,7 @@ void write(Level level, std::string_view source, std::string_view message) {
     const auto line = std::format("{} [{}] [{}] {}\n", timestamps::localPrecise(), label(level), source, message);
 
     auto& log = logFile();
-    std::lock_guard lock { log.mutex };
+    std::scoped_lock lock { log.mutex };
 
     writeToDebugOutputs(line);
 
