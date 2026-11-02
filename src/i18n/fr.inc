@@ -176,3 +176,11 @@
 // MainWindow (Windows)
 { "%1 needs the Microsoft Edge WebView2 Runtime to show its window. Please install it, then try again.",
   "%1 a besoin du Runtime Microsoft Edge WebView2 pour afficher sa fenêtre. Merci de l'installer, puis de réessayer." },
+
+// MainWindow (macOS) : dialog buttons
+{ "Yes",
+  "Oui" },
+{ "No",
+  "Non" },
+{ "OK",
+  "OK" },

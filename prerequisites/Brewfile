@@ -9,7 +9,8 @@ brew "ninja"
 brew "gh"           # GitHub CLI : publishes releases
 cask "dotnet-sdk"   # runs Velopack's CLI (dotnet tool restore)
 
-## runtime : libraries the app links to and ships with
-brew "qt"           # until the native user interface
+## build : the user interface page
+tap "oven-sh/bun"
+brew "bun"          # installs and builds the page (Vite, TypeScript)
 
 ## devex : clangd, clang-tidy and lldb come with llvm

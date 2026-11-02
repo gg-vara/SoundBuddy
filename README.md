@@ -16,7 +16,7 @@ Requires a C++20 enabled compiler. We assume you have Git installed on your syst
 
 SoundBuddy have some dependencies that are external and thus need to be installed on your system. They are listed in `prerequisites/`, in 3 parts :
 - build : the toolchain (compiler, linker, CMake, Ninja) and release tooling (GitHub CLI)
-- runtime : the libraries the app links to and ships with (on macOS, Qt, until its user interface moves to the system webview; none on Windows)
+- runtime : the libraries the app links to and ships with (none : the system provides the webview, libc++ comes with the compiler)
 - devex : development comfort (clangd and clang-tidy, debugger), optional to build
 
 The other libraries are declared in CMake (`FetchContent`, submodules), and Velopack's CLI in the .NET tools manifest (`.config/dotnet-tools.json`). CMake checks the toolchain when configuring, and tells what is missing.
@@ -31,7 +31,7 @@ All dependencies are fetched via Homebrew (https://brew.sh), make sure you have 
 - `brew bundle check --file prerequisites/Brewfile` tells what is missing
 
 #### Security
-Now from OSX 13.2+, executables have to be signed with a developper identity to be even lauched (for Qt binary depedencies via `macdeployqt`, for the Velopack package...).
+Now from OSX 13.2+, executables have to be signed with a developper identity to be even lauched (the app bundle, the Velopack package...).
 You need a locally registered XCode / Apple developper platform linked to your XCode app, and then set `APPLE_CODESIGN_ID` and `APPLE_CERT_APP_CODE_SIGN_IDENTITY` env variables:
 They would look like:
 - APPLE_CODESIGN_ID=U2T7J2AC52
@@ -92,7 +92,7 @@ Tests run under their own identity (`tests/support/version.h`) : they never touc
 
 ## User interface
 
-On Windows, the user interface is a web page shown in the system webview (WebView2), hosted by a native window and tray icon (`src/ui/win`). The application state and its workers live in C++ (`src/ui/Controller.cpp`); the page shows it, and asks for changes :
+The user interface is a web page shown in the system webview, hosted by a native shell : a window and a tray icon on Windows (WebView2, `src/ui/win`), a window and a menu bar item on macOS (WKWebView, `src/ui/mac`). The application state and its workers live in C++ (`src/ui/Controller.cpp`); the page shows it, and asks for changes :
 
 - `src/ui/page` : the page, in TypeScript with [Solid](https://www.solidjs.com), its states in an [XState](https://stately.ai/docs/xstate) machine (`src/machine.ts`), built by [Vite](https://vite.dev) into a single HTML file embedded in the executable
 - `bun run dev` (from `src/ui/page`) : the page in a browser, with live reload, against a stand-in of the application (`src/dev/fakeNative.ts`)
@@ -107,7 +107,7 @@ Icons are drawn in SVG (`resources/icons/svg`) : `bun run icons` (from `resource
 
 ## Translations
 
-Texts are written in English in the code (`i18n::tr()`, or `t()` in the page, and `tr()` in the Qt classes of macOS). Their translations are compiled into the app from `src/i18n/*.inc` tables (`{ "English text", "translation" },`), and the language follows the system's user interface one.
+Texts are written in English in the code (`i18n::tr()`, or `t()` in the page). Their translations are compiled into the app from `src/i18n/*.inc` tables (`{ "English text", "translation" },`), and the language follows the system's user interface one.
 
 To translate a new text, add it to `src/i18n/fr.inc`. Debug builds log every untranslated text as `[i18n] missing translation : "..."`.
 

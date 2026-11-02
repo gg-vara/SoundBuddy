@@ -19,7 +19,7 @@
 
 #pragma once
 
-// User interface : a web page in the system webview on Windows (src/ui/win), Qt widgets on macOS for now (src/ui/qt)
+// User interface : a web page (src/ui/page) in the system webview, hosted by a native shell (src/ui/win, src/ui/mac)
 namespace ui {
 
 // shows the user interface (in the tray) until the user quits : returns the exit code

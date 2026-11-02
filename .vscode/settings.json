@@ -48,10 +48,9 @@
         }
     },
 
-    // extension-less headers : the C++ standard library, Qt
+    // extension-less headers : the C++ standard library
     "files.associations": {
         "**/include/c++/v1/**": "cpp",
-        "**/qt6/**/Q*": "cpp",
         "*.inc": "cpp",
         "*.ipp": "cpp"
     }

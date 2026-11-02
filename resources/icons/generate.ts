@@ -79,10 +79,9 @@ const outputs: Record<string, () => Promise<Buffer>> = {
   'tray_dark.ico': () => icoOf('note.svg', traySizes, '#fff'),
   'tray_light.ico': () => icoOf('note.svg', traySizes, '#000'),
   'package.ico': () => icoOf('package.svg', appSizes),
-  // macOS : the bundle, the installer, the Qt window and menu bar
+  // macOS : the bundle, the installer, the menu bar item (a template image)
   'app.icns': () => icns('app.svg'),
   'package.icns': () => icns('package.svg'),
-  'app.png': () => render('app.svg', 512),
   'app_reverse.png': () => render('note.svg', 512),
 };
 

@@ -1,16 +1,9 @@
-// src/i18n, and the Qt translator bridge (macOS)
-
-#ifdef __APPLE__
-#include <QCoreApplication>
-#endif
+// src/i18n
 
 #include "Check.h"
 #include "src/i18n/Translations.h"
-#ifdef __APPLE__
-#include "src/ui/qt/QtTranslatorBridge.hpp"
-#endif
 
-int main([[maybe_unused]] int argc, [[maybe_unused]] char** argv) {
+int main() {
     i18n::setLanguage(i18n::Language::French);
     CHECK(i18n::tr("Quit") == "Quitter", "known text translated");
     CHECK(i18n::tr("Logged as \"%1\"") == "Connecté en tant que \"%1\"", "text with quotes and placeholder");
@@ -28,20 +21,6 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char** argv) {
     CHECK(i18n::tr("Quit") == "Quit", "English keeps source texts");
     CHECK(i18n::languageCode() == "en", "English code");
     CHECK(i18n::formatDataSize(45'678'901) == "43.56 MB" && i18n::formatDataSize(3ULL << 40) == "3072.00 GB", "English sizes, up to GB");
-
-#ifdef __APPLE__
-    // Qt bridge
-    const QCoreApplication app(argc, argv);
-    QtTranslatorBridge bridge;
-    QCoreApplication::installTranslator(&bridge);
-
-    i18n::setLanguage(i18n::Language::French);
-    CHECK(QCoreApplication::translate("MainWindow", "Quit") == QString::fromUtf8("Quitter"), "Qt tr() served by the bridge");
-    CHECK(QCoreApplication::translate("MainWindow", "Unknown text") == "Unknown text", "Qt falls back to the source text");
-
-    i18n::setLanguage(i18n::Language::English);
-    CHECK(QCoreApplication::translate("MainWindow", "Quit") == "Quit", "Qt tr() in English");
-#endif
 
     return check::summary();
 }

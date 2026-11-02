@@ -19,7 +19,6 @@ endif()
 # default configuration
 list(APPEND CMAKE_MODULE_PATH 
     ${CMAKE_CURRENT_SOURCE_DIR}/cmake
-    ${CMAKE_CURRENT_SOURCE_DIR}/cmake/Qt
 )
 
 if(WIN32)
@@ -85,22 +84,6 @@ SET(CMAKE_CXX_STANDARD 20)
 SET(CMAKE_CXX_STANDARD_REQUIRED ON)
 SET(CMAKE_C_STANDARD 11)
 
-# Qt : user interface on macOS, until it moves to the system webview as on Windows
-if(APPLE)
-    SET(CMAKE_AUTOMOC ON)
-    SET(CMAKE_AUTORCC ON)
-    SET(CMAKE_AUTOUIC ON)
-
-    find_package(Qt6 REQUIRED COMPONENTS
-        Core
-        Gui
-        Widgets
-        DBus
-    )
-
-    qt_standard_project_setup()
-endif()
-
 ##########################
 ## Bundle configuration ##
 ##########################
@@ -123,8 +106,10 @@ if (APPLE)
     #add icons
     SET(MACOSX_BUNDLE_ICON_FILE "app.icns")
     SET(APP_ICO ${CMAKE_CURRENT_SOURCE_DIR}/resources/icons/${MACOSX_BUNDLE_ICON_FILE})
-    set_source_files_properties(${APP_ICO} PROPERTIES 
-        MACOSX_PACKAGE_LOCATION "Resources"                                                    
+    # menu bar icon, a template image
+    SET(APP_MENU_BAR_ICON ${CMAKE_CURRENT_SOURCE_DIR}/resources/icons/app_reverse.png)
+    set_source_files_properties(${APP_ICO} ${APP_MENU_BAR_ICON} PROPERTIES
+        MACOSX_PACKAGE_LOCATION "Resources"
     )
 endif()
 
@@ -140,17 +125,12 @@ if (APPLE)
         ${CMAKE_CURRENT_SOURCE_DIR}/src/workers/shout/win/iTunesCOMClient.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/workers/shout/win/iTunesSession.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/workers/shout/ShoutWatcher.win.cpp
-        # webview user interface : Windows only for now
-        ${CMAKE_CURRENT_SOURCE_DIR}/src/ui/Controller.cpp
     )
     list(FILTER APP_CPP_FILES EXCLUDE REGEX "/src/ui/win/")
 elseif (WIN32)
     list(REMOVE_ITEM APP_CPP_FILES
         ${CMAKE_CURRENT_SOURCE_DIR}/src/workers/shout/ShoutWatcher.mac.cpp
     )
-    # Qt user interface : macOS only
-    list(FILTER APP_CPP_FILES EXCLUDE REGEX "/src/ui/qt/")
-    list(FILTER APP_HPP_FILES EXCLUDE REGEX "/src/ui/qt/")
 endif()
 
 # Objective-C++ sources (native macOS APIs)
@@ -170,11 +150,8 @@ add_executable(appExec ${BUNDLE_TYPE}
     ${APP_HPP_FILES}
     ${APP_CPP_FILES}
     ${APP_ICO}
+    ${APP_MENU_BAR_ICON}
 )
-
-if (APPLE)
-    target_sources(appExec PRIVATE resources/resources.qrc)
-endif()
 
 # generate debug symbols
 if (APPLE)
@@ -257,7 +234,7 @@ endif()
 # translations #
 ################
 
-# compiled in from src/i18n/*.inc tables (see src/i18n/Translations.h) : on macOS, only Qt own translations are deployed
+# compiled in from src/i18n/*.inc tables (see src/i18n/Translations.h)
 
 ############
 # Velopack #
@@ -298,19 +275,9 @@ endif()
 # User interface #
 ##################
 
-if(WIN32)
-    # page in the system webview (see cmake/webview.cmake)
-    include(webview)
-    target_link_libraries(appExec PRIVATE webview::core)
-endif()
-
-if(APPLE)
-    target_link_libraries(appExec PRIVATE
-        Qt6::Core
-        Qt6::Gui
-        Qt6::Widgets
-    )
-endif()
+# a page in the system webview (see cmake/webview.cmake) : WebView2 on Windows, WKWebView on macOS
+include(webview)
+target_link_libraries(appExec PRIVATE webview::core)
 
 ###############
 # OS services #
@@ -337,20 +304,15 @@ endif()
 
 if(APPLE)
     target_link_libraries(appExec PRIVATE
-        Qt6::DBus
+        # settings of previous versions
+        "-framework CoreFoundation"
         # HTTP client
         "-framework Foundation"
-        # platform services
+        # platform services, window and menu bar item
         "-framework AppKit"
         # library compression (libz of the macOS SDK)
         z
     )
-endif()
-
-# QT LIBRARIES COPY
-if(APPLE)
-    include(DeployQt)
-    DeployQt(appExec)
 endif()
 
 if(WIN32)

@@ -39,7 +39,7 @@ if(WIN32)
     target_link_libraries(soundbuddy_tested_core PUBLIC bcrypt cabinet shell32 ole32 uuid advapi32 winhttp)
 elseif(APPLE)
     target_compile_options(soundbuddy_tested_core PRIVATE $<$<COMPILE_LANGUAGE:OBJCXX>:-fobjc-arc>)
-    target_link_libraries(soundbuddy_tested_core PUBLIC "-framework Foundation" "-framework AppKit" z)
+    target_link_libraries(soundbuddy_tested_core PUBLIC "-framework CoreFoundation" "-framework Foundation" "-framework AppKit" z)
 endif()
 
 set_target_properties(soundbuddy_tested_core PROPERTIES AUTOMOC OFF AUTOUIC OFF AUTORCC OFF)
@@ -67,7 +67,7 @@ function(soundbuddy_test name)
 
     add_test(NAME ${name} COMMAND test_${name})
 
-    # toolchain libraries (libc++, Qt) lie next to the compiler
+    # toolchain libraries (libc++) lie next to the compiler
     if(WIN32)
         set_tests_properties(${name} PROPERTIES ENVIRONMENT_MODIFICATION "PATH=path_list_prepend:${TOOLCHAIN_BIN_DIR}")
     endif()
@@ -86,16 +86,14 @@ soundbuddy_test(platform)
 
 soundbuddy_test(upload)
 
-# Qt translation bridge, on macOS
-soundbuddy_test(i18n LIBRARIES $<$<PLATFORM_ID:Darwin>:Qt6::Core>)
+soundbuddy_test(i18n)
 
-# import of the settings of previous versions : from the registry on Windows, with QSettings on macOS
+# import of the settings of previous versions, as QSettings stored them : in the registry on Windows, the preferences on macOS
 soundbuddy_test(settings
     SOURCES
         ${PROJECT_SOURCE_DIR}/src/helpers/AppSettings.cpp
         $<$<PLATFORM_ID:Windows>:${PROJECT_SOURCE_DIR}/src/helpers/AppSettings.win.cpp>
         $<$<PLATFORM_ID:Darwin>:${PROJECT_SOURCE_DIR}/src/helpers/AppSettings.mac.cpp>
-    LIBRARIES $<$<PLATFORM_ID:Darwin>:Qt6::Core>
 )
 
 soundbuddy_test(shout SOURCES
@@ -128,7 +126,6 @@ soundbuddy_test(shout_watcher
         $<$<PLATFORM_ID:Darwin>:${PROJECT_SOURCE_DIR}/src/workers/shout/ShoutWatcher.mac.cpp>
     LIBRARIES
         $<$<PLATFORM_ID:Windows>:oleaut32>
-        $<$<PLATFORM_ID:Darwin>:Qt6::Core>
 )
 
 # against public test services (httpbin.org, stream.wikimedia.org) : left out of the default test runs

@@ -1,7 +1,0 @@
-<!DOCTYPE RCC><RCC version="1.0">
-<qresource>
-    <file>icons/app.png</file>
-    <file>icons/app_reverse.png</file>
-    <file>mac/CurrentlyPlaying.applescript</file>
-</qresource>
-</RCC>

@@ -7,8 +7,7 @@
 #ifdef _WIN32
 #include <windows.h>
 #else
-#include <QCoreApplication>
-#include <QSettings>
+#include <CoreFoundation/CoreFoundation.h>
 #endif
 
 #include "Check.h"
@@ -44,16 +43,29 @@ void clear() {
     RegDeleteKeyW(HKEY_CURRENT_USER, organizationKey);
 }
 #else
+// in the preferences domain of the test identity (see AppSettings::legacyDomain())
+void set(const char* name, CFPropertyListRef value) {
+    auto* const domain = CFStringCreateWithCString(nullptr, AppSettings::legacyDomain().c_str(), kCFStringEncodingUTF8);
+    auto* const key = CFStringCreateWithCString(nullptr, name, kCFStringEncodingUTF8);
+    CFPreferencesSetAppValue(key, value, domain);
+    CFPreferencesAppSynchronize(domain);
+    CFRelease(key);
+    CFRelease(domain);
+}
+
 void write(const char* name, const std::string& value) {
-    QSettings settings;
-    settings.setValue(name, value == "true" || value == "false" ? QVariant(value == "true") : QVariant(QString::fromStdString(value)));
-    settings.sync();
+    if (value == "true" || value == "false") {
+        set(name, value == "true" ? kCFBooleanTrue : kCFBooleanFalse);
+        return;
+    }
+    auto* const text = CFStringCreateWithCString(nullptr, value.c_str(), kCFStringEncodingUTF8);
+    set(name, text);
+    CFRelease(text);
 }
 
 void clear() {
-    QSettings settings;
-    settings.clear();
-    settings.sync();
+    for (const char* name : { "PlatformHostUrl", "PlatformUsername", "PlatformPassword", "AutoRunShout", "MustRunAtStartup" })
+        set(name, nullptr);
 }
 #endif
 
@@ -67,7 +79,7 @@ void clear() {
 
 }  // namespace
 
-int main([[maybe_unused]] int argc, [[maybe_unused]] char** argv) {
+int main() {
     const auto file = testdata::scratchDirectory("settings é") / "sub" / "settings.json";
 
     CHECK(!settings::load(file), "missing file : nothing");
@@ -111,12 +123,6 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char** argv) {
     CHECK(!settings::load(file), "not an object : nothing");
 
     // AppSettings, under the test identity
-#ifndef _WIN32
-    const QCoreApplication app(argc, argv);
-    QCoreApplication::setOrganizationName(APP_PUBLISHER_ORG);
-    QCoreApplication::setApplicationName(APP_NAME);
-#endif
-
     testdata::removeDataDirectory();
     const auto dataFile = platform::dataDirectory() / "settings.json";
 

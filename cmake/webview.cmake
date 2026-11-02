@@ -27,12 +27,13 @@ FetchContent_MakeAvailable(webview)
 ########
 
 # Bun : JavaScript runtime and package manager, running Vite and TypeScript
-# installed by its script, or by winget
+# installed by its script, by winget, or by Homebrew
 file(TO_CMAKE_PATH "$ENV{USERPROFILE}" USER_PROFILE_DIR)
 file(TO_CMAKE_PATH "$ENV{LOCALAPPDATA}" LOCAL_APP_DATA_DIR)
 find_program(BUN_EXECUTABLE bun
     HINTS
         ${USER_PROFILE_DIR}/.bun/bin
+        $ENV{HOME}/.bun/bin
         ${LOCAL_APP_DATA_DIR}/Microsoft/WinGet/Links
     # a tool of the system, out of the toolchain's root
     NO_CMAKE_FIND_ROOT_PATH

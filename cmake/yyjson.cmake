@@ -12,9 +12,6 @@ FetchContent_Declare(yyjson
 )
 FetchContent_MakeAvailable(yyjson)
 
-# plain C : no need for the Qt code generators enabled project-wide
-set_target_properties(yyjson PROPERTIES AUTOMOC OFF AUTOUIC OFF AUTORCC OFF)
-
 target_link_libraries(appExec PRIVATE
     yyjson
 )

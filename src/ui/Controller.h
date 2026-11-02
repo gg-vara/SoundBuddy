@@ -37,7 +37,7 @@
 #include "src/workers/shout/ShoutWatcher.h"
 
 // User interface, independent of the platform : the page (src/ui/page) shows the state kept here,
-// the native shell (window, tray, dialogs : src/ui/win) hosts it
+// the native shell (window, tray or menu bar, dialogs : src/ui/win, src/ui/mac) hosts it
 namespace ui {
 
 enum class Severity { Information, Error };

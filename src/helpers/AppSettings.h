@@ -58,6 +58,11 @@ class AppSettings {
                  .areOK = true };
     }
 
+#ifdef __APPLE__
+    // preferences domain where QSettings stored the settings of previous versions
+    static std::string legacyDomain();
+#endif
+
     static UploadInfos getShoutUploadInfos() { return { .path = "/uploadShout", .outputFileName = "shout_file" }; }
 
     static UploadInfos getFeederUploadInfos() {
