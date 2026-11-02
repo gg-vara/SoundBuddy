@@ -1,0 +1,24 @@
+{
+  "name": "soundbuddy-page",
+  "description": "SoundBuddy user interface, shown in the system webview : built into a single HTML file, embedded in the executable",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "test": "bun test",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@solidjs/web": "^2.0.0-rc.20",
+    "solid-js": "^2.0.0-rc.20",
+    "xstate": "^5.33.3"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.4.4",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.5",
+    "vite-plugin-singlefile": "^2.3.4",
+    "vite-plugin-solid": "^3.0.0-next.27"
+  }
+}
