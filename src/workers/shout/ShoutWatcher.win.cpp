@@ -19,6 +19,7 @@
 
 #include "ShoutWatcher.h"
 
+#include "src/helpers/Platform.h"
 #include "src/i18n/trad.hpp"
 #include "src/logs/Logs.h"
 
@@ -78,15 +79,15 @@ ShoutPayload toPayload(const iTunesCOMClient::Snapshot& snapshot) {
     if (!track.exists) return ShoutPayload{};
 
     ShoutPayload payload{};
-    payload.tName = QString::fromStdWString(track.name);
-    payload.tAlbum = QString::fromStdWString(track.album);
-    payload.tArtist = QString::fromStdWString(track.artist);
-    payload.tGenre = QString::fromStdWString(track.genre);
+    payload.tName = platform::narrow(track.name);
+    payload.tAlbum = platform::narrow(track.album);
+    payload.tArtist = platform::narrow(track.artist);
+    payload.tGenre = platform::narrow(track.genre);
     payload.iDuration = track.duration;
-    payload.tDatePlayed = QString::fromStdWString(track.playedDate);
-    payload.tDateSkipped = QString::fromStdWString(track.skippedDate);
+    payload.tDatePlayed = platform::narrow(track.playedDate);
+    payload.tDateSkipped = platform::narrow(track.skippedDate);
     payload.tYear = track.year;
-    payload.tFileLocation = QString::fromStdWString(track.location);
+    payload.tFileLocation = platform::narrow(track.location);
     payload.iPlayerPosMS = snapshot.positionMS;
     payload.iPlayerState = snapshot.playing;
 

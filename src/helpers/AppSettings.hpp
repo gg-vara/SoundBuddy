@@ -1,10 +1,11 @@
 #pragma once
 
 #include <QSettings>
-#include <QVariant>
 
 #include <filesystem>
 #include <optional>
+#include <string>
+#include <string_view>
 #include <utility>
 
 #include "src/helpers/Platform.h"
@@ -36,53 +37,50 @@ class AppSettings {
         return settings::save(_file, _values);
     }
 
+    // texts are UTF-8
     struct ConnectivityInfos {
-        const QString platformHostUrl = QString();
-        const QString username = QString();
-        const QString password = QString();
+        const std::string platformHostUrl;
+        const std::string username;
+        const std::string password;
 
         // Whenever infos are considered valid for usage
         bool areOK = false;
 
 
-        const QString getSoundHeartbeatUrl() const {
-            if(!areOK) return QString();
+        std::string getSoundHeartbeatUrl() const {
+            if(!areOK) return {};
             return platformHostUrl + "/hb";
         }
 
-        const QString getPlaformHomeUrl() const {
-            if(!areOK) return QString();
+        std::string getPlaformHomeUrl() const {
+            if(!areOK) return {};
             return platformHostUrl + "/u/" + username;
         }
     };
 
     struct UploadInfos {
-        const QString path;
-        const QString outputFileName;
+        const std::string path;
+        const std::string outputFileName;
     };
 
-    const ConnectivityInfos getConnectivityInfos() const {
-        auto hostUrl = QString::fromStdString(_values.platformHostUrl);
-        auto username = QString::fromStdString(_values.platformUsername);
-        auto password = QString::fromStdString(_values.platformPassword);
-
-        if(username.isEmpty() || hostUrl.isEmpty() || password.isEmpty())
+    ConnectivityInfos getConnectivityInfos() const {
+        if(_values.platformUsername.empty() || _values.platformHostUrl.empty() || _values.platformPassword.empty())
             return {};
 
         return {
-            hostUrl,
-            username,
-            password,
+            _values.platformHostUrl,
+            _values.platformUsername,
+            _values.platformPassword,
             true
         };
     }
 
-    static const UploadInfos getShoutUploadInfos() {
+    static UploadInfos getShoutUploadInfos() {
         return { "/uploadShout", "shout_file" };
     }
 
-    static const UploadInfos getFeederUploadInfos() {
-        return { "/uploadMusicLibrary", QString(DEST_PLATFORM_PRODUCT_NAME) + "_file" };
+    static UploadInfos getFeederUploadInfos() {
+        return { "/uploadMusicLibrary", DEST_PLATFORM_PRODUCT_NAME "_file" };
     }
 
     static std::filesystem::path getFeedWarningFilePath() {
@@ -93,12 +91,12 @@ class AppSettings {
         return platform::dataDirectory() / (std::string(_FeedOutputBaseFileName) + (isCompressed ? _ZippedFeedOutputExtension : _BasicFeedOutputExtension));
     }
 
-    static const QString getFeedOutputExtension(bool isCompressed) {
-        return isCompressed ? QString(_ZippedFeedOutputExtension) : QString(_BasicFeedOutputExtension);
+    static std::string_view getFeedOutputExtension(bool isCompressed) {
+        return isCompressed ? _ZippedFeedOutputExtension : _BasicFeedOutputExtension;
     }
 
-    static const QVariant getFeedOutputContentType(bool isCompressed) {
-        return QVariant(isCompressed ? "application/compressed-mlib" : "application/json");
+    static std::string_view getFeedOutputContentType(bool isCompressed) {
+        return isCompressed ? "application/compressed-mlib" : "application/json";
     }
 
  private:

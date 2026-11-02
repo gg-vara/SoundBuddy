@@ -30,9 +30,8 @@
 
 namespace {
 
-QString toQString(yyjson_val * value) {
-    const auto text = json::string(value);
-    return QString::fromUtf8(text.data(), static_cast<qsizetype>(text.size()));
+std::string toString(yyjson_val * value) {
+    return std::string { json::string(value) };
 }
 
 }  // namespace
@@ -89,17 +88,17 @@ void ShoutWatcher::_execWatchSession() {
             const auto at = [trackData](std::size_t index) { return yyjson_arr_get(trackData, index); };
 
             // get values for shout
-            payload.tFileLocation = toQString(at(0));
-            payload.tName = toQString(at(1));
-            payload.tAlbum = toQString(at(2));
-            payload.tArtist = toQString(at(3));
-            payload.tGenre = toQString(at(4));
+            payload.tFileLocation = toString(at(0));
+            payload.tName = toString(at(1));
+            payload.tAlbum = toString(at(2));
+            payload.tArtist = toString(at(3));
+            payload.tGenre = toString(at(4));
             payload.iDuration = static_cast<int>(json::integer(at(5)));
             payload.tYear = static_cast<int>(json::integer(at(6)));
             payload.iPlayerPosMS = static_cast<int>(json::integer(at(7)) * 1000); // TODO get the real thing instead of emulating the millisecond track state
             payload.iPlayerState = json::string(at(8)) == "paused" ? 0 : 1;
-            payload.tDateSkipped = toQString(at(9));
-            payload.tDatePlayed = toQString(at(10));
+            payload.tDateSkipped = toString(at(9));
+            payload.tDatePlayed = toString(at(10));
         }
 
         // compare with old shout, if equivalent, don't reshout

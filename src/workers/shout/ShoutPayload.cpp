@@ -1,40 +1,40 @@
 #include "ShoutPayload.h"
 #include "src/helpers/Hash.h"
 #include "src/helpers/Json.hpp"
+#include "src/helpers/Platform.h"
 #include "src/helpers/Timestamps.hpp"
 
 namespace {
 
-void addString(yyjson_mut_doc * doc, yyjson_mut_val * object, const char * key, const QString& value) {
-    const auto utf8 = value.toUtf8();
-    yyjson_mut_obj_add_strncpy(doc, object, key, utf8.constData(), static_cast<std::size_t>(utf8.size()));
+void addString(yyjson_mut_doc * doc, yyjson_mut_val * object, const char * key, const std::string& value) {
+    yyjson_mut_obj_add_strncpy(doc, object, key, value.data(), value.size());
 }
 
 }  // namespace
 
-QString ShoutPayload::hasChangedHash() const {
-    return QString::number(iPlayerState) + 
-        tName + 
-        tAlbum + 
-        tArtist + 
-        QString::number(iPlayerPosMS) +
+std::string ShoutPayload::hasChangedHash() const {
+    return std::to_string(iPlayerState) +
+        tName +
+        tAlbum +
+        tArtist +
+        std::to_string(iPlayerPosMS) +
         (tDatePlayed >= tDateSkipped ? tDatePlayed : tDateSkipped);
 }
 
-QString ShoutPayload::getFileHash() const {
+std::string ShoutPayload::getFileHash() const {
     //
-    if (tFileLocation.isEmpty()) {
-        return QString();
+    if (tFileLocation.empty()) {
+        return {};
     }
 
     //
-    return QString::fromStdString(hash::md5File(std::filesystem::path(tFileLocation.toStdWString())));
+    return hash::md5File(platform::fromUtf8(tFileLocation));
 }
 
 ShoutJSONParsingResult ShoutPayload::toJSON() const
 {
     auto audioFileHash = getFileHash();
-    const auto isEmptyShout = audioFileHash.isEmpty();
+    const auto isEmptyShout = audioFileHash.empty();
 
     const auto doc = json::create();
     const auto obj = yyjson_mut_obj(doc.get());

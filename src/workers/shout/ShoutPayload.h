@@ -19,35 +19,33 @@
 
 #pragma once
 
-#include <QString>
-
 #include <string>
 
 struct ShoutJSONParsingResult {
     std::string json;
-    QString audioFileHash;
+    std::string audioFileHash;
     bool isEmpty;
 };
 
-/** Shape of a Shout */
+/** Shape of a Shout; texts are UTF-8 */
 struct ShoutPayload {
     bool iPlayerState;
     int iPlayerPosMS;
     int iDuration;
     int tYear;
-    QString tFileLocation;
-    QString tName;
-    QString tAlbum;
-    QString tArtist;
-    QString tGenre;
-    QString tDateSkipped;
-    QString tDatePlayed;
+    std::string tFileLocation;
+    std::string tName;
+    std::string tAlbum;
+    std::string tArtist;
+    std::string tGenre;
+    std::string tDateSkipped;
+    std::string tDatePlayed;
 
     /** generates shout data footprint, used to compare shout payloads for changes */
-    QString hasChangedHash() const;
+    std::string hasChangedHash() const;
 
     /** gets the associated file's footprint */
-    QString getFileHash() const;
+    std::string getFileHash() const;
 
     /** serializes the shout, timestamped; only the date if no track is playing */
     struct ShoutJSONParsingResult toJSON() const;

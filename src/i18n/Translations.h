@@ -19,6 +19,7 @@
 
 #pragma once
 
+#include <cstdint>
 #include <initializer_list>
 #include <string>
 #include <string_view>
@@ -37,6 +38,12 @@ Language language();
 
 // overrides the detected language
 void setLanguage(Language language);
+
+// ISO 639-1 code of the current language, as sent in Accept-Language headers : "en", "fr"
+std::string_view languageCode();
+
+// size in bytes, in the current language, with 1024 multiples : "12.34 MB", "12,34 Mo"
+std::string formatDataSize(std::uint64_t bytes);
 
 // translation of an English text in the current language, or the text itself if untranslated (UTF-8)
 std::string_view tr(std::string_view source);

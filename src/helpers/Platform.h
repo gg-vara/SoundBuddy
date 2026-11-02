@@ -53,4 +53,10 @@ std::filesystem::path musicLibraryFile();
 std::string toUtf8(const std::filesystem::path& path);
 std::filesystem::path fromUtf8(std::string_view text);
 
+#ifdef _WIN32
+// conversions between UTF-8 and the UTF-16 of Windows APIs
+std::string narrow(std::wstring_view text);
+std::wstring widen(std::string_view text);
+#endif
+
 }  // namespace platform

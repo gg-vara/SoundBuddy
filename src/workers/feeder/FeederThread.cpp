@@ -29,6 +29,7 @@
 #include <stdlib.h>
 
 #include "src/helpers/Platform.h"
+#include "src/i18n/Translations.h"
 #include "src/logs/Logs.h"
 #include "src/helpers/UploadHelper.hpp"
 #include "src/net/HttpClient.h"
@@ -135,8 +136,8 @@ void FeederThread::run() {
 
         emit forwardMessage(
             tr("Went from %1 to %2")
-            .arg(QLocale::system().formattedDataSize(output_json.size()))
-            .arg(QLocale::system().formattedDataSize(compressedDataSize))
+            .arg(QString::fromStdString(i18n::formatDataSize(output_json.size())))
+            .arg(QString::fromStdString(i18n::formatDataSize(compressedDataSize)))
         );
 
         emit forwardMessage(tr("Let's try to send now !"));
@@ -154,11 +155,11 @@ void FeederThread::run() {
 
             //
             if (!response.ok()) {
-                logs::warning("Feeder", "Upload failed : {}", UploadHelper::describeFailure(response).toStdString());
+                logs::warning("Feeder", "Upload failed : {}", UploadHelper::describeFailure(response));
                 emit forwardMessage(
                     tr("An error occured while sending tracks infos to %1 platform : %2")
                         .arg(DEST_PLATFORM_PRODUCT_NAME)
-                        .arg(UploadHelper::describeFailure(response)),
+                        .arg(QString::fromStdString(UploadHelper::describeFailure(response))),
                     MessageType::ISSUE
                 );
             } else if (!response.body.empty()) {

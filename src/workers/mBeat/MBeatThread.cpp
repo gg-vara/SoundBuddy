@@ -20,9 +20,10 @@
 
 #include "MBeatThread.h"
 
-#include <QLocale>
-#include <QUrl>
+#include <format>
+#include <string>
 
+#include "src/i18n/Translations.h"
 #include "src/logs/Logs.h"
 #include "src/net/Multipart.h"
 
@@ -71,34 +72,34 @@ void MBeatThread::run() {
 
         if (response.status != 200) {
             // body first, as the platform explains why credentials are refused
-            QString details = QString::fromStdString(response.body);
-            if (details.isEmpty()) {
+            std::string details = response.body;
+            if (details.empty()) {
                 details = response.error.empty()
-                    ? QString("HTTP %1").arg(response.status)
-                    : QString::fromStdString(response.error);
+                    ? std::format("HTTP {}", response.status)
+                    : response.error;
             }
 
             //
             emit updateConnectivityStatus(
                 tr("An error occured while connecting with %1 platform : %2")
                     .arg(DEST_PLATFORM_PRODUCT_NAME)
-                    .arg(details),
+                    .arg(QString::fromStdString(details)),
                 ConnectivityIndicator::NOK
             );
 
             //
-            logs::warning("MBeat", "Credentials check failed : {}", details.toStdString());
+            logs::warning("MBeat", "Credentials check failed : {}", details);
 
         } else {
             //
             emit updateConnectivityStatus(
                 tr("Logged as \"%1\"")
-                    .arg(_connectivityInfos.username),
+                    .arg(QString::fromStdString(_connectivityInfos.username)),
                 ConnectivityIndicator::OK
             );
 
             //
-            logs::info("MBeat", "Logged as \"{}\"",_connectivityInfos.username.toStdString());
+            logs::info("MBeat", "Logged as \"{}\"", _connectivityInfos.username);
         }
 
         // if credentials are not accepted, no need to loop back again, user needs to update them.
@@ -129,26 +130,34 @@ bool MBeatThread::_isStopping() {
     return _stopping;
 }
 
-net::Request MBeatThread::_createRequest() const {
-    //
-    QUrl url(this->_connectivityInfos.getSoundHeartbeatUrl() + "/creds");
-    auto url_host = url.host();
-    const auto wantsUnsecure = url_host == "localhost" || url_host == "127.0.0.1";
-    url.setScheme(wantsUnsecure ? "http" : "https");
+namespace {
 
+// "url" in HTTPS, or in HTTP for a platform running locally
+std::string withPlatformScheme(const std::string& url) {
+    const auto schemeEnd = url.find("://");
+    const auto address = schemeEnd == std::string::npos ? url : url.substr(schemeEnd + 3);
+    const auto host = address.substr(0, address.find_first_of(":/"));
+
+    const auto wantsUnsecure = host == "localhost" || host == "127.0.0.1";
+    return (wantsUnsecure ? "http://" : "https://") + address;
+}
+
+}  // namespace
+
+net::Request MBeatThread::_createRequest() const {
     // build request
-    net::Request request { "POST", url.toString().toStdString() };
+    net::Request request { "POST", withPlatformScheme(this->_connectivityInfos.getSoundHeartbeatUrl() + "/creds") };
     request.timeout = REQUEST_TIMEOUT;  // setup an earlier timeout
     request.headers = {
-        { "Accept-Language", QLocale::system().name().toStdString() },
+        { "Accept-Language", std::string { i18n::languageCode() } },
         { "X-Client-Id", APP_NAME },
         { "X-Client-Version", APP_CURRENT_VERSION },
     };
 
     // credentials
     net::Multipart form;
-    form.addField("username", this->_connectivityInfos.username.toStdString());
-    form.addField("password", this->_connectivityInfos.password.toStdString());
+    form.addField("username", this->_connectivityInfos.username);
+    form.addField("password", this->_connectivityInfos.password);
     form.applyTo(request);
 
     //

@@ -44,14 +44,6 @@ constexpr const wchar_t * RUN_VALUE = L"" APP_NAME;
 
 constexpr const char * MUSIC_APP_NAME = "iTunes";
 
-std::wstring widen(std::string_view text) {
-    if (text.empty()) return {};
-    const auto size = MultiByteToWideChar(CP_UTF8, 0, text.data(), static_cast<int>(text.size()), nullptr, 0);
-    std::wstring wide(static_cast<std::size_t>(size), L'\0');
-    MultiByteToWideChar(CP_UTF8, 0, text.data(), static_cast<int>(text.size()), wide.data(), size);
-    return wide;
-}
-
 std::filesystem::path knownFolder(REFKNOWNFOLDERID id) {
     PWSTR path = nullptr;
     std::filesystem::path folder;
@@ -139,6 +131,22 @@ std::string percentDecoded(std::string_view text) {
 }
 
 }  // namespace
+
+std::string narrow(std::wstring_view text) {
+    if (text.empty()) return {};
+    const auto size = WideCharToMultiByte(CP_UTF8, 0, text.data(), static_cast<int>(text.size()), nullptr, 0, nullptr, nullptr);
+    std::string utf8(static_cast<std::size_t>(size), '\0');
+    WideCharToMultiByte(CP_UTF8, 0, text.data(), static_cast<int>(text.size()), utf8.data(), size, nullptr, nullptr);
+    return utf8;
+}
+
+std::wstring widen(std::string_view text) {
+    if (text.empty()) return {};
+    const auto size = MultiByteToWideChar(CP_UTF8, 0, text.data(), static_cast<int>(text.size()), nullptr, 0);
+    std::wstring wide(static_cast<std::size_t>(size), L'\0');
+    MultiByteToWideChar(CP_UTF8, 0, text.data(), static_cast<int>(text.size()), wide.data(), size);
+    return wide;
+}
 
 std::filesystem::path dataDirectory() {
     const auto directory = knownFolder(FOLDERID_LocalAppData) / APP_PUBLISHER_ORG / APP_NAME;

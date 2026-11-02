@@ -19,8 +19,11 @@
 
 #include "Translations.h"
 
+#include <algorithm>
+#include <array>
 #include <atomic>
 #include <cctype>
+#include <format>
 #include <mutex>
 #include <optional>
 #include <set>
@@ -113,6 +116,32 @@ Language language() {
 
 void setLanguage(Language language) {
     currentLanguage.store(language);
+}
+
+std::string_view languageCode() {
+    switch (language()) {
+        case Language::French: return "fr";
+        case Language::English: break;
+    }
+    return "en";
+}
+
+std::string formatDataSize(std::uint64_t bytes) {
+    const auto french = language() == Language::French;
+    constexpr std::array<std::string_view, 4> englishUnits { "B", "KB", "MB", "GB" };
+    constexpr std::array<std::string_view, 4> frenchUnits { "o", "Ko", "Mo", "Go" };
+
+    auto value = static_cast<double>(bytes);
+    std::size_t unit = 0;
+    while (value >= 1024 && unit + 1 < englishUnits.size()) {
+        value /= 1024;
+        ++unit;
+    }
+
+    auto text = unit == 0 ? std::to_string(bytes) : std::format("{:.2f}", value);
+    if (french) std::replace(text.begin(), text.end(), '.', ',');
+
+    return std::format("{} {}", text, french ? frenchUnits[unit] : englishUnits[unit]);
 }
 
 std::string_view tr(std::string_view source) {

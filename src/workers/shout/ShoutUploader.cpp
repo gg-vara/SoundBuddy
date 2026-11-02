@@ -98,11 +98,11 @@ void ShoutUploader::_uploadQueuedShouts() {
         if (response.ok()) {
             logs::debug("ShoutUploader", "Uploaded, HTTP {}", response.status);
         } else {
-            logs::warning("ShoutUploader", "Upload failed : {}", UploadHelper::describeFailure(response).toStdString());
+            logs::warning("ShoutUploader", "Upload failed : {}", UploadHelper::describeFailure(response));
             emit forwardMessage(
                 tr("An error occured while shouting tracks infos to %1 platform : %2")
                     .arg(DEST_PLATFORM_PRODUCT_NAME)
-                    .arg(UploadHelper::describeFailure(response)),
+                    .arg(QString::fromStdString(UploadHelper::describeFailure(response))),
                 MessageType::ISSUE
             );
         }

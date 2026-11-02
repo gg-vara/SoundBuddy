@@ -51,7 +51,7 @@ void MainWindow::informWarningPresence() {
 // updates the menu depending on the config values filled or not
 void MainWindow::onAppSettingsChanged() {
     //
-    bool shouldActivateLink = !this->appSettings.getConnectivityInfos().getPlaformHomeUrl().isEmpty();
+    bool shouldActivateLink = !this->appSettings.getConnectivityInfos().getPlaformHomeUrl().empty();
     this->myPlatformAction->setEnabled(shouldActivateLink);
 
     // restart threads ?
@@ -78,7 +78,7 @@ void MainWindow::accessPlatform() {
     const auto platformHomeUrl = this->appSettings.getConnectivityInfos().getPlaformHomeUrl();
 
     //
-    if(platformHomeUrl.isEmpty()) {
+    if(platformHomeUrl.empty()) {
         QMessageBox::critical(this,
             tr("Cannot access %1 plaform").arg(DEST_PLATFORM_PRODUCT_NAME),
             tr("%1 Plaform URL is not valid. Please check Preferences connectivity parameters.").arg(DEST_PLATFORM_PRODUCT_NAME)
@@ -87,7 +87,7 @@ void MainWindow::accessPlatform() {
     }
 
     //
-    platform::openUrl(platformHomeUrl.toStdString());
+    platform::openUrl(platformHomeUrl);
 }
 
 void MainWindow::accessPreferences() {
@@ -223,7 +223,7 @@ void MainWindow::onUpdateChecked(const UpdateCheckerThread::CheckResults checkRe
             if (userAsked) {
                 QMessageBox::critical(this,
                     tr("Error while checking updates"),
-                    checkResults.error,
+                    QString::fromStdString(checkResults.error),
                     QMessageBox::Ok,
                     QMessageBox::Ok);
             }
@@ -235,7 +235,7 @@ void MainWindow::onUpdateChecked(const UpdateCheckerThread::CheckResults checkRe
         tr("Update Available"),
         tr("%1 %2 is ready to be installed. Would you like to restart %1 now to install it ?")
             .arg(APP_NAME)
-            .arg(checkResults.version),
+            .arg(QString::fromStdString(checkResults.version)),
         QMessageBox::Yes | QMessageBox::No,
         QMessageBox::Yes);
 

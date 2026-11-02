@@ -20,11 +20,11 @@
 #pragma once
 
 #include <QThread>
-#include <QString>
 
 #include <exception>
 #include <memory>
 #include <optional>
+#include <string>
 
 #include <Velopack.hpp>
 
@@ -45,8 +45,8 @@ class UpdateCheckerThread : public QThread {
 
     struct CheckResults {
         Result result = Result::Failed;
-        QString version;  // of the downloaded update
-        QString error;
+        std::string version;  // of the downloaded update
+        std::string error;  // UTF-8
     };
 
     void run() override {
@@ -63,22 +63,22 @@ class UpdateCheckerThread : public QThread {
             _update = _manager->CheckForUpdates();
             if (_update) {
                 _manager->DownloadUpdates(*_update);
-                results = { Result::UpdateReady, QString::fromStdString(_update->TargetFullRelease.Version) };
+                results = { Result::UpdateReady, _update->TargetFullRelease.Version };
             } else {
                 results.result = Result::NoUpdate;
             }
         } catch (const std::exception& e) {
             // the manager cannot be created outside of an installation
             results.result = _manager ? Result::Failed : Result::NotInstalled;
-            results.error = QString::fromUtf8(e.what());
+            results.error = e.what();
             _update.reset();
         }
 
         switch (results.result) {
-            case Result::UpdateReady: logs::info("Updates", "Version {} downloaded", results.version.toStdString()); break;
+            case Result::UpdateReady: logs::info("Updates", "Version {} downloaded", results.version); break;
             case Result::NoUpdate: logs::info("Updates", "Up to date"); break;
             case Result::NotInstalled: logs::info("Updates", "Not checked, not running from an installation"); break;
-            case Result::Failed: logs::warning("Updates", "Check failed : {}", results.error.toStdString()); break;
+            case Result::Failed: logs::warning("Updates", "Check failed : {}", results.error); break;
         }
 
         emit checked(results);

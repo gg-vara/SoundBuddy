@@ -19,7 +19,8 @@
 
 #pragma once
 
-#include <QString>
+#include <string>
+
 #include "ShoutPayload.h"
 
 struct ShoutConsumeResult {
@@ -28,7 +29,7 @@ struct ShoutConsumeResult {
 };
 
 struct ShoutPayloadConsumer {
-    QString lastHasChangedHash;
+    std::string lastHasChangedHash;
 
     /** updates state and produce a JSON output */
     ShoutConsumeResult consume(const ShoutPayload &incomingPayload);

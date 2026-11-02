@@ -97,17 +97,17 @@ void ShoutWatcher::processPayload(const ShoutPayload &incomingPayload) {
                     .arg(QString::fromStdString(timestamps::local()))
             );
         } else {
-            logs::info("ShoutWatcher", "Shouting : {} - {} - {} ({})", incomingPayload.tName.toStdString(),
-                incomingPayload.tAlbum.toStdString(), incomingPayload.tArtist.toStdString(), incomingPayload.iPlayerState ? "playing" : "paused");
+            logs::info("ShoutWatcher", "Shouting : {} - {} - {} ({})", incomingPayload.tName,
+                incomingPayload.tAlbum, incomingPayload.tArtist, incomingPayload.iPlayerState ? "playing" : "paused");
 
             // log content
             const auto pState = incomingPayload.iPlayerState ? tr("playing") : tr("paused");
             const auto logMessage =
                 tr("%1: Shouting -> %2 - %3 - %4 (%5)")
                     .arg(QString::fromStdString(timestamps::local()))
-                    .arg(incomingPayload.tName)
-                    .arg(incomingPayload.tAlbum)
-                    .arg(incomingPayload.tArtist)
+                    .arg(QString::fromStdString(incomingPayload.tName))
+                    .arg(QString::fromStdString(incomingPayload.tAlbum))
+                    .arg(QString::fromStdString(incomingPayload.tArtist))
                     .arg(pState);
             
             //
