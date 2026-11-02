@@ -24,7 +24,7 @@
 #include <utility>
 
 #include "src/helpers/Platform.h"
-#include "src/helpers/Timestamps.hpp"
+#include "src/helpers/Timestamps.h"
 #include "src/i18n/Translations.h"
 #include "src/logs/Logs.h"
 #include "src/workers/base/Message.h"

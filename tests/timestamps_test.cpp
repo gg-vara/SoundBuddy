@@ -1,9 +1,9 @@
-// src/helpers/Timestamps.hpp
+// src/helpers/Timestamps.h
 
 #include <regex>
 
 #include "Check.h"
-#include "src/helpers/Timestamps.hpp"
+#include "src/helpers/Timestamps.h"
 
 int main() {
     CHECK(std::regex_match(timestamps::utcISO(), std::regex(R"(\d{4}-\d\d-\d\dT\d\d:\d\d:\d\dZ)")), "UTC, ISO 8601");

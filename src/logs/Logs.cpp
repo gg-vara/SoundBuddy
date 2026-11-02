@@ -34,7 +34,7 @@
 #include <windows.h>
 #endif
 
-#include "src/helpers/Timestamps.hpp"
+#include "src/helpers/Timestamps.h"
 
 namespace logs {
 

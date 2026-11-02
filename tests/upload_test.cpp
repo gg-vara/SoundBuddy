@@ -2,7 +2,7 @@
 
 #include "Check.h"
 #include "src/helpers/AppSettings.h"
-#include "src/helpers/UploadHelper.hpp"
+#include "src/helpers/UploadHelper.h"
 #include "src/net/HttpClient.h"
 
 int main() {

@@ -7,7 +7,7 @@
 
 #include "Check.h"
 #include "TestData.h"
-#include "src/helpers/Json.hpp"
+#include "src/helpers/Json.h"
 #include "src/helpers/Platform.h"
 #include "src/workers/shout/ShoutPayload.h"
 #include "src/workers/shout/ShoutPayloadConsumer.h"

@@ -34,7 +34,7 @@
 #include <system_error>
 #include <utility>
 
-#include "src/helpers/Json.hpp"
+#include "src/helpers/Json.h"
 #include "src/helpers/Platform.h"
 #include "src/i18n/Translations.h"
 #include "src/logs/Logs.h"

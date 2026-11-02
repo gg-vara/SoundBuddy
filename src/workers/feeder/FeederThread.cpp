@@ -35,7 +35,7 @@
 #include "src/helpers/AppSettings.h"
 #include "src/helpers/Compression.h"
 #include "src/helpers/Platform.h"
-#include "src/helpers/UploadHelper.hpp"
+#include "src/helpers/UploadHelper.h"
 #include "src/i18n/Translations.h"
 #include "src/logs/Logs.h"
 #include "src/net/HttpClient.h"

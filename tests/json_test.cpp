@@ -1,9 +1,9 @@
-// src/helpers/Json.hpp
+// src/helpers/Json.h
 
 #include <yyjson.h>
 
 #include "Check.h"
-#include "src/helpers/Json.hpp"
+#include "src/helpers/Json.h"
 
 int main() {
     CHECK(!json::parse("{ nope"), "invalid JSON : null document");

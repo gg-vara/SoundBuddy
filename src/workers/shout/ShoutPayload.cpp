@@ -6,9 +6,9 @@
 #include <utility>
 
 #include "src/helpers/Hash.h"
-#include "src/helpers/Json.hpp"
+#include "src/helpers/Json.h"
 #include "src/helpers/Platform.h"
-#include "src/helpers/Timestamps.hpp"
+#include "src/helpers/Timestamps.h"
 
 namespace {
 

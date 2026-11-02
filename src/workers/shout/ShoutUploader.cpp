@@ -26,7 +26,7 @@
 #include <utility>
 
 #include "src/helpers/AppSettings.h"
-#include "src/helpers/UploadHelper.hpp"
+#include "src/helpers/UploadHelper.h"
 #include "src/i18n/Translations.h"
 #include "src/logs/Logs.h"
 
