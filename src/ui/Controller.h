@@ -5,14 +5,13 @@
 
 #include <yyjson.h>
 
-#include <cstdint>
-#include <deque>
 #include <memory>
 #include <optional>
 #include <string>
 #include <string_view>
 
 #include "src/helpers/AppSettings.h"
+#include "src/ui/PageMessages.h"
 #include "src/workers/base/Message.h"
 #include "src/workers/base/UpdateChecker.h"
 #include "src/workers/feeder/FeederThread.h"
@@ -27,9 +26,6 @@ namespace ui {
 enum class Severity { Information, Error };
 
 enum class Answer { Yes, No };
-
-// panels of the page, over the tabs
-enum class Panel { Preferences, Warnings };
 
 // what the native shell offers, on the user interface thread
 class Shell {
@@ -87,17 +83,10 @@ class Controller {
     static bool hasWarnings();
 
  private:
-    enum class Tab { Shout, Feeder };
+    using Tab = page::Tab;
 
-    struct LogEntry {
-        workers::Message message;
-        std::int64_t time = 0;  // milliseconds since the epoch
-    };
-
-    // what a tab shows of its worker
     struct TabState {
-        std::deque<LogEntry> log;
-        bool running = false;
+        page::TabState shown;
         int run = 0;  // to ignore the end of a run replaced meanwhile
     };
 
@@ -121,7 +110,6 @@ class Controller {
     UpdateChecker _updateChecker;
 
     TabState& _tab(Tab tab) { return tab == Tab::Shout ? _shoutTab : _feederTab; }
-    static const char* _tabName(Tab tab) { return tab == Tab::Shout ? "shout" : "feeder"; }
 
     // workers
     workers::MessageSink _messageSink(Tab tab);
@@ -135,6 +123,8 @@ class Controller {
     void _setRunAtStartup(bool enabled);
     void _setAutoRunShout(bool enabled);
     void _onConnectivityChanged();
+    // as the page shows them : starting with the system also when set from outside the app
+    settings::Settings _shownSettings() const;
 
     // updates
     void _checkForUpdates(bool userAsked);

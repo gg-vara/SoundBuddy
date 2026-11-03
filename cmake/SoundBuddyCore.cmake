@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: 2018-2026 Guillaume Vara <guillaume.vara@gmail.com>
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-# The sources of SoundBuddy, apart from its entry point and user interface, and what they need.
+# The sources of SoundBuddy, apart from its entry point and user interface (but the messages to its page), and what they need.
 #
 # The app and the tests' core library compile them each, as each brings its own version.h : the generated one for the
 # app, tests/support/version.h for the tests, which then keep to their own data directory, registry values and locks.
@@ -22,6 +22,7 @@ function(soundbuddy_add_core target scope)
         ${src}/net/HttpClient.cpp
         ${src}/net/SseParser.cpp
         ${src}/settings/Settings.cpp
+        ${src}/ui/PageMessages.cpp
         ${src}/workers/base/Message.cpp
         ${src}/workers/feeder/FeederThread.cpp
         ${src}/workers/mBeat/MBeatThread.cpp

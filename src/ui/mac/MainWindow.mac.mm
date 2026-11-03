@@ -18,6 +18,7 @@
 #include "src/i18n/Translations.h"
 #include "src/logs/Logs.h"
 #include "src/ui/Controller.h"
+#include "src/ui/PageMessages.h"
 #include "src/ui/Post.h"
 #include "src/ui/Run.h"
 #include "src/ui/mac/WebView.h"
