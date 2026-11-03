@@ -1,3 +1,8 @@
-# the files of the user interface page keep LF line endings, which Biome checks (src/ui/page/biome.json),
-# whatever core.autocrlf does elsewhere (as on the Windows runners of the CI)
-src/ui/page/** text eol=lf
+# text files keep LF line endings, in the repository and in checkouts, whatever core.autocrlf says
+# (as on the Windows runners of the CI) : Biome checks it for the user interface page (src/ui/page/biome.json)
+* text=auto eol=lf
+
+# binaries
+*.ico binary
+*.icns binary
+*.png binary
