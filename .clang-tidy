@@ -41,7 +41,7 @@ Checks: >
 
 # our own headers only (not fetched dependencies)
 HeaderFilterRegex: '.*[/\\](src|tests)[/\\].*'
-ExcludeHeaderFilterRegex: '.*([/\\]_?deps[/\\]|iTunesCOMInterface).*'
+ExcludeHeaderFilterRegex: '.*[/\\]_?deps[/\\].*'
 
 CheckOptions:
   # bare boolean literals as arguments, as foo(true) : prefer an enum, or name it
@@ -88,9 +88,8 @@ CheckOptions:
   readability-identifier-naming.PrivateMethodPrefix: '_'
   readability-identifier-naming.ProtectedMethodCase: camelBack
   readability-identifier-naming.ProtectedMethodPrefix: '_'
-  # names given by Apple : the iTunes brand, and the identifiers of its COM SDK (iTunesCOMInterface)
+  # names given by Apple : the iTunes brand
   readability-identifier-naming.ClassIgnoredRegexp: '^iTunes.*'
-  readability-identifier-naming.GlobalConstantIgnoredRegexp: '^(IID|CLSID|LIBID|DIID)_.*'
   readability-identifier-naming.NamespaceCase: lower_case
   readability-identifier-naming.MacroDefinitionCase: UPPER_CASE
   readability-identifier-naming.IgnoreMainLikeFunctions: true

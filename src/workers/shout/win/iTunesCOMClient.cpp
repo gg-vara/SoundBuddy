@@ -31,12 +31,23 @@
 #include <string>
 #include <utility>
 
-// identifiers of the iTunes COM SDK, defined once here
-#include "iTunesCOMInterface_i.c"  // NOLINT(bugprone-suspicious-include)
-
 using Microsoft::WRL::ComPtr;
 
 namespace {
+
+// identifiers of the iTunes COM interfaces, as iTunes registers them : the rest is late-bound, through IDispatch
+// iTunesApp class
+constexpr CLSID appClass {
+    .Data1 = 0xDC0C2640, .Data2 = 0x1415, .Data3 = 0x4644, .Data4 = { 0x87, 0x5C, 0x6F, 0x4D, 0x76, 0x98, 0x39, 0xBA }
+};
+// _IiTunesEvents dispatch interface
+constexpr IID eventsInterface {
+    .Data1 = 0x5846EB78, .Data2 = 0x317E, .Data3 = 0x4B6F, .Data4 = { 0xB0, 0xC3, 0x11, 0xEE, 0x8C, 0x8F, 0xEE, 0xF2 }
+};
+// IITFileOrCDTrack interface
+constexpr IID fileTrackInterface {
+    .Data1 = 0x00D7FE99, .Data2 = 0x7868, .Data3 = 0x4CC7, .Data4 = { 0xAD, 0x9E, 0xAC, 0xFD, 0x70, 0xD0, 0x95, 0x66 }
+};
 
 std::runtime_error comError(const char* what, const HRESULT hr) {
     return std::runtime_error(std::format("{} (HRESULT 0x{:08X})", what, static_cast<unsigned long>(hr)));
@@ -102,7 +113,7 @@ class iTunesCOMClient::EventSink final : public IDispatch {
     HRESULT STDMETHODCALLTYPE QueryInterface(REFIID riid, void** object) override {
         if (object == nullptr) return E_POINTER;
 
-        if (riid == IID_IUnknown || riid == IID_IDispatch || riid == DIID__IiTunesEvents) {
+        if (riid == IID_IUnknown || riid == IID_IDispatch || riid == eventsInterface) {
             *object = static_cast<IDispatch*>(this);
             AddRef();
             return S_OK;
@@ -210,7 +221,7 @@ HRESULT iTunesCOMClient::PropertyIds::get(IDispatch* object, const wchar_t* name
 //
 
 iTunesCOMClient::iTunesCOMClient(std::function<void(Event)> onEvent) {
-    auto hr = CoCreateInstance(CLSID_iTunesApp, nullptr, CLSCTX_ALL, IID_IDispatch, reinterpret_cast<void**>(_app.GetAddressOf()));
+    auto hr = CoCreateInstance(appClass, nullptr, CLSCTX_ALL, IID_IDispatch, reinterpret_cast<void**>(_app.GetAddressOf()));
     if (FAILED(hr)) throw comError("Cannot connect to iTunes", hr);
 
     // events description, from the type library containing the application interface
@@ -221,7 +232,7 @@ iTunesCOMClient::iTunesCOMClient(std::function<void(Event)> onEvent) {
 
     hr = _app->GetTypeInfo(0, LOCALE_USER_DEFAULT, &appInfo);
     if (SUCCEEDED(hr)) hr = appInfo->GetContainingTypeLib(&typeLib, &index);
-    if (SUCCEEDED(hr)) hr = typeLib->GetTypeInfoOfGuid(DIID__IiTunesEvents, &eventsInfo);
+    if (SUCCEEDED(hr)) hr = typeLib->GetTypeInfoOfGuid(eventsInterface, &eventsInfo);
     if (FAILED(hr)) throw comError("Cannot read iTunes events description", hr);
 
     // NOLINTNEXTLINE(cppcoreguidelines-owning-memory) : COM reference counting, the ComPtr owns it
@@ -230,7 +241,7 @@ iTunesCOMClient::iTunesCOMClient(std::function<void(Event)> onEvent) {
     // subscribe
     ComPtr<IConnectionPointContainer> container;
     hr = _app.As(&container);
-    if (SUCCEEDED(hr)) hr = container->FindConnectionPoint(DIID__IiTunesEvents, &_connectionPoint);
+    if (SUCCEEDED(hr)) hr = container->FindConnectionPoint(eventsInterface, &_connectionPoint);
     if (SUCCEEDED(hr)) hr = _connectionPoint->Advise(_sink.Get(), &_cookie);
     if (FAILED(hr)) throw comError("Cannot subscribe to iTunes events", hr);
 }
@@ -256,7 +267,7 @@ std::wstring iTunesCOMClient::_trackLocation(IDispatch* track) {
 
     // fallback on the IITFileOrCDTrack interface, much costlier since it is a new remote interface
     ComPtr<IDispatch> fileTrack;
-    if (FAILED(track->QueryInterface(IID_IITFileOrCDTrack, reinterpret_cast<void**>(fileTrack.GetAddressOf())))) {
+    if (FAILED(track->QueryInterface(fileTrackInterface, reinterpret_cast<void**>(fileTrack.GetAddressOf())))) {
         return {};
     }
 
