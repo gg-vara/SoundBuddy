@@ -1,0 +1,3 @@
+# the files of the user interface page keep LF line endings, which Biome checks (src/ui/page/biome.json),
+# whatever core.autocrlf does elsewhere (as on the Windows runners of the CI)
+src/ui/page/** text eol=lf
