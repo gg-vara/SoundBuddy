@@ -134,7 +134,7 @@ Packaging fetches the previous release (`vpk download github`) to generate delta
 ## License
     SoundBuddy
     Small companion app that feeds SoundVitrine with ITunes / Music library metadata
-    Copyright (C) 2018-2021 Guillaume Vara <guillaume.vara@gmail.com>
+    Copyright (C) 2018-2026 Guillaume Vara <guillaume.vara@gmail.com>
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -146,7 +146,7 @@ Packaging fetches the previous release (`vpk download github`) to generate delta
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
 
-    Any graphical resources available within the source code may
+    Any graphical or audio resources available within the source code may
     use a different license and copyright : please refer to their metadata
-    for further details. Graphical resources without explicit references to a
+    for further details. Resources without explicit references to a
     different license and copyright still refer to this GPL.

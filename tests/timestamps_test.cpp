@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2018-2026 Guillaume Vara <guillaume.vara@gmail.com>
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 // src/helpers/Timestamps.h
 
 #include <regex>

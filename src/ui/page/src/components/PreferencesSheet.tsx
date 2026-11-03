@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2018-2026 Guillaume Vara <guillaume.vara@gmail.com>
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 // Preferences : the credentials are saved together; launching at startup applies right away
 import { createEffect, createMemo, createSignal, untrack } from 'solid-js';
 import { t } from '../i18n';

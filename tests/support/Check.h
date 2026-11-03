@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2018-2026 Guillaume Vara <guillaume.vara@gmail.com>
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 // SoundBuddy tests : minimal checks, each test being a program whose exit code is its failure count
 
 #pragma once

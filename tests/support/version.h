@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2018-2026 Guillaume Vara <guillaume.vara@gmail.com>
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 // SoundBuddy tests : identity of the tested code, replacing the generated version.h.
 // Data directory, registry values and locks then never touch the real app ones.
 

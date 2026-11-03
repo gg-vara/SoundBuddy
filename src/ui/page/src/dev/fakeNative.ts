@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2018-2026 Guillaume Vara <guillaume.vara@gmail.com>
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 // Stand-in for the application, to work on the page in a browser (bun run dev) : plays the workers' messages
 import type { Native } from '../native';
 import type { LogMessage, NativeEvent, NativeState, Shout, Tab } from '../state';

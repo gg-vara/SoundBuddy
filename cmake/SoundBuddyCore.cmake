@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2018-2026 Guillaume Vara <guillaume.vara@gmail.com>
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 # The sources of SoundBuddy, apart from its entry point and user interface, and what they need.
 #
 # The app and the tests' core library compile them each, as each brings its own version.h : the generated one for the

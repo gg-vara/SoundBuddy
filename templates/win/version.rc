@@ -23,6 +23,10 @@
 #define RC_COMPANY_NAME "@APP_PUBLISHER_ORG@"
 #endif
 
+#ifndef RC_COPYRIGHT
+#define RC_COPYRIGHT "@APP_COPYRIGHT@"
+#endif
+
 // has to be project name
 #ifndef RC_FILE_DESCRIPTION
 #define RC_FILE_DESCRIPTION "@CMAKE_PROJECT_NAME@"

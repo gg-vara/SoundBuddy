@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2018-2026 Guillaume Vara <guillaume.vara@gmail.com>
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 // Tracks of the latest library export missing metadata
 import { createMemo, For, Show } from 'solid-js';
 import { t } from '../i18n';

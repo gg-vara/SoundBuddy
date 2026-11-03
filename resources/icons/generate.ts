@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2018-2026 Guillaume Vara <guillaume.vara@gmail.com>
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 // Generates the icons of SoundBuddy from svg/ : each size is rendered from the drawing, rather than scaled from one image.
 // Run "bun run icons" from this folder after changing a drawing, then commit what it wrote.
 import { Resvg } from '@resvg/resvg-js';

@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2018-2026 Guillaume Vara <guillaume.vara@gmail.com>
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 // UpdateChecker : outside of a Velopack installation, one check at a time, not waited for on destruction
 
 #include <chrono>

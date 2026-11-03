@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2018-2026 Guillaume Vara <guillaume.vara@gmail.com>
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 // FeederThread : a full run against an unreachable platform, and a stop during the upload.
 // Reads the local iTunes / Music library when there is one; writes only to the tests data directory
 

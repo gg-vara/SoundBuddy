@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2018-2026 Guillaume Vara <guillaume.vara@gmail.com>
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 // Messages of a worker : new ones spring in, an issue shakes; a progress replaces the last one in place
 import { createMemo, For, onSettled, Show, untrack } from 'solid-js';
 import { animate, bouncy } from '../animations';

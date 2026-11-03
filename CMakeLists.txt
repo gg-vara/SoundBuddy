@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2018-2026 Guillaume Vara <guillaume.vara@gmail.com>
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 # SoundBuddy : configured from CMakePresets.json, with the toolchain files of toolchains/ (see README.md)
 cmake_minimum_required(VERSION 3.25)
 
@@ -51,6 +54,8 @@ endif()
 set(APP_PUBLISHER_ORG "LVNWL")  # the organization of the executables' signing certificate
 set(APP_PUBLISHER_ORG_PKG_NORM "lvnwl")  # as a bundle identifier part : lowercase, no spaces
 set(DEST_PLATFORM_PRODUCT_NAME "SoundVitrine")
+# the executables' copyright notice (see LICENSE)
+set(APP_COPYRIGHT "Copyright (C) 2018-2026 Guillaume Vara")
 # GitHub repository whose releases (published with Velopack, see cmake/Velopack.cmake) feed updates
 set(APP_UPDATES_REPOSITORY_URL ${PROJECT_HOMEPAGE_URL})
 
@@ -148,6 +153,7 @@ elseif(APPLE)
         MACOSX_BUNDLE_BUNDLE_NAME ${PROJECT_NAME}
         MACOSX_BUNDLE_BUNDLE_VERSION ${PROJECT_VERSION}
         MACOSX_BUNDLE_SHORT_VERSION_STRING ${PROJECT_VERSION}
+        MACOSX_BUNDLE_COPYRIGHT ${APP_COPYRIGHT}
     )
 
     # debug symbols

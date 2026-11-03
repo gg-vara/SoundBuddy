@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2018-2026 Guillaume Vara <guillaume.vara@gmail.com>
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 // src/helpers/Platform.h : data directory, UTF-8 paths, launch at login, single instance, music library.
 // Writes only under the test identity (tests/support/version.h).
 

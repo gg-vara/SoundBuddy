@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2018-2026 Guillaume Vara <guillaume.vara@gmail.com>
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 // Modal sheet : a native <dialog>, shown by the state machine. The page closes it on Escape or a click on its
 // backdrop, and tells the state machine; focus stays inside while it is open
 import type { JSX } from '@solidjs/web';

@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2018-2026 Guillaume Vara <guillaume.vara@gmail.com>
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 # Windows toolchain : MSYS2's CLANG64 environment (LLVM Clang, libc++, lld), whose bin directory the presets put in the PATH
 
 # MSYS2 installation : MSYS2_ROOT environment variable, else its default location

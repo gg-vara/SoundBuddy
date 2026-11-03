@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2018-2026 Guillaume Vara <guillaume.vara@gmail.com>
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 // Calls to the application, bound by the native shell (src/ui/win/MainWindow.win.cpp) :
 // sbQuery(name, argument) answers, sbCommand(name, argument) acts; the application calls sb.receive(event)
 import type { NativeEvent, NativeState, WarningsReport } from './state';

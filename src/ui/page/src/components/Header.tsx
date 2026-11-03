@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2018-2026 Guillaume Vara <guillaume.vara@gmail.com>
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 import { createEffect, createMemo, Show } from 'solid-js';
 import { animate, bouncy } from '../animations';
 import { t } from '../i18n';

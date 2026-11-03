@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2018-2026 Guillaume Vara <guillaume.vara@gmail.com>
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 // ShoutWatcher : waits for the music app, stopped right away. Skipped while the music app runs,
 // not to connect to the user's session
 

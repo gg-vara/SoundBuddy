@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2018-2026 Guillaume Vara <guillaume.vara@gmail.com>
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 // On / off switch, controlled : it shows "checked", and asks for the change through "onChange"
 import type { JSX } from '@solidjs/web';
 

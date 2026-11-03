@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2018-2026 Guillaume Vara <guillaume.vara@gmail.com>
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 // Stand-ins for the application, in the tests
 import type { CommandName, Native } from '../src/native';
 import type { NativeState, WarningsReport } from '../src/state';

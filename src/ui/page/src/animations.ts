@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2018-2026 Guillaume Vara <guillaume.vara@gmail.com>
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 // Animations : springs, sampled into CSS linear() easings, for the Web Animations API and CSS transitions
 
 export interface Timing {

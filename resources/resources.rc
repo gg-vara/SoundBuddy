@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2018-2026 Guillaume Vara <guillaume.vara@gmail.com>
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 // executable icon (the first icon group, in names order), window and tray icons : generated from icons/svg (see icons/generate.ts)
 APP                     ICON    "icons/app.ico"
 TRAY_DARK               ICON    "icons/tray_dark.ico"

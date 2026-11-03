@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2018-2026 Guillaume Vara <guillaume.vara@gmail.com>
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 // src/net/HttpClient, against public test services (httpbin.org, stream.wikimedia.org).
 // Labelled "network" : left out of the default test runs, run with ctest -L network
 

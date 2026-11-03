@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2018-2026 Guillaume Vara <guillaume.vara@gmail.com>
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 # Runs Velopack's CLI, in CMake script mode : see velopack_pack / velopack_publish targets in cmake/Velopack.cmake
 #
 # ACTION=pack : fetches the previous GitHub release (for delta updates), then packages PACK_DIR into RELEASES_DIR

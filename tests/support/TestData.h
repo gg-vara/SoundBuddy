@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2018-2026 Guillaume Vara <guillaume.vara@gmail.com>
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 // SoundBuddy tests : directories the tests write to, removed only after checking they belong to the tests
 
 #pragma once

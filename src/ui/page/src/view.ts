@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2018-2026 Guillaume Vara <guillaume.vara@gmail.com>
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 // What components get of the page's state machine : its snapshot, as a signal, and a way to send it events
 import { createSignal } from 'solid-js';
 import type { Actor } from 'xstate';

@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2018-2026 Guillaume Vara <guillaume.vara@gmail.com>
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 # Compiler requirements, checked with explicit messages (see prerequisites/ and README.md)
 
 # C++20 library features used by the app (std::format, <chrono> formatting, std::jthread) : LLVM 18 or newer

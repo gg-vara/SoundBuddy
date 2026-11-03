@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2018-2026 Guillaume Vara <guillaume.vara@gmail.com>
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 # Embeds the built page into a C++ header, in CMake script mode : see cmake/webview.cmake
 #   PAGE_HTML_FILE : the page, as built by Vite
 #   TEMPLATE : templates/page.h.in

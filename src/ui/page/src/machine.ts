@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2018-2026 Guillaume Vara <guillaume.vara@gmail.com>
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 // States of the page : loading, then in parallel the two workers, the menu and the panels.
 // The data shown comes from the application (see state.ts); the regions only follow what the user asked for meanwhile,
 // so that a click is not repeated while the application has not answered yet. Tested in tests/machine.test.ts

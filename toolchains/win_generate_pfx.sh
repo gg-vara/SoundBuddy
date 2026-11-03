@@ -1,5 +1,8 @@
 #! /bin/bash
 
+# SPDX-FileCopyrightText: 2018-2026 Guillaume Vara <guillaume.vara@gmail.com>
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 # Get the directory of the script
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 

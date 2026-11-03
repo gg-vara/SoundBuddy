@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2018-2026 Guillaume Vara <guillaume.vara@gmail.com>
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 // The page : a view of the state machine's snapshot. Components only read it, and send it events
 import { createSignal, Match, onSettled, Show, Switch } from 'solid-js';
 import { animate } from './animations';

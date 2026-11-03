@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2018-2026 Guillaume Vara <guillaume.vara@gmail.com>
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 # macOS toolchain : Homebrew's LLVM (prerequisites/Brewfile), against the SDK of Xcode or of its Command Line Tools
 
 # macOS 13.3 or newer : std::format of floating-point numbers needs std::to_chars of the system libc++, from 13.3

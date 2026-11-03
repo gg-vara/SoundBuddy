@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2018-2026 Guillaume Vara <guillaume.vara@gmail.com>
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 // What the music app plays : a new title springs in, the position goes on while playing
 import { createEffect, createMemo, createSignal } from 'solid-js';
 import { animate, bouncy } from '../animations';

@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2018-2026 Guillaume Vara <guillaume.vara@gmail.com>
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 # User interface : a web page (src/ui/page) shown in the system webview, through webview/webview.
 #
 # - webview::core : header-only C++ API; on Windows, WebView2 headers are fetched and its loader is built in,

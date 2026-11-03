@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2018-2026 Guillaume Vara <guillaume.vara@gmail.com>
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 # yyjson : JSON reading and writing (settings, SoundVitrine requests and responses)
 #
 # built from sources, as a static library (linked by cmake/SoundBuddyCore.cmake)
