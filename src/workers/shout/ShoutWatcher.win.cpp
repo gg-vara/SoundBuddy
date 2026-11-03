@@ -52,7 +52,7 @@ bool ShoutWatcher::_waitForAvailableSession(const std::stop_token& stop) {
 
         // Music App found, store the associated PID
         DWORD currentProcessID = 0;
-        auto success = GetWindowThreadProcessId(windowHandler, &currentProcessID);
+        const auto success = GetWindowThreadProcessId(windowHandler, &currentProcessID);
 
         // if cannot fetch, wait and retry
         if (success == 0) {

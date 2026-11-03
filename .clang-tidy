@@ -14,6 +14,7 @@ Checks: >
   -modernize-use-trailing-return-type,
   -modernize-use-nodiscard,
   -readability-identifier-length,
+  -readability-trailing-comma,
   -readability-magic-numbers,
   -cppcoreguidelines-avoid-magic-numbers,
   -performance-enum-size,
@@ -31,7 +32,8 @@ Checks: >
   -cppcoreguidelines-non-private-member-variables-in-classes
 
 # Disabled above :
-# - matters of taste : trailing return types, [[nodiscard]] everywhere, short names, magic numbers, enum sizes
+# - matters of taste : trailing return types, [[nodiscard]] everywhere, short names, magic numbers, enum sizes,
+#   trailing commas (in every pair of src/i18n/*.inc)
 # - noise : adjacent parameters of the same type, static initializations which could only throw bad_alloc,
 #   const data members (intended, as in AppSettings::ConnectivityInfos)
 # - low-level code (Win32, COM, WinHTTP) : pointer arithmetic, casts, unions and varargs of C APIs
@@ -49,6 +51,8 @@ CheckOptions:
   # "if (done) return;" stays on one line
   readability-braces-around-statements.ShortStatementLines: 1
   readability-implicit-bool-conversion.AllowPointerConditions: true
+  # const pointers, not what they point to : C handles (HANDLE, yyjson_val*...) are passed to APIs taking them mutable
+  misc-const-correctness.WarnPointersAsPointers: false
   # umbrella headers whose symbols come from internal headers : C APIs (windows.h, WebView2.h...), and libc++ (<chrono> literals)
   misc-include-cleaner.IgnoreHeaders: 'include/[A-Za-z0-9_]+.h;__[a-z_]+/[a-z0-9_]+.h'
   # plain structs

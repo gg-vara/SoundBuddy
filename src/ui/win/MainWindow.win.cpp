@@ -102,7 +102,7 @@ void runPostedTasks() {
         const std::scoped_lock lock { posted.mutex };
         tasks.swap(posted.tasks);
     }
-    for (auto& task : tasks) task();
+    for (const auto& task : tasks) task();
 }
 
 // "setting" of the personalization : AppsUseLightTheme for windows, SystemUsesLightTheme for the taskbar
@@ -318,7 +318,7 @@ LRESULT MainWindow::_handle(UINT message, WPARAM wParam, LPARAM lParam) {
             return 0;
 
         case WM_SYSCOMMAND:
-            if ((wParam & 0xFFF0) == SC_MINIMIZE) {
+            if ((wParam & 0xFFF0U) == SC_MINIMIZE) {
                 _hideWindow();
                 return 0;
             }

@@ -112,8 +112,8 @@ std::string md5File(const std::filesystem::path& file) {
     std::string hex;
     hex.reserve(digest->size() * 2);
     for (const auto byte : *digest) {
-        hex += digits[byte >> 4];
-        hex += digits[byte & 0x0F];
+        hex += digits[static_cast<unsigned>(byte) >> 4U];
+        hex += digits[static_cast<unsigned>(byte) & 0x0FU];
     }
     return hex;
 }

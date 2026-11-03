@@ -71,12 +71,12 @@ class Multipart {
         _body += _boundary;
         _body += "\r\nContent-Disposition: form-data; name=\"";
         _body += name;
-        _body += "\"";
+        _body += '"';
 
         if (!fileName.empty()) {
             _body += "; filename=\"";
             _body += fileName;
-            _body += "\"";
+            _body += '"';
         }
 
         if (!contentType.empty()) {

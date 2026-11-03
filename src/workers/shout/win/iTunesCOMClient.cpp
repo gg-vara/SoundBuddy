@@ -157,7 +157,7 @@ class iTunesCOMClient::EventSink final : public IDispatch {
     // the type info is a proxy to iTunes process, which cannot remote GetIDsOfNames : lookup through the members descriptions
     static DISPID _idOf(ITypeInfo* eventsInfo, const wchar_t* name) {
         TYPEATTR* attributes = nullptr;
-        auto hr = eventsInfo->GetTypeAttr(&attributes);
+        const auto hr = eventsInfo->GetTypeAttr(&attributes);
         if (FAILED(hr)) throw comError("Cannot read iTunes events description", hr);
 
         const auto functionsCount = attributes->cFuncs;

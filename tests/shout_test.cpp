@@ -17,7 +17,7 @@ int main() {
     const auto empty = ShoutPayload {}.toJSON();
     const auto emptyDoc = json::parse(empty.json);
     CHECK(empty.isEmpty && yyjson_obj_size(json::root(emptyDoc)) == 1, "empty shout : only the date");
-    CHECK(json::string(yyjson_obj_get(json::root(emptyDoc), "date")).ends_with("Z"), "UTC date");
+    CHECK(json::string(yyjson_obj_get(json::root(emptyDoc), "date")).ends_with('Z'), "UTC date");
 
     // a track, from a file at a non-ASCII path
     const auto file = testdata::scratchDirectory("shout é") / platform::fromUtf8("caf\xC3\xA9.mp3");

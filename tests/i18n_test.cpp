@@ -20,7 +20,7 @@ int main() {
     i18n::setLanguage(i18n::Language::English);
     CHECK(i18n::tr("Quit") == "Quit", "English keeps source texts");
     CHECK(i18n::languageCode() == "en", "English code");
-    CHECK(i18n::formatDataSize(45'678'901) == "43.56 MB" && i18n::formatDataSize(3ULL << 40) == "3072.00 GB", "English sizes, up to GB");
+    CHECK(i18n::formatDataSize(45'678'901) == "43.56 MB" && i18n::formatDataSize(3ULL << 40U) == "3072.00 GB", "English sizes, up to GB");
 
     return check::summary();
 }

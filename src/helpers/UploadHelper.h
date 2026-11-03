@@ -31,7 +31,7 @@ class UploadHelper {
         const auto contentType = AppSettings::getFeedOutputContentType(format);
 
         net::Multipart form;
-        form.addFile(fileName, fileName + std::string { fileExtension }, std::string { contentType }, instructions.dataToUpload);
+        form.addFile(fileName, fileName + std::string { fileExtension }, contentType, instructions.dataToUpload);
 
         // password...
         form.addField("password", instructions.connectivityInfos.password);
