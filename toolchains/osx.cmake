@@ -23,9 +23,8 @@ list(APPEND CMAKE_PREFIX_PATH ${LLVM_PREFIX})
 execute_process(COMMAND xcrun --show-sdk-path OUTPUT_VARIABLE OSX_SDK_PATH OUTPUT_STRIP_TRAILING_WHITESPACE)
 set(CMAKE_OSX_SYSROOT ${OSX_SDK_PATH})
 
-# LLVM's linker (Homebrew's lld formula)
-set(CMAKE_EXE_LINKER_FLAGS_INIT "-fuse-ld=lld")
-set(CMAKE_SHARED_LINKER_FLAGS_INIT "-fuse-ld=lld")
+# Apple's linker, rather than lld : it builds the stubs Clang emits for Objective-C messages (objc_msgSendClass$...),
+# which lld does not, and signs ad hoc
 
 set(CMAKE_CXX_FLAGS_DEBUG_INIT "-O0")  # added to CMake's -g
 set(CMAKE_OBJCXX_FLAGS_DEBUG_INIT "-O0")

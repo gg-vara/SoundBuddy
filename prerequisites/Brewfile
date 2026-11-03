@@ -3,8 +3,7 @@
 #   brew bundle check --file prerequisites/Brewfile (tells what is missing)
 
 ## build : toolchain and release tooling
-brew "llvm"         # clang, llvm-ar, llvm-rc
-brew "lld"          # linker, apart from llvm in Homebrew
+brew "llvm"         # clang, llvm-ar; clangd and clang-tidy (devex)
 brew "cmake"
 brew "ninja"
 brew "gh"           # GitHub CLI : publishes releases
