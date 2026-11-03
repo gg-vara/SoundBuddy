@@ -134,6 +134,8 @@ elseif(APPLE)
 
     target_sources(appExec PRIVATE
         src/ui/mac/MainWindow.mac.mm
+        # webview, compiled without ARC
+        src/ui/mac/WebView.mac.cpp
         ${APP_ICON}
         ${APP_MENU_BAR_ICON}
     )

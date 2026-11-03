@@ -22,11 +22,10 @@
 
 #import <AppKit/AppKit.h>
 
-#include <webview/webview.h>
-
 #include <atomic>
 #include <functional>
 #include <memory>
+#include <stdexcept>
 #include <string>
 #include <string_view>
 #include <utility>
@@ -37,6 +36,7 @@
 #include "src/ui/Controller.h"
 #include "src/ui/Post.h"
 #include "src/ui/Run.h"
+#include "src/ui/mac/WebView.h"
 #include "version.h"
 
 namespace ui {
@@ -145,7 +145,7 @@ class MacShell final : public Shell {
 
     bool sendToPage(const std::string& event) override {
         if (!_view || !_pageLoaded) return false;
-        _view->browser.eval("sb.receive(" + event + ");");
+        _view->eval("sb.receive(" + event + ");");
         return true;
     }
 
@@ -239,20 +239,13 @@ class MacShell final : public Shell {
     }
 
  private:
-    struct View {
-        explicit View(void* window) :
-            browser(devTools, window) {}
-
-        webview::webview browser;
-    };
-
     SBShellTarget* _target = nil;
     NSWindow* _window = nil;
     NSStatusItem* _statusItem = nil;
     NSMenu* _statusMenu = nil;
 
     // the webview, while the window is shown
-    std::unique_ptr<View> _view;
+    std::unique_ptr<WebView> _view;
     bool _pageLoaded = false;
 
     // created once the window exists, destroyed first
@@ -334,27 +327,27 @@ class MacShell final : public Shell {
 
         try {
             // fills the window's content
-            _view = std::make_unique<View>((__bridge void*)_window);
-        } catch (const webview::exception& e) {
+            _view = std::make_unique<WebView>(devTools, (__bridge void*)_window);
+        } catch (const std::runtime_error& e) {
             logs::error("UI", "Webview unavailable : {}", e.what());
             tell(APP_NAME, e.what(), Severity::Error);
             return;
         }
 
         // page queries are answered right away; commands may wait for workers or open dialogs, out of WebKit's callbacks
-        _view->browser.bind("sbQuery", [this](const std::string& request) -> std::string {
+        _view->bind("sbQuery", [this](const std::string& request) -> std::string {
             auto answer = _controller->query(request);
             _pageLoaded = true;
             return answer;
         });
-        _view->browser.bind("sbCommand", [this](const std::string& request) -> std::string {
+        _view->bind("sbCommand", [this](const std::string& request) -> std::string {
             post([this, request] {
                 if (_controller) _controller->command(request);
             });
             return "null";
         });
 
-        _view->browser.set_html(page::html);
+        _view->setHtml(page::html);
     }
 
     void _destroyView() {
