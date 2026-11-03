@@ -7,7 +7,7 @@ Small companion app that feeds SoundVitrine with ITunes / Music library metadata
 
 ## How to build and debug
 
-Available for MacOS (BigSur 11.0+) and Windows 10+. Usage of Visual Studio Code (https://code.visualstudio.com) as IDE is recommanded.
+Available for macOS 13.3 (Ventura) or newer, and Windows 10 or newer. Usage of Visual Studio Code (https://code.visualstudio.com) as IDE is recommanded.
 Requires a C++20 enabled compiler. We assume you have Git installed on your system.
 
 - Run command in terminal to clone this repository: `git clone --recurse-submodules -j8 https://github.com/gg-vara/SoundBuddy`

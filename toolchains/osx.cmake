@@ -1,4 +1,5 @@
-SET(CMAKE_OSX_DEPLOYMENT_TARGET 13.2)
+# macOS 13.3 or newer : std::format of floating-point numbers needs std::to_chars of the system libc++, from 13.3
+set(CMAKE_OSX_DEPLOYMENT_TARGET 13.3)
 
 list(APPEND CMAKE_MODULE_PATH
     "/opt/homebrew/opt/llvm/lib/cmake"
