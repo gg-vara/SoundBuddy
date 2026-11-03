@@ -38,6 +38,9 @@ jobs:
         run: pacman -S --needed --noconfirm $(sed 's/#.*//' prerequisites/msys2/*.txt)
 
       - uses: oven-sh/setup-bun@v2
+        with:
+          # the version the page declares (packageManager)
+          bun-version-file: src/ui/page/package.json
 
       - name: MSYS2 location, for the CMake presets
         run: echo "MSYS2_ROOT=$(cygpath -w /)" >> "$GITHUB_ENV"
@@ -62,6 +65,11 @@ jobs:
 
       - name: Homebrew LLVM first, as README.md
         run: echo "$(brew --prefix llvm)/bin" >> "$GITHUB_PATH"
+
+      # the version the page declares (packageManager), rather than Homebrew's
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: src/ui/page/package.json
 
       - name: Build, then unit tests
         run: cmake --workflow --preset macos-test
