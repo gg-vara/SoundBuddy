@@ -19,9 +19,9 @@ target_include_directories(soundbuddy_tested_core BEFORE PUBLIC ${CMAKE_CURRENT_
 # Tests #
 #########
 
-# test "name", built from <name>_test.cpp and SOURCES, linked to LIBRARIES; LABELS tag it (as "network")
+# test "name", built from <name>_test.cpp and SOURCES, linked to LIBRARIES, run with ARGS; LABELS tag it (as "network")
 function(soundbuddy_test name)
-    cmake_parse_arguments(TEST "" "" "SOURCES;LIBRARIES;LABELS" ${ARGN})
+    cmake_parse_arguments(TEST "" "" "SOURCES;LIBRARIES;LABELS;ARGS" ${ARGN})
 
     add_executable(test_${name} ${name}_test.cpp ${TEST_SOURCES})
     target_link_libraries(test_${name} PRIVATE soundbuddy_tested_core ${TEST_LIBRARIES})
@@ -29,7 +29,7 @@ function(soundbuddy_test name)
     # out of the app directory, which is packaged
     set_target_properties(test_${name} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
 
-    add_test(NAME ${name} COMMAND test_${name})
+    add_test(NAME ${name} COMMAND test_${name} ${TEST_ARGS})
 
     # toolchain libraries (libc++) lie next to the compiler
     if(WIN32)
@@ -59,6 +59,23 @@ soundbuddy_test(shout_uploader)
 soundbuddy_test(mbeat)
 soundbuddy_test(feeder)
 soundbuddy_test(shout_watcher)
+
+# messages between the application and its page, checked against the page's types : the test writes them as TypeScript,
+# which tsc checks, with the page's compiler options (src/ui/page/tsconfig.json)
+set(PAGE_CONTRACT_DIR ${CMAKE_CURRENT_BINARY_DIR}/page_contract)
+file(CONFIGURE OUTPUT ${PAGE_CONTRACT_DIR}/tsconfig.json @ONLY CONTENT [=[
+{
+  "extends": "@PAGE_DIR@/tsconfig.json",
+  "compilerOptions": { "types": [] },
+  "files": ["contract.ts"],
+  "include": []
+}
+]=])
+soundbuddy_test(page_contract ARGS ${PAGE_CONTRACT_DIR}/contract.ts)
+target_compile_definitions(test_page_contract PRIVATE PAGE_SOURCE_DIR="${PAGE_DIR}/src")
+set_tests_properties(page_contract PROPERTIES FIXTURES_SETUP page_contract)
+add_test(NAME page-contract-types COMMAND ${BUN_EXECUTABLE} x --bun tsc -p ${PAGE_CONTRACT_DIR}/tsconfig.json WORKING_DIRECTORY ${PAGE_DIR})
+set_tests_properties(page-contract-types PROPERTIES FIXTURES_REQUIRED page_contract)
 
 # updates, through Velopack, which only the app links otherwise
 soundbuddy_test(update_checker SOURCES ${PROJECT_SOURCE_DIR}/src/workers/base/UpdateChecker.cpp LIBRARIES velopack)

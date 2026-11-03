@@ -30,6 +30,7 @@ export interface Shout {
   playerPositionMS?: number;
   playerState?: boolean; // playing
   year?: number;
+  md5?: string; // of the audio file, identifying the track for the platform
 }
 
 export interface Settings {

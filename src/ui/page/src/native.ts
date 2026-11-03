@@ -2,8 +2,11 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 // Calls to the application, bound by the native shell (src/ui/win/MainWindow.win.cpp) :
-// sbQuery(name, argument) answers, sbCommand(name, argument) acts; the application calls sb.receive(event)
+// sbQuery(name, argument) answers, sbCommand(name, argument) acts; the application calls sb.receive(event).
+// The application handles these names (src/ui/PageMessages.h), as tests/page_contract_test.cpp checks
 import type { NativeEvent, NativeState, WarningsReport } from './state';
+
+export type QueryName = 'ready' | 'warnings';
 
 export type CommandName =
   | 'runShouts'
@@ -24,12 +27,12 @@ export interface Native {
   command(name: CommandName, argument?: unknown): void;
 }
 
-type Binding = (name: string, argument: unknown) => Promise<unknown>;
+type Binding<Name extends string> = (name: Name, argument: unknown) => Promise<unknown>;
 
 declare global {
   interface Window {
-    sbQuery?: Binding;
-    sbCommand?: Binding;
+    sbQuery?: Binding<QueryName>;
+    sbCommand?: Binding<CommandName>;
     sb?: { receive(event: NativeEvent): void };
   }
 }
