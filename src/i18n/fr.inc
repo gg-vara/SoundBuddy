@@ -1,7 +1,7 @@
 // French translations : { English source text, translation },
 // included by Translations.cpp. Texts are UTF-8; %1, %2... are placeholders.
 
-// FeederTab
+// page : Feeder tab
 { "Generate Digest and Upload",
   "Générer le fichier et mettre en ligne" },
 
@@ -49,15 +49,11 @@
 { "An error occured while connecting with %1 platform : %2",
   "Une erreur s'est produite pendant la connexion à la plateforme %1 : %2" },
 
-// MainWindow
-{ "Options",
-  "Options" },
+// Controller, tray and menu bar menus, page menu
 { "Check for updates",
   "Vérification de mises à jour" },
 { "Searching for updates...",
   "Recherche des mises à jour..." },
-{ "File",
-  "Fichier" },
 { "Open monitor...",
   "Ouvrir le tableau de bord" },
 { "My %1",
@@ -97,7 +93,7 @@
 { "%1 Plaform URL is not valid. Please check Preferences connectivity parameters.",
   "L'URL de la plateforme %1 n'est pas valide. Merci de vérifier les paramètres de connectivité." },
 
-// PreferencesDialog
+// page : preferences
 { "Host URL",
   "URL hôte" },
 { "%1 connectivity",
@@ -111,7 +107,7 @@
 { "Launch %1 at system boot",
   "Lancer %1 au démarrage système" },
 
-// QObject
+// Platform
 { "Music",
   "Musique" },
 { "Could not open %1 preferences file.",
@@ -119,7 +115,7 @@
 { "%1 XML library location could not be deduced.",
   "L'emplacement du fichier XML de bibliothèque de %1 n'a pas pu être déduit." },
 
-// ShoutTab
+// page : Shout! tab
 { "Start shouting at app launch",
   "Shout automatiques dès le démarrage" },
 { "Connect to %1",

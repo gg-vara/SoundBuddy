@@ -101,7 +101,6 @@ class Controller {
 
     bool canOpenPlatform() const;
     static bool hasWarnings();
-    bool isSearchingUpdates() const { return _searchingUpdates; }
 
  private:
     enum class Tab { Shout, Feeder };

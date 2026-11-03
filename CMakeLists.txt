@@ -51,7 +51,6 @@ endif()
 set(APP_PUBLISHER_ORG "LVNWL")  # the organization of the executables' signing certificate
 set(APP_PUBLISHER_ORG_PKG_NORM "lvnwl")  # as a bundle identifier part : lowercase, no spaces
 set(DEST_PLATFORM_PRODUCT_NAME "SoundVitrine")
-set(APP_PATCHNOTE_URL ${PROJECT_HOMEPAGE_URL}/releases)
 # GitHub repository whose releases (published with Velopack, see cmake/Velopack.cmake) feed updates
 set(APP_UPDATES_REPOSITORY_URL ${PROJECT_HOMEPAGE_URL})
 
