@@ -46,21 +46,27 @@ if(WIN32)
         COMMAND ${CMAKE_COMMAND} -E copy_if_different ${VELOPACK_LIB} $<TARGET_FILE_DIR:appExec>/velopack_libc.dll
     )
 elseif(APPLE)
-    SET(VELOPACK_LIB ${velopack_SOURCE_DIR}/lib/velopack_libc_osx.dylib)
+    # the library id is an absolute path on Velopack's CI, one per architecture : a copy whose id is relative to the
+    # run paths of the executables linking it (the app, the tests). The change voids its ad hoc signature, without which
+    # Apple Silicon Macs refuse to load it : signed again, ad hoc. Velopack signs the packages for real (see below)
+    SET(VELOPACK_LIB ${PROJECT_BINARY_DIR}/velopack/libvelopack_libc.dylib)
+    if(${velopack_SOURCE_DIR}/lib/velopack_libc_osx.dylib IS_NEWER_THAN ${VELOPACK_LIB})
+        file(MAKE_DIRECTORY ${PROJECT_BINARY_DIR}/velopack)
+        file(COPY_FILE ${velopack_SOURCE_DIR}/lib/velopack_libc_osx.dylib ${VELOPACK_LIB})
+        execute_process(COMMAND install_name_tool -id @rpath/libvelopack_libc.dylib ${VELOPACK_LIB} COMMAND_ERROR_IS_FATAL ANY)
+        execute_process(COMMAND codesign --force --sign - ${VELOPACK_LIB} COMMAND_ERROR_IS_FATAL ANY)
+    endif()
     set_target_properties(velopack PROPERTIES
         IMPORTED_LOCATION ${VELOPACK_LIB}
     )
 
-    # the library id is an absolute path from Velopack's CI : load it from the bundle instead
+    # the app loads it from the bundle, next to its executable
+    set_target_properties(appExec PROPERTIES
+        BUILD_WITH_INSTALL_RPATH ON
+        INSTALL_RPATH @executable_path
+    )
     add_custom_command(TARGET appExec POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_if_different ${VELOPACK_LIB} $<TARGET_FILE_DIR:appExec>/libvelopack_libc.dylib
-        COMMAND install_name_tool -id @executable_path/libvelopack_libc.dylib $<TARGET_FILE_DIR:appExec>/libvelopack_libc.dylib
-        COMMAND install_name_tool -change /Users/runner/_work/velopack/velopack/target/x86_64-apple-darwin/release/deps/libvelopack_libc.dylib
-            @executable_path/libvelopack_libc.dylib $<TARGET_FILE:appExec>
-        # these changes void the ad hoc signatures, without which Apple Silicon Macs refuse to run them : signed again, ad hoc.
-        # Velopack signs the packages for real (see below)
-        COMMAND codesign --force --sign - $<TARGET_FILE_DIR:appExec>/libvelopack_libc.dylib
-        COMMAND codesign --force --sign - $<TARGET_FILE:appExec>
     )
 endif()
 
