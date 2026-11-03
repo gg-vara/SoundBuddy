@@ -124,9 +124,10 @@ Requirements, in addition to the build dependencies :
 - Velopack's CLI, pinned by `.config/dotnet-tools.json` to the version of the library (`VELOPACK_VERSION` in `cmake/Velopack.cmake`, which checks they match) : run `dotnet tool restore` once from the repository. To upgrade Velopack, change both versions (and the library hash)
 - GitHub CLI, logged in (`gh auth login`), or a `GITHUB_TOKEN` environment variable
 
-Then, after bumping the version in `CMakeLists.txt` (`project(... VERSION X.Y.Z`) :
+Then, after bumping the version in `CMakeLists.txt` (`project(... VERSION X.Y.Z`) and describing it in a `## X.Y.Z` section of `CHANGELOG.md` (its release notes) :
 - `cmake --workflow --preset windows-package` builds in Release and packages the app into `build_release_unsigned/releases`, without signing nor publishing anything : useful to check a release locally
 - `cmake --workflow --preset windows-publish` builds, signs, packages, and publishes the `vX.Y.Z` GitHub release. Set the `SOUNDBUDDY_RELEASE_DRAFT` environment variable to create it as a draft instead
+- `cmake --workflow --preset windows-publish-unsigned` does the same without signing, the release being named `SoundBuddy vX.Y.Z (unsigned)`
 - on macOS, `macos-package` / `macos-publish` add the macOS packages to the same release
 
 Packaging fetches the previous release (`vpk download github`) to generate delta updates, then runs `vpk pack`; publishing runs `vpk upload github` (see `cmake/Velopack.cmake`).

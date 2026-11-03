@@ -98,6 +98,7 @@ SET(VELOPACK_SCRIPT_ARGS
     -DREPOSITORY_URL=${APP_UPDATES_REPOSITORY_URL}
     -DPACK_ID=${PROJECT_NAME}
     -DPACK_VERSION=${PROJECT_VERSION}
+    -DCHANGELOG=${CMAKE_SOURCE_DIR}/CHANGELOG.md
 )
 
 if(WIN32)
@@ -120,6 +121,9 @@ if(WIN32)
         list(APPEND VELOPACK_SCRIPT_ARGS
             "-DSIGN_PARAMS=/f ${EXPECTED_PFX_PATH} /tr http://timestamp.acs.microsoft.com /td SHA256 /fd SHA256"
         )
+    else()
+        # its GitHub release is named so
+        list(APPEND VELOPACK_SCRIPT_ARGS -DUNSIGNED=ON)
     endif()
 elseif(APPLE)
     if(CMAKE_SYSTEM_PROCESSOR STREQUAL "arm64")

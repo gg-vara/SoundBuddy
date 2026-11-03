@@ -110,6 +110,7 @@
         { "name": "windows-release-publish", "configurePreset": "windows-release", "targets": [ "velopack_publish" ] },
         { "name": "windows-release-unsigned", "configurePreset": "windows-release-unsigned" },
         { "name": "windows-release-unsigned-pack", "configurePreset": "windows-release-unsigned", "targets": [ "velopack_pack" ] },
+        { "name": "windows-release-unsigned-publish", "configurePreset": "windows-release-unsigned", "targets": [ "velopack_publish" ] },
         { "name": "macos-debug", "configurePreset": "macos-debug" },
         { "name": "macos-release", "configurePreset": "macos-release" },
         { "name": "macos-release-pack", "configurePreset": "macos-release", "targets": [ "velopack_pack" ] },
@@ -172,6 +173,16 @@
                 { "type": "build", "name": "windows-release" },
                 { "type": "build", "name": "windows-release-pack" },
                 { "type": "build", "name": "windows-release-publish" }
+            ]
+        },
+        {
+            "name": "windows-publish-unsigned",
+            "displayName": "Windows - build, package and publish the GitHub release, unsigned (named so)",
+            "steps": [
+                { "type": "configure", "name": "windows-release-unsigned" },
+                { "type": "build", "name": "windows-release-unsigned" },
+                { "type": "build", "name": "windows-release-unsigned-pack" },
+                { "type": "build", "name": "windows-release-unsigned-publish" }
             ]
         },
         {

@@ -3,9 +3,10 @@
 
 # Runs Velopack's CLI, in CMake script mode : see velopack_pack / velopack_publish targets in cmake/Velopack.cmake
 #
-# ACTION=pack : fetches the previous GitHub release (for delta updates), then packages PACK_DIR into RELEASES_DIR
+# ACTION=pack : fetches the previous GitHub release (for delta updates), then packages PACK_DIR into RELEASES_DIR,
+#   with the section of CHANGELOG for PACK_VERSION as release notes
 # ACTION=publish : uploads RELEASES_DIR as the vPACK_VERSION GitHub release, published unless
-#   SOUNDBUDDY_RELEASE_DRAFT environment variable is set
+#   SOUNDBUDDY_RELEASE_DRAFT environment variable is set; named as unsigned when UNSIGNED is set
 #
 # The GitHub token comes from GITHUB_TOKEN environment variable, else from GitHub CLI (gh auth token)
 
@@ -60,6 +61,18 @@ endfunction()
 if(ACTION STREQUAL "pack")
     file(REMOVE_RECURSE ${RELEASES_DIR})
 
+    # release notes : the "## X.Y.Z" section of the changelog, up to the next section
+    file(READ ${CHANGELOG} changelog)
+    string(REPLACE "\r" "" changelog "${changelog}")
+    string(REPLACE "." "\\." version_regex ${PACK_VERSION})
+    if(NOT changelog MATCHES "\n## ${version_regex} *\n(.*)")
+        message(FATAL_ERROR "No \"## ${PACK_VERSION}\" section in ${CHANGELOG} : describe this version there first")
+    endif()
+    string(REGEX REPLACE "\n## .*" "" notes "${CMAKE_MATCH_1}")
+    string(STRIP "${notes}" notes)
+    set(notes_file ${RELEASES_DIR}/release-notes.md)
+    file(WRITE ${notes_file} "${notes}\n")
+
     # previous release, to generate delta updates (none for the very first release)
     execute_process(COMMAND ${VPK} download github ${github_args} RESULT_VARIABLE download_result)
     if(NOT download_result EQUAL 0)
@@ -77,6 +90,7 @@ if(ACTION STREQUAL "pack")
         --channel ${CHANNEL}
         --icon ${ICON}
         --outputDir ${RELEASES_DIR}
+        --releaseNotes ${notes_file}
     )
 
     if(SIGN_PARAMS)
@@ -118,11 +132,16 @@ elseif(ACTION STREQUAL "publish")
         message(FATAL_ERROR "No GitHub token : set GITHUB_TOKEN environment variable, or log in with GitHub CLI (gh auth login)")
     endif()
 
+    set(release_name "${PACK_ID} v${PACK_VERSION}")
+    if(UNSIGNED)
+        string(APPEND release_name " (unsigned)")
+    endif()
+
     # the other platform may already have created the release
     set(upload_args
         --token ${token}
         --tag v${PACK_VERSION}
-        --releaseName "${PACK_ID} v${PACK_VERSION}"
+        --releaseName "${release_name}"
         --merge
     )
 
