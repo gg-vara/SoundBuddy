@@ -1,29 +1,31 @@
+# macOS toolchain : Homebrew's LLVM (prerequisites/Brewfile), against the SDK of Xcode or of its Command Line Tools
+
 # macOS 13.3 or newer : std::format of floating-point numbers needs std::to_chars of the system libc++, from 13.3
 set(CMAKE_OSX_DEPLOYMENT_TARGET 13.3)
 
-list(APPEND CMAKE_MODULE_PATH
-    "/opt/homebrew/opt/llvm/lib/cmake"
-)
+# Homebrew's LLVM, rather than Apple's Clang, which comes first in the PATH
+execute_process(COMMAND brew --prefix llvm OUTPUT_VARIABLE LLVM_PREFIX OUTPUT_STRIP_TRAILING_WHITESPACE ERROR_QUIET)
+if(NOT LLVM_PREFIX)
+    set(LLVM_PREFIX /opt/homebrew/opt/llvm)
+endif()
+if(NOT EXISTS ${LLVM_PREFIX}/bin/clang++)
+    message(FATAL_ERROR "Homebrew's LLVM not found in ${LLVM_PREFIX} : install the build prerequisites (see prerequisites/Brewfile)")
+endif()
 
-list(APPEND CMAKE_PREFIX_PATH
-    "/opt/homebrew/opt/llvm"
-)
+set(CMAKE_CXX_COMPILER ${LLVM_PREFIX}/bin/clang++)
+set(CMAKE_OBJCXX_COMPILER ${LLVM_PREFIX}/bin/clang++)
+set(CMAKE_AR ${LLVM_PREFIX}/bin/llvm-ar)
+set(CMAKE_RANLIB ${LLVM_PREFIX}/bin/llvm-ranlib)
+set(CMAKE_NM ${LLVM_PREFIX}/bin/llvm-nm)
+list(APPEND CMAKE_PREFIX_PATH ${LLVM_PREFIX})
 
-# Will probably find AppleClang of XCode first
-SET (CMAKE_CXX_COMPILER         "clang++")
+# the system's frameworks and libraries, which Homebrew's LLVM does not find by itself
+execute_process(COMMAND xcrun --show-sdk-path OUTPUT_VARIABLE OSX_SDK_PATH OUTPUT_STRIP_TRAILING_WHITESPACE)
+set(CMAKE_OSX_SYSROOT ${OSX_SDK_PATH})
 
-# specifics of LLVM's "normal" toolkit
-# make sure to add "/opt/homebrew/opt/llvm/bin" to .zshrc PATH
-SET (CMAKE_AR                   "llvm-ar")
-SET (CMAKE_RANLIB               "llvm-ranlib")
-SET (CMAKE_NM                   "llvm-nm")
-SET (CMAKE_RC_COMPILER          "llvm-rc")
+# LLVM's linker (Homebrew's lld formula)
+set(CMAKE_EXE_LINKER_FLAGS_INIT "-fuse-ld=lld")
+set(CMAKE_SHARED_LINKER_FLAGS_INIT "-fuse-ld=lld")
 
-# we have to manually tell to use SDK libs / framework, because cmake's automatic --isysroot of SDK does not the job using "classic" LLVM
-SET (OSX_SDK_PATH               "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk")
-SET (CMAKE_EXE_LINKER_FLAGS     "-fuse-ld=lld")
-
-SET (CMAKE_SHARED_LINKER_FLAGS  ${CMAKE_EXE_LINKER_FLAGS})
-
-SET (CMAKE_CXX_FLAGS            "-isysroot ${OSX_SDK_PATH}")
-SET (CMAKE_CXX_FLAGS_DEBUG      "-O0 -g")
+set(CMAKE_CXX_FLAGS_DEBUG_INIT "-O0")  # added to CMake's -g
+set(CMAKE_OBJCXX_FLAGS_DEBUG_INIT "-O0")
