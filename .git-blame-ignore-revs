@@ -2,3 +2,6 @@
 
 # format all sources with .clang-format
 cae5776221eb58f16210e8c90ce0afd1be330a6f
+
+# LF line endings for every text file
+94eece1ee3121b557c40191b5a317a9feef8fe58
