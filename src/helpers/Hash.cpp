@@ -27,6 +27,7 @@
 #include <optional>
 #include <string>
 #include <string_view>
+#include <system_error>
 #include <vector>
 
 #ifdef _WIN32
@@ -105,6 +106,10 @@ std::optional<Digest> md5(const std::filesystem::path& file) {
 }  // namespace
 
 std::string md5File(const std::filesystem::path& file) {
+    // POSIX systems open directories as files, read as empty
+    std::error_code error;
+    if (!std::filesystem::is_regular_file(file, error)) return {};
+
     const auto digest = md5(file);
     if (!digest) return {};
 
