@@ -12,6 +12,7 @@
 #include <system_error>
 
 #include "src/i18n/Translations.h"
+#include "src/logs/Logs.h"
 #include "version.h"
 
 namespace platform {
@@ -41,7 +42,8 @@ std::filesystem::path dataDirectory() {
     @autoreleasepool {
         NSString* applicationSupport =
             NSSearchPathForDirectoriesInDomains(NSApplicationSupportDirectory, NSUserDomainMask, YES).firstObject;
-        const auto directory = toPath(applicationSupport) / APP_PUBLISHER_ORG / APP_NAME;
+        const auto* const isolated = isolation();
+        const auto directory = isolated ? isolated->dataDirectory : toPath(applicationSupport) / APP_PUBLISHER_ORG / APP_NAME;
 
         std::error_code error;
         std::filesystem::create_directories(directory, error);
@@ -51,12 +53,22 @@ std::filesystem::path dataDirectory() {
 }
 
 bool openPath(const std::filesystem::path& path) {
+    if (isIsolated()) {
+        logs::info("Platform", "Would open {}", toUtf8(path));
+        return true;
+    }
+
     @autoreleasepool {
         return [NSWorkspace.sharedWorkspace openURL:[NSURL fileURLWithPath:toNSString(path)]];
     }
 }
 
 bool openUrl(const std::string& url) {
+    if (isIsolated()) {
+        logs::info("Platform", "Would open {}", url);
+        return true;
+    }
+
     @autoreleasepool {
         NSURL* target = [NSURL URLWithString:@(url.c_str())];
         return target && [NSWorkspace.sharedWorkspace openURL:target];
@@ -64,6 +76,8 @@ bool openUrl(const std::string& url) {
 }
 
 bool isLaunchingAtStartup() {
+    if (isIsolated()) return false;
+
     @autoreleasepool {
         NSURL* file = [NSURL fileURLWithPath:toNSString(launchAgentFile())];
         NSDictionary* agent = [NSDictionary dictionaryWithContentsOfURL:file error:nil];
@@ -75,6 +89,8 @@ bool isLaunchingAtStartup() {
 }
 
 bool setLaunchingAtStartup(bool enabled) {
+    if (isIsolated()) return true;
+
     const auto file = launchAgentFile();
     std::error_code error;
 
@@ -115,6 +131,11 @@ bool claimSingleInstance() {
 }
 
 std::filesystem::path musicLibraryFile() {
+    if (const auto* const isolated = isolation()) {
+        if (isolated->libraryFile.empty()) throw std::runtime_error("Isolated run without --library");
+        return isolated->libraryFile;
+    }
+
     @autoreleasepool {
         // last directory chosen in Music.app, where its library lies
         const auto value = CFPreferencesCopyAppValue(CFSTR("NSNavLastRootDirectory"), CFSTR("com.apple.Music"));

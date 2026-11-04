@@ -16,6 +16,7 @@ function(soundbuddy_add_core target scope)
     target_sources(${target} PRIVATE
         ${src}/helpers/AppSettings.cpp
         ${src}/helpers/Hash.cpp
+        ${src}/helpers/Options.cpp
         ${src}/helpers/Platform.cpp
         ${src}/i18n/Translations.cpp
         ${src}/logs/Logs.cpp

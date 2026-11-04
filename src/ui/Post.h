@@ -11,4 +11,8 @@ namespace ui {
 // runs "task" later on the user interface thread, unless the user interface is gone meanwhile
 void post(std::function<void()> task);
 
+// what post() hands tasks to : set by the running user interface, as a window or headless
+using Poster = void (*)(std::function<void()> task);
+void setPoster(Poster poster);
+
 }  // namespace ui

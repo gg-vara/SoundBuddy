@@ -4,10 +4,34 @@
 #include "Platform.h"
 
 #include <filesystem>
+#include <optional>
 #include <string>
 #include <string_view>
+#include <utility>
 
 namespace platform {
+
+namespace {
+
+std::optional<Isolation>& currentIsolation() {
+    static std::optional<Isolation> instance;
+    return instance;
+}
+
+}  // namespace
+
+void isolate(Isolation isolation) {
+    currentIsolation() = std::move(isolation);
+}
+
+const Isolation* isolation() {
+    const auto& current = currentIsolation();
+    return current ? &*current : nullptr;
+}
+
+bool isIsolated() {
+    return isolation() != nullptr;
+}
 
 std::string toUtf8(const std::filesystem::path& path) {
     const auto text = path.u8string();

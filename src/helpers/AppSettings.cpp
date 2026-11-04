@@ -12,8 +12,10 @@ AppSettings::AppSettings() :
     _file(platform::dataDirectory() / "settings.json") {
     if (auto stored = settings::load(_file)) {
         _values = std::move(*stored);
-    } else if (auto legacy = _readLegacySettings()) {
-        _values = std::move(*legacy);
-        save();
+    } else if (!platform::isIsolated()) {
+        if (auto legacy = _readLegacySettings()) {
+            _values = std::move(*legacy);
+            save();
+        }
     }
 }

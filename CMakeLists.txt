@@ -88,6 +88,8 @@ endif()
 add_executable(appExec
     src/main.cpp
     src/ui/Controller.cpp
+    src/ui/Headless.cpp
+    src/ui/Post.cpp
     src/workers/base/UpdateChecker.cpp
 )
 soundbuddy_add_core(appExec PRIVATE)

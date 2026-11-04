@@ -4,7 +4,7 @@ Desktop companion of [SoundVitrine](https://github.com/gg-vara/SoundVitrine) : p
 
 ## Never
 
-- **Launch the app (`SoundBuddy.exe`, an installed copy, or `build_*/out/`)** : it reads the user's real settings, and may send what is playing to their real SoundVitrine. Run the tests instead, which keep to their own identity (`tests/support/version.h`).
+- **Launch the app without `--data-dir`** : it would read the user's real settings, and may send what is playing to their real SoundVitrine. The user's installed copy may well be running : `--data-dir` runs beside it.
 - Install software the build needs : ask the user.
 - Push or publish without being asked.
 
@@ -28,11 +28,31 @@ The user interface page, in `src/ui/page` (Solid 2, XState, Vite, Biome) :
 - `bun test` and `bun x biome check --write .`, from that folder
 - `bun run dev` : the page in a browser at http://localhost:5173, against fake native data (`src/dev/fakeNative.ts`). Safe : it sends nothing anywhere
 
+## Running the app
+
+```bash
+build_ci/out/SoundBuddy.exe --headless --data-dir <empty folder> --library "deps/ItunesLibraryParser/tests/samples/iTunes Music Library (S).xml"
+```
+
+No window, and nothing of the session's real data : see `platform::isolate()`. Without `--library`, the feed fails rather than reading the real library. `--data-dir` alone gives the real window, as isolated.
+
+It is driven by lines on its standard input, and answers with JSON lines (`src/ui/Headless.h`, `tests/headless.test.ts`) :
+
+```
+command ["savePreferences",{"platformHostUrl":"http://localhost:3000","platformUsername":"testcurator","platformPassword":"testpassword"}]
+command ["runFeeder",null]
+query ["ready",[]]
+```
+
+Those credentials are the ones of SoundVitrine's `bun run dev:seed`. Its log is `<data folder>/logs/soundbuddy.log`.
+
+Shouts still need the real music app : `runShouts` watches iTunes, so nothing replaces it in these runs yet.
+
 ## Structure
 
 - `src/ui/Controller` : the application state and its workers, independent of the platform. It talks to the window through the `ui::Shell` interface
 - `src/ui/PageMessages` : every message between the page and the application. `tests/page_contract_test.cpp` checks them against the page's TypeScript types
-- `src/ui/win`, `src/ui/mac` : the native windows
+- `src/ui/win`, `src/ui/mac` : the native windows. `src/ui/Headless` : the same application without one
 - `src/workers` : heartbeat, library feed, shouts. `*.win.cpp` and `*.mac.cpp` are the platform parts
 - `tests/` : one program per test, run by ctest. The `network` label reaches public services, and is left out of default runs
 

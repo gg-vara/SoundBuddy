@@ -79,6 +79,12 @@ On Windows, Debug builds keep their debug info beside the executable, in `build_
 
 On Windows, clangd and CMake are taken from the CLANG64 environment of `MSYS2_ROOT`. On macOS, set `clangd.path` and `cmake.cmakePath` in your user settings, to Homebrew's ones.
 
+### Running apart from your real data
+
+`SoundBuddy --data-dir <folder>` keeps to that folder : settings of previous versions are not imported, start at login stays off, nothing opens in other apps, no update is looked for, and it runs beside another instance. Add `--library <file>` to read that iTunes XML library, as the real one is otherwise left alone.
+
+`--headless` then removes the window : the app is driven through its standard input and output (see `src/ui/Headless.h`), as `tests/headless.test.ts` does.
+
 ### Static analysis and layout
 
 - `.clang-tidy` lists the static analysis checks, which clangd shows in the editor as you type (with quick fixes). From the command line : `clang-tidy -p build_debug <file>`

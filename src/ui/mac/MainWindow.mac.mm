@@ -76,7 +76,7 @@ void activate() {
 
 }  // namespace
 
-void post(std::function<void()> task) {
+void postToMainQueue(std::function<void()> task) {
     if (!acceptingTasks()) return;
 
     auto* const posted =
@@ -342,6 +342,8 @@ class MacShell final : public Shell {
 };
 
 int run(int /*argc*/, char** /*argv*/) {
+    setPoster(&postToMainQueue);
+
     @autoreleasepool {
         [NSApplication sharedApplication];
 

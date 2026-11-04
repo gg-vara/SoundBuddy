@@ -7,11 +7,13 @@
 #include <memory>
 #include <mutex>
 #include <optional>
+#include <stdexcept>
 #include <thread>
 #include <utility>
 
 #include <Velopack.hpp>
 
+#include "src/helpers/Platform.h"
 #include "src/logs/Logs.h"
 #include "version.h"
 
@@ -68,6 +70,8 @@ bool UpdateChecker::check(OnChecked onChecked) {
         std::optional<Velopack::UpdateInfo> update;
 
         try {
+            if (platform::isIsolated()) throw std::runtime_error("Isolated run");
+
             manager = std::make_unique<Velopack::UpdateManager>(std::make_unique<Velopack::GithubSource>(APP_UPDATES_REPOSITORY_URL));
 
             update = manager->CheckForUpdates();

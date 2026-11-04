@@ -121,6 +121,15 @@ const wchar_t* trayIconName() {
     return isDark(L"SystemUsesLightTheme") ? L"TRAY_DARK" : L"TRAY_LIGHT";
 }
 
+void postToWindow(std::function<void()> task) {
+    auto& posted = postedTasks();
+    const std::scoped_lock lock { posted.mutex };
+    if (!posted.window) return;
+
+    posted.tasks.push_back(std::move(task));
+    if (posted.tasks.size() == 1) PostMessageW(posted.window, postedTasksMessage, 0, 0);
+}
+
 // pointer carried by a message parameter, or a window data
 template <typename T, typename Integer>
 T* pointerOf(Integer value) {
@@ -135,15 +144,6 @@ struct MainWindow::View {
 
     webview::webview browser;
 };
-
-void post(std::function<void()> task) {
-    auto& posted = postedTasks();
-    const std::scoped_lock lock { posted.mutex };
-    if (!posted.window) return;
-
-    posted.tasks.push_back(std::move(task));
-    if (posted.tasks.size() == 1) PostMessageW(posted.window, postedTasksMessage, 0, 0);
-}
 
 MainWindow::MainWindow() {
     auto* const instance = GetModuleHandleW(nullptr);
@@ -595,6 +595,8 @@ void MainWindow::_onMenuCommand(UINT command) {
 //
 
 int run(int /*argc*/, char** /*argv*/) {
+    setPoster(&postToWindow);
+
     SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
 
     // WebView2 runs in this single-threaded apartment

@@ -21,6 +21,7 @@
 #include <system_error>
 
 #include "src/i18n/Translations.h"
+#include "src/logs/Logs.h"
 #include "version.h"
 
 namespace platform {
@@ -136,7 +137,8 @@ std::wstring widen(std::string_view text) {
 }
 
 std::filesystem::path dataDirectory() {
-    const auto directory = knownFolder(FOLDERID_LocalAppData) / APP_PUBLISHER_ORG / APP_NAME;
+    const auto* const isolated = isolation();
+    const auto directory = isolated ? isolated->dataDirectory : knownFolder(FOLDERID_LocalAppData) / APP_PUBLISHER_ORG / APP_NAME;
 
     std::error_code error;
     std::filesystem::create_directories(directory, error);
@@ -145,14 +147,24 @@ std::filesystem::path dataDirectory() {
 }
 
 bool openPath(const std::filesystem::path& path) {
+    if (isIsolated()) {
+        logs::info("Platform", "Would open {}", toUtf8(path));
+        return true;
+    }
     return shellOpen(path.wstring());
 }
 
 bool openUrl(const std::string& url) {
+    if (isIsolated()) {
+        logs::info("Platform", "Would open {}", url);
+        return true;
+    }
     return shellOpen(widen(url));
 }
 
 bool isLaunchingAtStartup() {
+    if (isIsolated()) return false;
+
     const auto registered = registeredStartupCommand();
     const auto expected = startupCommand();
 
@@ -163,6 +175,8 @@ bool isLaunchingAtStartup() {
 }
 
 bool setLaunchingAtStartup(bool enabled) {
+    if (isIsolated()) return true;
+
     if (!enabled) {
         const auto result = RegDeleteKeyValueW(HKEY_CURRENT_USER, runKey, runValue);
         return result == ERROR_SUCCESS || result == ERROR_FILE_NOT_FOUND;
@@ -181,13 +195,22 @@ std::string_view musicAppName() {
 bool claimSingleInstance() {
     // the mutex is released by the system when the process ends; its handle is never closed before
     static const bool claimed = [] {
-        auto* const mutex = CreateMutexW(nullptr, FALSE, L"Local\\" APP_PUBLISHER_ORG "." APP_NAME);
+        // by data directory when isolated, to run beside the real app
+        const auto* const isolated = isolation();
+        const auto suffix = isolated ? L"." + std::to_wstring(std::filesystem::hash_value(isolated->dataDirectory)) : std::wstring {};
+        const auto name = L"Local\\" APP_PUBLISHER_ORG "." APP_NAME + suffix;
+        auto* const mutex = CreateMutexW(nullptr, FALSE, name.c_str());
         return mutex != nullptr && GetLastError() != ERROR_ALREADY_EXISTS;
     }();
     return claimed;
 }
 
 std::filesystem::path musicLibraryFile() {
+    if (const auto* const isolated = isolation()) {
+        if (isolated->libraryFile.empty()) throw std::runtime_error("Isolated run without --library");
+        return isolated->libraryFile;
+    }
+
     std::ifstream preferences { iTunesPreferencesFile(), std::ios::binary };
     if (!preferences) {
         throw std::runtime_error(i18n::format(i18n::tr("Could not open %1 preferences file."), { musicAppName() }));

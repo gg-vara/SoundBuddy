@@ -3,16 +3,23 @@
 
 #include <Velopack.hpp>
 
+#include <cstdio>
 #include <cstdlib>
 #include <exception>
+#include <span>
+#include <string>
 #include <string_view>
+#include <vector>
 
 #ifdef _WIN32
 #include <windows.h>
+#include <shellapi.h>
 #endif
 
+#include "src/helpers/Options.h"
 #include "src/helpers/Platform.h"
 #include "src/logs/Logs.h"
+#include "src/ui/Headless.h"
 #include "src/ui/Run.h"
 #include "version.h"
 
@@ -39,11 +46,45 @@ void logFatalError(const char* what) noexcept {
     }
 }
 
+// the arguments, in UTF-8, without the name of the program
+std::vector<std::string> arguments([[maybe_unused]] int argc, [[maybe_unused]] char** argv) {
+    std::vector<std::string> result;
+
+#ifdef _WIN32
+    // "argv" is in the system's code page
+    int count = 0;
+    auto* const wide = CommandLineToArgvW(GetCommandLineW(), &count);
+    if (wide != nullptr) {
+        for (const auto* const argument : std::span(wide, static_cast<std::size_t>(count)).subspan(1)) {
+            result.push_back(platform::narrow(argument));
+        }
+        LocalFree(static_cast<void*>(wide));
+    }
+#else
+    for (const auto* const argument : std::span(argv, static_cast<std::size_t>(argc)).subspan(1)) result.emplace_back(argument);
+#endif
+
+    return result;
+}
+
 int run(int argc, char** argv) {
+    const auto [options, error] = options::parse(arguments(argc, argv));
+    if (!error.empty()) {
+        std::fprintf(stderr, "%s\n", error.c_str());
+        return 2;
+    }
+
+    if (options.dataDirectory) {
+        platform::isolate(
+            { .dataDirectory = *options.dataDirectory, .libraryFile = options.libraryFile.value_or(std::filesystem::path {}) }
+        );
+    }
+
     logs::start(platform::dataDirectory() / "logs" / "soundbuddy.log");
 
-    // must run first : handles install / update / uninstall hooks, and may exit the process right away
-    Velopack::VelopackApp::Build().SetLogger(&logVelopackMessage, nullptr).Run();
+    // must run first : handles install / update / uninstall hooks, and may exit the process right away.
+    // Not when isolated, as it also applies the updates already downloaded
+    if (!platform::isIsolated()) Velopack::VelopackApp::Build().SetLogger(&logVelopackMessage, nullptr).Run();
 
     logs::info("App", "{} {} started", APP_NAME, APP_CURRENT_VERSION);
 
@@ -53,7 +94,7 @@ int run(int argc, char** argv) {
         return 1;
     }
 
-    const auto exitCode = ui::run(argc, argv);
+    const auto exitCode = options.headless ? ui::runHeadless() : ui::run(argc, argv);
     logs::info("App", "Exiting with code {}", exitCode);
     logs::stop();
     return exitCode;

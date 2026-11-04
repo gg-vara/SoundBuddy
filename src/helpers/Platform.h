@@ -10,6 +10,23 @@
 // Operating system services, through native APIs
 namespace platform {
 
+// What keeps a run of the app away from the session's real data, to try it safely. Once isolated :
+// - data goes to "dataDirectory", and the settings of previous versions are not imported
+// - the library is "libraryFile" : none if empty, the real one being left alone
+// - start at login is off, and nothing is opened in other apps
+// - it runs beside another instance, and looks for no update
+struct Isolation {
+    std::filesystem::path dataDirectory;
+    std::filesystem::path libraryFile;
+};
+
+// at startup, before anything else uses this namespace
+void isolate(Isolation isolation);
+
+// nothing if not isolated
+const Isolation* isolation();
+bool isIsolated();
+
 // directory where the app stores its data (settings, library exports), created if missing
 std::filesystem::path dataDirectory();
 
