@@ -89,7 +89,7 @@ class AppSettings {
     }
 
     static std::string_view getFeedOutputContentType(FeedFormat format) {
-        return format == FeedFormat::Compressed ? "application/compressed-mlib" : "application/json";
+        return format == FeedFormat::Compressed ? "application/octet-stream" : "application/json";
     }
 
  private:

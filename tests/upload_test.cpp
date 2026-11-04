@@ -23,8 +23,9 @@ int main() {
     CHECK(AppSettings::getFeederUploadInfos().outputFileName == "SoundVitrine_file", "library upload file name");
     CHECK(
         AppSettings::getFeedOutputExtension(AppSettings::FeedFormat::Compressed) == ".zmlib" &&
-            AppSettings::getFeedOutputContentType(AppSettings::FeedFormat::Json) == "application/json",
-        "feed extension and content type"
+            AppSettings::getFeedOutputContentType(AppSettings::FeedFormat::Json) == "application/json" &&
+            AppSettings::getFeedOutputContentType(AppSettings::FeedFormat::Compressed) == "application/octet-stream",
+        "feed extension and content types"
     );
 
     net::Response refused;
