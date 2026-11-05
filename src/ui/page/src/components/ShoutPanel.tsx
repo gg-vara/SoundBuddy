@@ -1,11 +1,13 @@
 // SPDX-FileCopyrightText: 2018-2026 Guillaume Vara <guillaume.vara@gmail.com>
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+import { Plug, Unplug } from 'lucide';
 import { createMemo, onSettled } from 'solid-js';
 import { animate } from '../animations';
 import { t } from '../i18n';
 import { regionState } from '../machine';
 import { loaded, type View } from '../view';
+import { Icon } from './Icon';
 import { Log } from './Log';
 import { NowPlaying } from './NowPlaying';
 import { Toggle } from './Toggle';
@@ -39,6 +41,7 @@ export function ShoutPanel(props: { view: View }) {
           onClick={() => props.view.send(worker() === 'running' ? { type: 'ui.stop', tab: 'shout' } : { type: 'ui.start', tab: 'shout' })}
         >
           <span class="spinner" />
+          <Icon icon={stoppable() ? Unplug : Plug} />
           {stoppable() ? t('Stop') : t('Connect to %1', data().app.musicApp)}
         </button>
         <Toggle

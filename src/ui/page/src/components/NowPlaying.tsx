@@ -2,10 +2,12 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 // What the music app plays : a new title springs in, the position goes on while playing
+import { Music } from 'lucide';
 import { createEffect, createMemo, createSignal } from 'solid-js';
 import { animate, bouncy } from '../animations';
 import { t } from '../i18n';
 import { isTrack, type Shout, trackProgress } from '../state';
+import { Icon } from './Icon';
 
 export function NowPlaying(props: { shout: Shout | null }) {
   const title = createMemo(() => (isTrack(props.shout) ? props.shout.name : t('Nothing playing')));
@@ -50,8 +52,8 @@ export function NowPlaying(props: { shout: Shout | null }) {
 
   return (
     <div class="now" title={isTrack(props.shout) ? `${title()} — ${t(playing() ? 'playing' : 'paused')}` : ''}>
-      <div class="cover" aria-hidden="true" ref={cover}>
-        &#9835;
+      <div class="cover" ref={cover}>
+        <Icon icon={Music} />
       </div>
       <div class="meta" ref={meta}>
         <div class="title">{title()}</div>

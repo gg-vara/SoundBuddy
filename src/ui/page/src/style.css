@@ -224,7 +224,9 @@ h1 {
   }
 }
 .menu button {
-  display: block;
+  display: flex;
+  align-items: center;
+  gap: 8px;
   width: 100%;
   text-align: left;
   border: 0;
@@ -425,10 +427,21 @@ main {
   flex-wrap: wrap;
 }
 
+.button svg,
+.menu button svg,
+.tabs button svg {
+  width: 16px;
+  height: 16px;
+  flex: none;
+}
+.button.busy svg {
+  display: none;
+}
 .button {
   display: inline-flex;
   align-items: center;
   gap: 8px;
+  white-space: nowrap;
   border: 1px solid var(--border);
   background: var(--surface);
   color: var(--text);
@@ -706,6 +719,7 @@ legend {
   transform: translateY(-50%);
 }
 .actions {
+  flex-wrap: wrap;
   display: flex;
   justify-content: flex-end;
   gap: 8px;

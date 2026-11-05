@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2018-2026 Guillaume Vara <guillaume.vara@gmail.com>
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+import { Ellipsis, ExternalLink, FolderOpen, Info, Music, Power, Settings, TriangleAlert } from 'lucide';
 import { createEffect, createMemo, Show } from 'solid-js';
 import { animate, bouncy } from '../animations';
 import { t } from '../i18n';
@@ -19,8 +20,8 @@ export function Header(props: { view: View }) {
 
   return (
     <header>
-      <div class="logo" aria-hidden="true">
-        &#9835;
+      <div class="logo">
+        <Icon icon={Music} />
       </div>
       <h1>{data().app.name}</h1>
       <Show when={data().app.debug}>
@@ -38,7 +39,7 @@ export function Header(props: { view: View }) {
         disabled={!data().canOpenPlatform}
         onClick={() => props.view.send({ type: 'ui.command', name: 'openPlatform' })}
       >
-        <Icon name="external" />
+        <Icon icon={ExternalLink} />
       </button>
       <button
         type="button"
@@ -46,7 +47,7 @@ export function Header(props: { view: View }) {
         title={t('Preferences')}
         onClick={() => props.view.send({ type: 'ui.openPanel', panel: 'preferences' })}
       >
-        <Icon name="gear" />
+        <Icon icon={Settings} />
       </button>
       <Menu view={props.view} />
     </header>
@@ -73,7 +74,7 @@ function Menu(props: { view: View }) {
   return (
     <>
       <button type="button" class="icon-button menu-button" title={t('More')} popovertarget="menu" aria-haspopup="menu">
-        <Icon name="more" />
+        <Icon icon={Ellipsis} />
       </button>
       <div
         id="menu"
@@ -89,18 +90,22 @@ function Menu(props: { view: View }) {
           disabled={!data().hasWarnings}
           onClick={() => props.view.send({ type: 'ui.openPanel', panel: 'warnings' })}
         >
+          <Icon icon={TriangleAlert} />
           {t('Read latest upload warnings report')}
         </button>
         <button type="button" role="menuitem" onClick={() => props.view.send({ type: 'ui.command', name: 'openDataFolder' })}>
+          <Icon icon={FolderOpen} />
           {t('Access upload data folder')}
         </button>
         <hr />
         <button type="button" role="menuitem" onClick={() => props.view.send({ type: 'ui.openPanel', panel: 'about' })}>
+          <Icon icon={Info} />
           {t('About %1', data().app.name)}
         </button>
         <div class="menu-note">{version()}</div>
         <hr />
         <button type="button" role="menuitem" onClick={() => props.view.send({ type: 'ui.command', name: 'quit' })}>
+          <Icon icon={Power} />
           {t('Quit')}
         </button>
       </div>

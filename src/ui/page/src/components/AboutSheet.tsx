@@ -2,10 +2,12 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 // What is running, and whether a newer version exists
+import { Code, FolderOpen, RefreshCw } from 'lucide';
 import { createMemo } from 'solid-js';
 import { t } from '../i18n';
 import { regionState } from '../machine';
 import { loaded, type View } from '../view';
+import { Icon } from './Icon';
 import { Sheet } from './Sheet';
 
 export function AboutSheet(props: { view: View }) {
@@ -59,15 +61,18 @@ export function AboutSheet(props: { view: View }) {
             disabled={data().searchingUpdates}
             onClick={() => props.view.send({ type: 'ui.command', name: 'checkUpdates' })}
           >
+            <Icon icon={RefreshCw} />
             {t('Check for updates')}
           </button>
         </div>
       </fieldset>
       <div class="actions">
         <button type="button" class="button" onClick={() => props.view.send({ type: 'ui.command', name: 'openRepository' })}>
+          <Icon icon={Code} />
           {t('Source code')}
         </button>
         <button type="button" class="button" onClick={() => props.view.send({ type: 'ui.command', name: 'openDataFolder' })}>
+          <Icon icon={FolderOpen} />
           {t('Access upload data folder')}
         </button>
         <button type="button" class="button primary" autofocus onClick={close}>

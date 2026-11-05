@@ -1,15 +1,17 @@
 // SPDX-FileCopyrightText: 2018-2026 Guillaume Vara <guillaume.vara@gmail.com>
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+import { type IconNode, Library, Radio } from 'lucide';
 import { createEffect, For } from 'solid-js';
 import { animate, snappy } from '../animations';
 import { regionState } from '../machine';
 import type { Tab } from '../state';
 import type { View } from '../view';
+import { Icon } from './Icon';
 
-const tabs: { tab: Tab; label: string }[] = [
-  { tab: 'shout', label: 'Shout!' },
-  { tab: 'feeder', label: 'Feeder' },
+const tabs: { tab: Tab; label: string; icon: IconNode }[] = [
+  { tab: 'shout', label: 'Shout!', icon: Radio },
+  { tab: 'feeder', label: 'Feeder', icon: Library },
 ];
 
 export function Tabs(props: { view: View; selected: Tab; onSelect: (tab: Tab) => void }) {
@@ -45,6 +47,7 @@ export function Tabs(props: { view: View; selected: Tab; onSelect: (tab: Tab) =>
             class={{ running: isBusy(entry.tab) }}
             onClick={() => props.onSelect(entry.tab)}
           >
+            <Icon icon={entry.icon} />
             {entry.label}
             <span class="running-dot" />
           </button>

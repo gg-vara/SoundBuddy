@@ -1,11 +1,13 @@
 // SPDX-FileCopyrightText: 2018-2026 Guillaume Vara <guillaume.vara@gmail.com>
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+import { CloudUpload } from 'lucide';
 import { onSettled } from 'solid-js';
 import { animate } from '../animations';
 import { t } from '../i18n';
 import { regionState } from '../machine';
 import { loaded, type View } from '../view';
+import { Icon } from './Icon';
 import { Log } from './Log';
 
 export function FeederPanel(props: { view: View }) {
@@ -34,6 +36,7 @@ export function FeederPanel(props: { view: View }) {
           onClick={() => props.view.send({ type: 'ui.start', tab: 'feeder' })}
         >
           <span class="spinner" />
+          <Icon icon={CloudUpload} />
           {t('Generate Digest and Upload')}
         </button>
       </div>

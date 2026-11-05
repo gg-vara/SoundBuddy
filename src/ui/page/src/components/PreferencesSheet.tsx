@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 // Preferences : the credentials are saved together; launching at startup applies right away
+import { Eye, EyeOff, Save } from 'lucide';
 import { createEffect, createMemo, createSignal, untrack } from 'solid-js';
 import { t } from '../i18n';
 import { regionState } from '../machine';
@@ -72,7 +73,7 @@ export function PreferencesSheet(props: { view: View }) {
               title={t(revealed() ? 'Hide password' : 'Show password')}
               onClick={() => setRevealed(!revealed())}
             >
-              <Icon name="eye" />
+              <Icon icon={revealed() ? EyeOff : Eye} />
             </button>
           </div>
         </fieldset>
@@ -90,6 +91,7 @@ export function PreferencesSheet(props: { view: View }) {
             {t('Cancel')}
           </button>
           <button type="submit" class="button primary">
+            <Icon icon={Save} />
             {t('Save')}
           </button>
         </div>
