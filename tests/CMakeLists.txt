@@ -92,7 +92,7 @@ soundbuddy_test(isolation)
 # the real executable, without a window, against a local server standing in for SoundVitrine
 add_test(NAME headless COMMAND ${BUN_EXECUTABLE} test ./headless.test.ts WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 set_tests_properties(headless PROPERTIES ENVIRONMENT
-    "SOUNDBUDDY_EXE=$<TARGET_FILE:appExec>;SOUNDBUDDY_LIBRARY=${PROJECT_SOURCE_DIR}/deps/ItunesLibraryParser/tests/samples/iTunes Music Library (S).xml"
+    "SOUNDBUDDY_DEBUG_BUILD=$<CONFIG:Debug>;SOUNDBUDDY_EXE=$<TARGET_FILE:appExec>;SOUNDBUDDY_LIBRARY=${PROJECT_SOURCE_DIR}/deps/ItunesLibraryParser/tests/samples/iTunes Music Library (S).xml"
 )
 
 # against public test services (httpbin.org, stream.wikimedia.org) : left out of the default test runs

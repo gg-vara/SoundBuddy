@@ -79,6 +79,9 @@ class Controller {
     // asks first if shouts are running
     void requestQuit();
 
+    // name and version, and the build type when it is not a production one : "SoundBuddy 1.0.0 (Debug)"
+    static std::string versionLabel();
+
     bool canOpenPlatform() const;
     static bool hasWarnings();
 
@@ -99,7 +102,7 @@ class Controller {
     std::string _nowPlaying;  // last shout, as JSON
     std::optional<Panel> _pendingPanel;
     bool _searchingUpdates = false;
-    bool _userAskedUpdates = false;
+    std::optional<page::UpdateResult> _updateResult;
     bool _quitting = false;
 
     // workers, stopped by the destructor : the watcher, which hands shouts to the uploader, stops first
@@ -127,7 +130,6 @@ class Controller {
     settings::Settings _shownSettings() const;
 
     // updates
-    void _checkForUpdates(bool userAsked);
     void _onUpdateChecked(const UpdateChecker::CheckResults& results);
 
     // state changes, sent to the page

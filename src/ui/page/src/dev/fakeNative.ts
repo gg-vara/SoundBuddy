@@ -40,6 +40,10 @@ export function fakeNative(): Native {
       musicApp: 'iTunes',
       language: navigator.language,
       debug: true,
+      system: 'Browser',
+      copyright: 'Copyright (C) 2018-2026 Guillaume Vara',
+      repositoryUrl: 'https://github.com/gg-vara/SoundBuddy',
+      dataFolder: 'C:/Users/dev/AppData/Local/LVNWL/SoundBuddy',
     },
     translations: {},
     status: { text: 'Waiting for appropriate credentials.', connectivity: 'refused' },
@@ -55,6 +59,7 @@ export function fakeNative(): Native {
     canOpenPlatform: true,
     hasWarnings: true,
     searchingUpdates: false,
+    updateResult: null,
     panel: null,
   };
 
@@ -118,8 +123,8 @@ export function fakeNative(): Native {
           );
           break;
         case 'checkUpdates':
-          send({ type: 'update', searching: true });
-          setTimeout(() => send({ type: 'update', searching: false }), 1500);
+          send({ type: 'update', searching: true, result: null });
+          setTimeout(() => send({ type: 'update', searching: false, result: { kind: 'upToDate', version: '', error: '' } }), 1500);
           break;
         default:
           break;

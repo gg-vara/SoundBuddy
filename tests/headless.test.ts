@@ -7,7 +7,7 @@
 import { afterAll, afterEach, beforeAll, expect, test } from 'bun:test';
 import { existsSync, mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { join, resolve } from 'node:path';
 
 const EXE = process.env.SOUNDBUDDY_EXE as string;
 const LIBRARY = process.env.SOUNDBUDDY_LIBRARY as string;
@@ -170,6 +170,28 @@ test(
     await app.command('setAutoRunShout', false);
     expect(existsSync(join(folder, 'settings.json'))).toBe(true);
     expect(existsSync(join(folder, 'logs', 'soundbuddy.log'))).toBe(true);
+  },
+  TIMEOUT_MS,
+);
+
+test(
+  'tells what About shows, opens nothing, and looks for no update when isolated',
+  async () => {
+    const folder = dataFolder();
+    const app = await start(folder);
+
+    const { app: info } = await app.query('ready', []);
+    expect(info.version).toBeTruthy();
+    expect(info.debug).toBe(process.env.SOUNDBUDDY_DEBUG_BUILD === '1');
+    expect(info.system).toBeTruthy();
+    expect(info.copyright).toContain('Guillaume Vara');
+    expect(info.repositoryUrl).toContain('SoundBuddy');
+    expect(resolve(info.dataFolder)).toBe(resolve(folder));
+
+    await app.command('openRepository');
+    await app.command('checkUpdates');
+    const checked = await app.wait(message => message.type === 'update' && message.result?.kind === 'notInstalled', 'result of the check');
+    expect(checked.searching).toBe(false);
   },
   TIMEOUT_MS,
 );

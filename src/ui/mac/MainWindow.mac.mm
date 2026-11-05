@@ -39,7 +39,7 @@ namespace ui {
 namespace {
 
 // menu bar item's menu
-enum class MenuCommand : NSInteger { OpenMonitor = 1, Preferences, MyPlatform, Warnings, DataFolder, Quit };
+enum class MenuCommand : NSInteger { OpenMonitor = 1, Preferences, MyPlatform, Warnings, DataFolder, Quit, About };
 
 // size of the window, in points
 constexpr CGFloat defaultWidth = 760;
@@ -48,10 +48,8 @@ constexpr CGFloat minimumWidth = 480;
 constexpr CGFloat minimumHeight = 400;
 
 #ifdef _DEBUG
-const char* const windowTitle = "DEBUG - " APP_NAME;
 constexpr bool devTools = true;
 #else
-const char* const windowTitle = APP_NAME;
 constexpr bool devTools = false;
 #endif
 
@@ -217,6 +215,9 @@ class MacShell final : public Shell {
             case MenuCommand::DataFolder:
                 Controller::openDataFolder();
                 break;
+            case MenuCommand::About:
+                _controller->openPanel(Panel::About);
+                break;
             case MenuCommand::Quit:
                 _controller->requestQuit();
                 break;
@@ -269,7 +270,7 @@ class MacShell final : public Shell {
                                                 backing:NSBackingStoreBuffered
                                                   defer:NO];
         _window.releasedWhenClosed = NO;
-        _window.title = toNSString(windowTitle);
+        _window.title = toNSString(Controller::versionLabel());
         _window.contentMinSize = NSMakeSize(minimumWidth, minimumHeight);
         _window.delegate = _target;
         [_window center];
@@ -283,7 +284,7 @@ class MacShell final : public Shell {
         image.size = NSMakeSize(18, 18);
         [image setTemplate:YES];  // "template" is a C++ keyword
         _statusItem.button.image = image;
-        _statusItem.button.toolTip = toNSString(windowTitle);
+        _statusItem.button.toolTip = toNSString(Controller::versionLabel());
 
         _statusMenu = [[NSMenu alloc] init];
         _statusMenu.autoenablesItems = NO;
@@ -294,6 +295,8 @@ class MacShell final : public Shell {
             item.tag = static_cast<NSInteger>(command);
             item.target = _target;
         };
+        add(MenuCommand::About, Controller::versionLabel());
+        [_statusMenu addItem:NSMenuItem.separatorItem];
         add(MenuCommand::OpenMonitor, i18n::tr("Open monitor..."));
         [_statusMenu addItem:NSMenuItem.separatorItem];
         add(MenuCommand::Preferences, i18n::tr("Preferences"));

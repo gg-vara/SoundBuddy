@@ -18,6 +18,7 @@ export type CommandName =
   | 'openPlatform'
   | 'openDataFolder'
   | 'checkUpdates'
+  | 'openRepository'
   | 'quit';
 
 export interface Native {

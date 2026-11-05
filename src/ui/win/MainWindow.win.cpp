@@ -18,6 +18,7 @@
 #include <mutex>
 #include <stdexcept>
 #include <string>
+#include <string_view>
 #include <utility>
 
 #include "page.h"
@@ -39,7 +40,7 @@ constexpr UINT postedTasksMessage = WM_APP + 1;
 constexpr UINT trayIconMessage = WM_APP + 2;
 
 // tray menu
-enum class MenuCommand : UINT { OpenMonitor = 1, Preferences, MyPlatform, Warnings, DataFolder, Quit };
+enum class MenuCommand : UINT { OpenMonitor = 1, Preferences, MyPlatform, Warnings, DataFolder, Quit, About };
 
 // size of the window, in pixels at 96 DPI
 constexpr int defaultWidth = 760;
@@ -54,10 +55,8 @@ constexpr COLORREF darkBackground = RGB(0x16, 0x15, 0x14);
 const wchar_t* const windowClass = L"SoundBuddyWindow";
 
 #ifdef _DEBUG
-const char* const windowTitle = "DEBUG - " APP_NAME;
 constexpr bool devTools = true;
 #else
-const char* const windowTitle = APP_NAME;
 constexpr bool devTools = false;
 #endif
 
@@ -160,8 +159,8 @@ MainWindow::MainWindow() {
     RegisterClassExW(&windowClassInfos);
 
     CreateWindowExW(
-        0, windowClass, platform::widen(windowTitle).c_str(), WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
-        CW_USEDEFAULT, nullptr, nullptr, instance, this
+        0, windowClass, platform::widen(Controller::versionLabel()).c_str(), WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT,
+        CW_USEDEFAULT, CW_USEDEFAULT, nullptr, nullptr, instance, this
     );
     if (!_window) throw std::runtime_error("Could not create the main window");
 
@@ -520,7 +519,7 @@ void MainWindow::_addTrayIcon() {
             .uCallbackMessage = trayIconMessage,
             .hIcon = loadIcon(trayIconName(), LIM_SMALL),
         };
-        const auto tip = platform::widen(windowTitle);
+        const auto tip = platform::widen(Controller::versionLabel());
         std::copy_n(tip.c_str(), std::min(tip.size() + 1, std::size(_trayIcon.szTip) - 1), std::begin(_trayIcon.szTip));
         _trayIcon.uVersion = NOTIFYICON_VERSION_4;
     }
@@ -543,6 +542,8 @@ void MainWindow::_showTrayMenu() {
         AppendMenuW(menu, MF_STRING | (enabled ? MF_ENABLED : MF_GRAYED), static_cast<UINT_PTR>(command), platform::widen(text).c_str());
     };
 
+    add(MenuCommand::About, Controller::versionLabel());
+    AppendMenuW(menu, MF_SEPARATOR, 0, nullptr);
     add(MenuCommand::OpenMonitor, i18n::tr("Open monitor..."));
     AppendMenuW(menu, MF_SEPARATOR, 0, nullptr);
     add(MenuCommand::Preferences, i18n::tr("Preferences"));
@@ -581,6 +582,9 @@ void MainWindow::_onMenuCommand(UINT command) {
             break;
         case MenuCommand::DataFolder:
             Controller::openDataFolder();
+            break;
+        case MenuCommand::About:
+            _controller->openPanel(Panel::About);
             break;
         case MenuCommand::Quit:
             _controller->requestQuit();

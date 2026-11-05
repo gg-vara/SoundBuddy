@@ -95,13 +95,8 @@ function Menu(props: { view: View }) {
           {t('Access upload data folder')}
         </button>
         <hr />
-        <button
-          type="button"
-          role="menuitem"
-          disabled={data().searchingUpdates}
-          onClick={() => props.view.send({ type: 'ui.command', name: 'checkUpdates' })}
-        >
-          {t('Check for updates')}
+        <button type="button" role="menuitem" onClick={() => props.view.send({ type: 'ui.openPanel', panel: 'about' })}>
+          {t('About %1', data().app.name)}
         </button>
         <div class="menu-note">{version()}</div>
         <hr />

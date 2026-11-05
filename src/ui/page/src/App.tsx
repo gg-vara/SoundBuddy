@@ -4,6 +4,7 @@
 // The page : a view of the state machine's snapshot. Components only read it, and send it events
 import { createSignal, Match, onSettled, Show, Switch } from 'solid-js';
 import { animate } from './animations';
+import { AboutSheet } from './components/AboutSheet';
 import { FeederPanel } from './components/FeederPanel';
 import { Header } from './components/Header';
 import { PreferencesSheet } from './components/PreferencesSheet';
@@ -43,6 +44,7 @@ function Loaded(props: { view: View }) {
       </main>
       <PreferencesSheet view={props.view} />
       <WarningsSheet view={props.view} />
+      <AboutSheet view={props.view} />
     </div>
   );
 }

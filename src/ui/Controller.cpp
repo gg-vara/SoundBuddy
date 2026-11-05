@@ -9,6 +9,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <filesystem>
+#include <format>
 #include <fstream>
 #include <ios>
 #include <iterator>
@@ -37,6 +38,24 @@ namespace {
 // as many messages as a tab keeps
 constexpr std::size_t maxLogEntries = 100;
 
+#ifdef _DEBUG
+constexpr bool isDebugBuild = true;
+#else
+constexpr bool isDebugBuild = false;
+#endif
+
+#ifdef _WIN32
+constexpr std::string_view systemName = "Windows";
+#else
+constexpr std::string_view systemName = "macOS";
+#endif
+
+#if defined(__aarch64__) || defined(_M_ARM64)
+constexpr std::string_view architecture = "arm64";
+#else
+constexpr std::string_view architecture = "x64";
+#endif
+
 std::int64_t now() {
     return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
 }
@@ -61,7 +80,7 @@ PageCall parseCall(std::string_view request) {
 Controller::Controller(Shell& shell) :
     _shell(shell) {
     _runMBeat();
-    _checkForUpdates(/*userAsked=*/false);
+    checkForUpdates();
 
     if (_appSettings.values().autoRunShout) _runShouts();
 }
@@ -139,6 +158,9 @@ void Controller::command(std::string_view request) {
         case page::Command::CheckUpdates:
             checkForUpdates();
             break;
+        case page::Command::OpenRepository:
+            platform::openUrl(APP_UPDATES_REPOSITORY_URL);
+            break;
         case page::Command::Quit:
             requestQuit();
             break;
@@ -153,11 +175,11 @@ std::string Controller::_state(yyjson_val* translationKeys) {
             .platformName = DEST_PLATFORM_PRODUCT_NAME,
             .musicApp = std::string { platform::musicAppName() },
             .language = std::string { i18n::languageCode() },
-#ifdef _DEBUG
-            .debug = true,
-#else
-            .debug = false,
-#endif
+            .debug = isDebugBuild,
+            .system = std::format("{} ({})", systemName, architecture),
+            .copyright = APP_COPYRIGHT,
+            .repositoryUrl = APP_UPDATES_REPOSITORY_URL,
+            .dataFolder = platform::toUtf8(platform::dataDirectory()),
         },
         .translations = {},
         .status = _status,
@@ -168,6 +190,7 @@ std::string Controller::_state(yyjson_val* translationKeys) {
         .canOpenPlatform = canOpenPlatform(),
         .hasWarnings = hasWarnings(),
         .searchingUpdates = _searchingUpdates,
+        .updateResult = _updateResult,
         .panel = _pendingPanel,
     };
     _pendingPanel.reset();
@@ -221,8 +244,15 @@ void Controller::openDataFolder() {
     platform::openPath(platform::dataDirectory());
 }
 
+std::string Controller::versionLabel() {
+    return std::string { APP_NAME " " APP_CURRENT_VERSION } + (isDebugBuild ? " (Debug)" : "");
+}
+
 void Controller::checkForUpdates() {
-    _checkForUpdates(/*userAsked=*/true);
+    _searchingUpdates = true;
+    _sendUpdate();
+
+    _updateChecker.check([this](const UpdateChecker::CheckResults& results) { post([this, results] { _onUpdateChecked(results); }); });
 }
 
 void Controller::requestQuit() {
@@ -368,42 +398,28 @@ void Controller::_onConnectivityChanged() {
 // Updates
 //
 
-void Controller::_checkForUpdates(bool userAsked) {
-    // a check already in progress notifies the user as well
-    _userAskedUpdates = _userAskedUpdates || userAsked;
-    _searchingUpdates = true;
-    _sendUpdate();
-
-    _updateChecker.check([this](const UpdateChecker::CheckResults& results) { post([this, results] { _onUpdateChecked(results); }); });
-}
-
 void Controller::_onUpdateChecked(const UpdateChecker::CheckResults& results) {
-    const bool userAsked = _userAskedUpdates;
-    _userAskedUpdates = false;
+    using Kind = page::UpdateResult::Kind;
+    const auto kindOf = [](UpdateChecker::Result result) {
+        switch (result) {
+            case UpdateChecker::Result::NoUpdate:
+                break;
+            case UpdateChecker::Result::UpdateReady:
+                return Kind::Ready;
+            case UpdateChecker::Result::NotInstalled:
+                return Kind::NotInstalled;
+            case UpdateChecker::Result::Failed:
+                return Kind::Failed;
+        }
+        return Kind::UpToDate;
+    };
+
+    // told by the About panel, as the check may not have been asked for
     _searchingUpdates = false;
+    _updateResult = page::UpdateResult { .kind = kindOf(results.result), .version = results.version, .error = results.error };
     _sendUpdate();
 
-    switch (results.result) {
-        case UpdateChecker::Result::UpdateReady:
-            break;
-
-        case UpdateChecker::Result::NoUpdate:
-            if (userAsked) _shell.tell(i18n::tr("Checking updates"), i18n::tr("No updates available at the time."), Severity::Information);
-            return;
-
-        case UpdateChecker::Result::NotInstalled:
-            if (userAsked) {
-                _shell.tell(
-                    i18n::tr("Checking updates"),
-                    i18n::format(i18n::tr("Updates are only available for installed versions of %1."), { APP_NAME }), Severity::Information
-                );
-            }
-            return;
-
-        case UpdateChecker::Result::Failed:
-            if (userAsked) _shell.tell(i18n::tr("Error while checking updates"), results.error, Severity::Error);
-            return;
-    }
+    if (results.result != UpdateChecker::Result::UpdateReady) return;
 
     // update downloaded : if declined, it is applied on next launch anyway
     const auto accepted = _shell.ask(
@@ -464,7 +480,7 @@ void Controller::_sendWarnings() {
 }
 
 void Controller::_sendUpdate() {
-    _shell.sendToPage(page::updateEvent(_searchingUpdates));
+    _shell.sendToPage(page::updateEvent(_searchingUpdates, _updateResult));
 }
 
 }  // namespace ui

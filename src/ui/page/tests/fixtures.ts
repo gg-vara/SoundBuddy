@@ -7,7 +7,18 @@ import type { NativeState, WarningsReport } from '../src/state';
 
 export function nativeState(changes: Partial<NativeState> = {}): NativeState {
   return {
-    app: { name: 'SoundBuddy', version: '0.0.0', platformName: 'SoundVitrine', musicApp: 'iTunes', language: 'en', debug: false },
+    app: {
+      name: 'SoundBuddy',
+      version: '0.0.0',
+      platformName: 'SoundVitrine',
+      musicApp: 'iTunes',
+      language: 'en',
+      debug: false,
+      system: 'Windows (x64)',
+      copyright: 'Copyright',
+      repositoryUrl: 'https://repository.test',
+      dataFolder: 'folder',
+    },
     translations: {},
     status: { text: 'Waiting for appropriate credentials.', connectivity: 'refused' },
     tabs: { shout: { running: false, log: [] }, feeder: { running: false, log: [] } },
@@ -22,6 +33,7 @@ export function nativeState(changes: Partial<NativeState> = {}): NativeState {
     canOpenPlatform: true,
     hasWarnings: false,
     searchingUpdates: false,
+    updateResult: null,
     panel: null,
     ...changes,
   };

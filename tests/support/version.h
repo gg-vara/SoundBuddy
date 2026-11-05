@@ -13,4 +13,5 @@
 #define APP_CURRENT_VERSION "0.0.0"
 #define DEST_PLATFORM_PRODUCT_NAME "SoundVitrine"
 #define APP_UPDATES_REPOSITORY_URL "https://example.invalid/SoundBuddyTests"
+#define APP_COPYRIGHT "Copyright (C) SoundBuddyTests"
 // NOLINTEND(cppcoreguidelines-macro-usage)

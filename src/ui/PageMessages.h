@@ -19,7 +19,7 @@
 namespace ui {
 
 // panels of the page, over the tabs
-enum class Panel { Preferences, Warnings };
+enum class Panel { Preferences, Warnings, About };
 
 }  // namespace ui
 
@@ -47,6 +47,7 @@ enum class Command {
     OpenPlatform,
     OpenDataFolder,
     CheckUpdates,
+    OpenRepository,
     Quit,
 };
 
@@ -55,7 +56,7 @@ inline constexpr std::array<std::pair<Query, std::string_view>, 2> queryNames { 
     { Query::Warnings, "warnings" },
 } };
 
-inline constexpr std::array<std::pair<Command, std::string_view>, 10> commandNames { {
+inline constexpr std::array<std::pair<Command, std::string_view>, 11> commandNames { {
     { Command::RunShouts, "runShouts" },
     { Command::StopShouts, "stopShouts" },
     { Command::RunFeeder, "runFeeder" },
@@ -65,6 +66,7 @@ inline constexpr std::array<std::pair<Command, std::string_view>, 10> commandNam
     { Command::OpenPlatform, "openPlatform" },
     { Command::OpenDataFolder, "openDataFolder" },
     { Command::CheckUpdates, "checkUpdates" },
+    { Command::OpenRepository, "openRepository" },
     { Command::Quit, "quit" },
 } };
 
@@ -83,6 +85,19 @@ struct AppInfo {
     std::string musicApp;
     std::string language;
     bool debug = false;
+    std::string system;
+    std::string copyright;
+    std::string repositoryUrl;
+    std::string dataFolder;
+};
+
+// how the latest check for updates ended
+struct UpdateResult {
+    enum class Kind { Ready, UpToDate, NotInstalled, Failed };
+
+    Kind kind = Kind::UpToDate;
+    std::string version;  // when ready
+    std::string error;    // when failed
 };
 
 struct LogEntry {
@@ -107,6 +122,7 @@ struct State {
     bool canOpenPlatform = false;
     bool hasWarnings = false;
     bool searchingUpdates = false;
+    std::optional<UpdateResult> updateResult;
     std::optional<Panel> panel;
 };
 
@@ -125,7 +141,7 @@ std::string runEvent(Tab tab, bool running);
 std::string nowPlayingEvent(std::string_view shout);
 std::string settingsEvent(const settings::Settings& settings, bool canOpenPlatform);
 std::string warningsEvent(bool hasWarnings);
-std::string updateEvent(bool searching);
+std::string updateEvent(bool searching, const std::optional<UpdateResult>& result);
 std::string panelEvent(Panel panel);
 
 }  // namespace ui::page

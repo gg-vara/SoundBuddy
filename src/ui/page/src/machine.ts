@@ -197,16 +197,23 @@ export const pageMachine = setup({
               target: '.warnings',
               actions: 'clearRequestedPanel',
             },
+            {
+              guard: { type: 'isRequested', params: { panel: 'about' } },
+              target: '.about',
+              actions: 'clearRequestedPanel',
+            },
           ],
           on: {
             'ui.openPanel': [
               { guard: { type: 'isPanel', params: { panel: 'preferences' } }, target: '.preferences' },
               { guard: { type: 'isPanel', params: { panel: 'warnings' } }, target: '.warnings' },
+              { guard: { type: 'isPanel', params: { panel: 'about' } }, target: '.about' },
             ],
             'ui.closePanel': '.closed',
           },
           states: {
             closed: { id: 'panelClosed' },
+            about: {},
             preferences: {
               on: { 'ui.savePreferences': { target: 'closed', actions: 'savePreferences' } },
             },
@@ -238,7 +245,7 @@ export type WorkerState = 'idle' | 'starting' | 'running' | 'stopping';
 // state of a region of "ready", or null while not ready
 export function regionState(snapshot: PageSnapshot, region: 'shout' | 'feeder'): WorkerState | null;
 export function regionState(snapshot: PageSnapshot, region: 'menu'): 'closed' | 'open' | null;
-export function regionState(snapshot: PageSnapshot, region: 'panel'): 'closed' | 'preferences' | 'warnings' | null;
+export function regionState(snapshot: PageSnapshot, region: 'panel'): 'closed' | 'preferences' | 'warnings' | 'about' | null;
 export function regionState(snapshot: PageSnapshot, region: 'shout' | 'feeder' | 'menu' | 'panel'): string | null {
   const { value } = snapshot;
   if (typeof value !== 'object' || !('ready' in value)) return null;

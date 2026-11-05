@@ -8,6 +8,7 @@
 #include <fstream>
 #include <cstddef>
 #include <ios>
+#include <optional>
 #include <span>
 #include <string>
 #include <string_view>
@@ -105,9 +106,16 @@ int main(int argc, char* argv[]) {
     events.push_back(ui::page::nowPlayingEvent({}));
     events.push_back(ui::page::settingsEvent(settings, /*canOpenPlatform=*/true));
     events.push_back(ui::page::warningsEvent(/*hasWarnings=*/true));
-    events.push_back(ui::page::updateEvent(/*searching=*/true));
+    events.push_back(ui::page::updateEvent(/*searching=*/true, std::nullopt));
+    using Kind = ui::page::UpdateResult::Kind;
+    for (const auto kind : { Kind::Ready, Kind::UpToDate, Kind::NotInstalled, Kind::Failed }) {
+        events.push_back(
+            ui::page::updateEvent(/*searching=*/false, ui::page::UpdateResult { .kind = kind, .version = "1.0.0", .error = "Error" })
+        );
+    }
     events.push_back(ui::page::panelEvent(ui::Panel::Preferences));
     events.push_back(ui::page::panelEvent(ui::Panel::Warnings));
+    events.push_back(ui::page::panelEvent(ui::Panel::About));
 
     // states : a page loading while the app runs, then just started
     const ui::page::State running {
@@ -116,7 +124,11 @@ int main(int argc, char* argv[]) {
                  .platformName = "SoundVitrine",
                  .musicApp = "iTunes",
                  .language = "en",
-                 .debug = true },
+                 .debug = true,
+                 .system = "Windows (x64)",
+                 .copyright = "Copyright",
+                 .repositoryUrl = "https://example.invalid",
+                 .dataFolder = "folder" },
         .translations = { { "Shout", "Crier" } },
         .status = { .text = "Connected", .connectivity = mbeat::Connectivity::Connected },
         .shout = { .log = { { .message = { .text = "Shouting", .kind = workers::MessageKind::Standard }, .time = 1700000000000 } },
@@ -127,6 +139,7 @@ int main(int argc, char* argv[]) {
         .canOpenPlatform = true,
         .hasWarnings = true,
         .searchingUpdates = true,
+        .updateResult = ui::page::UpdateResult { .kind = Kind::Failed, .version = {}, .error = "Error" },
         .panel = ui::Panel::Warnings,
     };
     const ui::page::State started {};

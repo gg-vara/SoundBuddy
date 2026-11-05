@@ -637,6 +637,34 @@ main {
   font-size: 16px;
   font-weight: 600;
 }
+.about {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 6px 16px;
+  margin: 0 0 16px;
+}
+.about dt {
+  color: var(--muted);
+}
+.about dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.about-note {
+  margin: 0 0 16px;
+  color: var(--muted);
+  font-size: 12.5px;
+}
+.update-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+.update-row span {
+  flex: 1;
+  overflow-wrap: anywhere;
+}
 fieldset {
   border: 0;
   margin: 0;

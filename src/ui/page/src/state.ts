@@ -6,7 +6,7 @@
 export type Tab = 'shout' | 'feeder';
 export type MessageKind = 'standard' | 'warning' | 'issue';
 export type Connectivity = 'refused' | 'checking' | 'connected';
-export type PanelName = 'preferences' | 'warnings';
+export type PanelName = 'preferences' | 'warnings' | 'about';
 
 export interface LogMessage {
   text: string;
@@ -50,6 +50,17 @@ export interface AppInfo {
   musicApp: string;
   language: string;
   debug: boolean;
+  system: string;
+  copyright: string;
+  repositoryUrl: string;
+  dataFolder: string;
+}
+
+// how the latest check for updates ended
+export interface UpdateResult {
+  kind: 'ready' | 'upToDate' | 'notInstalled' | 'failed';
+  version: string;
+  error: string;
 }
 
 // tracks of the latest library export missing metadata : column => value, empty when missing
@@ -66,6 +77,7 @@ export interface NativeState {
   canOpenPlatform: boolean;
   hasWarnings: boolean;
   searchingUpdates: boolean;
+  updateResult: UpdateResult | null;
   panel: PanelName | null;
 }
 
@@ -77,7 +89,7 @@ export type NativeEvent =
   | { type: 'nowPlaying'; shout: Shout | null }
   | { type: 'settings'; settings: Settings; canOpenPlatform: boolean }
   | { type: 'warnings'; hasWarnings: boolean }
-  | { type: 'update'; searching: boolean }
+  | { type: 'update'; searching: boolean; result: UpdateResult | null }
   | { type: 'panel'; panel: PanelName };
 
 // as many messages as a tab keeps, as the application
@@ -94,6 +106,7 @@ export interface PageData {
   canOpenPlatform: boolean;
   hasWarnings: boolean;
   searchingUpdates: boolean;
+  updateResult: UpdateResult | null;
   requestedPanel: PanelName | null; // by the application, until opened
 }
 
@@ -109,6 +122,7 @@ export function fromNativeState(state: NativeState): PageData {
     canOpenPlatform: state.canOpenPlatform,
     hasWarnings: state.hasWarnings,
     searchingUpdates: state.searchingUpdates,
+    updateResult: state.updateResult,
     requestedPanel: state.panel,
   };
 }
@@ -138,7 +152,7 @@ export function applyEvent(data: PageData, event: NativeEvent): PageData {
     case 'warnings':
       return { ...data, hasWarnings: event.hasWarnings };
     case 'update':
-      return { ...data, searchingUpdates: event.searching };
+      return { ...data, searchingUpdates: event.searching, updateResult: event.result };
     case 'panel':
       return { ...data, requestedPanel: event.panel };
   }

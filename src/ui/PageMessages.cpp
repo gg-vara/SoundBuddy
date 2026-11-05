@@ -46,8 +46,30 @@ const char* connectivityName(mbeat::Connectivity connectivity) {
     return "refused";
 }
 
+const char* updateKindName(UpdateResult::Kind kind) {
+    switch (kind) {
+        case UpdateResult::Kind::UpToDate:
+            break;
+        case UpdateResult::Kind::Ready:
+            return "ready";
+        case UpdateResult::Kind::NotInstalled:
+            return "notInstalled";
+        case UpdateResult::Kind::Failed:
+            return "failed";
+    }
+    return "upToDate";
+}
+
 const char* panelName(Panel panel) {
-    return panel == Panel::Preferences ? "preferences" : "warnings";
+    switch (panel) {
+        case Panel::Preferences:
+            break;
+        case Panel::Warnings:
+            return "warnings";
+        case Panel::About:
+            return "about";
+    }
+    return "preferences";
 }
 
 // JSON object under construction : keys must be literals, values are copied
@@ -114,6 +136,17 @@ yyjson_mut_val* settingsValue(yyjson_mut_doc* doc, const settings::Settings& set
     return value;
 }
 
+// null if there was no check yet
+yyjson_mut_val* updateResultValue(yyjson_mut_doc* doc, const std::optional<UpdateResult>& result) {
+    if (!result) return yyjson_mut_null(doc);
+
+    auto* const value = yyjson_mut_obj(doc);
+    addString(doc, value, "kind", updateKindName(result->kind));
+    addString(doc, value, "version", result->version);
+    addString(doc, value, "error", result->error);
+    return value;
+}
+
 yyjson_mut_val* tabValue(yyjson_mut_doc* doc, const TabState& tab) {
     auto* const value = yyjson_mut_obj(doc);
     yyjson_mut_obj_add_bool(doc, value, "running", tab.running);
@@ -158,6 +191,10 @@ std::string state(const State& state) {
     addString(doc, app, "musicApp", state.app.musicApp);
     addString(doc, app, "language", state.app.language);
     yyjson_mut_obj_add_bool(doc, app, "debug", state.app.debug);
+    addString(doc, app, "system", state.app.system);
+    addString(doc, app, "copyright", state.app.copyright);
+    addString(doc, app, "repositoryUrl", state.app.repositoryUrl);
+    addString(doc, app, "dataFolder", state.app.dataFolder);
 
     auto* const translations = yyjson_mut_obj_add_obj(doc, root, "translations");
     for (const auto& [source, translation] : state.translations) {
@@ -178,6 +215,7 @@ std::string state(const State& state) {
     yyjson_mut_obj_add_bool(doc, root, "canOpenPlatform", state.canOpenPlatform);
     yyjson_mut_obj_add_bool(doc, root, "hasWarnings", state.hasWarnings);
     yyjson_mut_obj_add_bool(doc, root, "searchingUpdates", state.searchingUpdates);
+    yyjson_mut_obj_add_val(doc, root, "updateResult", updateResultValue(doc, state.updateResult));
 
     if (state.panel) {
         addString(doc, root, "panel", panelName(*state.panel));
@@ -233,9 +271,10 @@ std::string warningsEvent(bool hasWarnings) {
     return changed.write();
 }
 
-std::string updateEvent(bool searching) {
+std::string updateEvent(bool searching, const std::optional<UpdateResult>& result) {
     const auto changed = event("update");
     yyjson_mut_obj_add_bool(changed.doc(), changed.root(), "searching", searching);
+    yyjson_mut_obj_add_val(changed.doc(), changed.root(), "result", updateResultValue(changed.doc(), result));
     return changed.write();
 }
 

@@ -144,6 +144,21 @@ describe('menu and panels', () => {
     expect(page.getSnapshot().context.report).toEqual(report);
   });
 
+  test('the About panel opens, stays open during a check for updates, and tells its result', async () => {
+    const { page, native, receive } = await loadedPage();
+    page.send({ type: 'ui.openPanel', panel: 'about' });
+    expect(regionState(page.getSnapshot(), 'panel')).toBe('about');
+
+    page.send({ type: 'ui.command', name: 'checkUpdates' });
+    expect(native.commands).toContainEqual(['checkUpdates', null]);
+    receive({ type: 'update', searching: true, result: null });
+    expect(regionState(page.getSnapshot(), 'panel')).toBe('about');
+
+    receive({ type: 'update', searching: false, result: { kind: 'upToDate', version: '', error: '' } });
+    expect(page.getSnapshot().context.data?.searchingUpdates).toBe(false);
+    expect(page.getSnapshot().context.data?.updateResult?.kind).toBe('upToDate');
+  });
+
   test('a panel requested by the application opens once', async () => {
     const { page, receive } = await loadedPage();
     receive({ type: 'panel', panel: 'preferences' });
