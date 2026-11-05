@@ -1,0 +1,137 @@
+# When the version changes in CMakeLists.txt : builds the unsigned Windows installer, keeps it as an artifact of the run, and
+# creates the GitHub release as a draft. Publishing it stays a click, as it updates every installed copy.
+# Also started by hand, whatever the version (Actions > Package > Run workflow), with the release as an option.
+name: Package
+
+on:
+  push:
+    branches: [main]
+    paths: [CMakeLists.txt]
+  workflow_dispatch:
+    inputs:
+      release:
+        description: Create the draft release too
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+# a newer push replaces the run in progress
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # on a cheap runner : most changes of CMakeLists.txt do not touch the version
+  version:
+    name: Version
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      version: ${{ steps.compare.outputs.version }}
+      changed: ${{ steps.compare.outputs.changed }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 1
+
+      - name: Compare with the previous commit
+        id: compare
+        env:
+          BEFORE: ${{ github.event.before }}
+          EVENT: ${{ github.event_name }}
+        run: |
+          version_in() { sed -nE 's/^project\(.* VERSION ([0-9]+\.[0-9]+\.[0-9]+).*/\1/p'; }
+
+          version=$(version_in < CMakeLists.txt)
+          if [ -z "$version" ]; then
+            echo "::error::No version found in CMakeLists.txt"
+            exit 1
+          fi
+
+          # by hand, or nothing to compare with (a new branch, a forced push) : build
+          previous=""
+          if [ "$EVENT" = "push" ] && git fetch --quiet --depth=1 origin "$BEFORE" 2>/dev/null; then
+            previous=$(git show "$BEFORE:CMakeLists.txt" | version_in)
+          fi
+
+          echo "$previous -> $version"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          if [ "$version" = "$previous" ]; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+  windows:
+    name: Windows installer
+    needs: version
+    if: needs.version.outputs.changed == 'true'
+    runs-on: windows-latest
+    timeout-minutes: 45
+    permissions:
+      # the draft release
+      contents: write
+    defaults:
+      run:
+        shell: msys2 {0}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          submodules: true
+
+      - uses: msys2/setup-msys2@v2
+        with:
+          msystem: CLANG64
+          update: true
+          cache: true
+          # Bun and .NET, installed for Windows, stay reachable
+          path-type: inherit
+
+      - name: Prerequisites (prerequisites/msys2, as README.md)
+        run: pacman -S --needed --noconfirm $(sed 's/#.*//' prerequisites/msys2/*.txt)
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          # the version the page declares (packageManager)
+          bun-version-file: src/ui/page/package.json
+
+      # what a build downloads, unchanged between versions
+      - uses: actions/cache@v6
+        with:
+          path: |
+            ~/.bun/install/cache
+            ~/.nuget/packages
+          key: package-${{ runner.os }}-${{ hashFiles('src/ui/page/bun.lock', 'resources/icons/bun.lock', '.config/dotnet-tools.json') }}
+          restore-keys: package-${{ runner.os }}-
+
+      - name: Velopack's CLI (.config/dotnet-tools.json)
+        run: dotnet tool restore
+
+      - name: MSYS2 location, for the CMake presets
+        run: echo "MSYS2_ROOT=$(cygpath -w /)" >> "$GITHUB_ENV"
+
+      # nothing is packaged from a version failing its tests
+      - name: Unit tests
+        run: cmake --workflow --preset windows-test
+
+      - name: Build and package, unsigned
+        run: cmake --workflow --preset windows-package
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: SoundBuddy-v${{ needs.version.outputs.version }}-windows-x64-unsigned
+          path: build_release_unsigned/releases/SoundBuddy-win-Setup.exe
+          if-no-files-found: error
+          # already compressed
+          compression-level: 0
+
+      - name: Draft release
+        if: github.event_name == 'push' || inputs.release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SOUNDBUDDY_RELEASE_DRAFT: 1
+          # a draft gets its tag when published : on what was built here, not on what main has become
+          SOUNDBUDDY_RELEASE_COMMIT: ${{ github.sha }}
+        run: cmake --build --preset windows-release-unsigned-publish

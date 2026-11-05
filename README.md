@@ -68,6 +68,8 @@ Builds are described by CMake presets (`CMakePresets.json`), also used by the VS
 
 GitHub Actions (`.github/workflows/ci.yml`) builds and tests every push to `main` and every pull request, with the prerequisites and presets above : on Windows in MSYS2 CLANG64 (`msys2/setup-msys2`, then `prerequisites/msys2/*.txt`) through `windows-ci`, on macOS with Homebrew (`prerequisites/Brewfile`) through `macos-test`.
 
+When the version changes in `CMakeLists.txt` on `main`, `.github/workflows/package.yml` also runs the unit tests, then builds the unsigned Windows installer through `windows-package`, kept as an artifact of the run, and creates the `vX.Y.Z` GitHub release as a draft : publishing it, from the Releases page, is what updates installed copies. It can be started by hand from the Actions tab, the release being then an option.
+
 ### Visual Studio Code
 
 The workspace recommends its extensions (`.vscode/extensions.json`) :

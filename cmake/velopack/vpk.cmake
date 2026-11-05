@@ -6,7 +6,8 @@
 # ACTION=pack : fetches the previous GitHub release (for delta updates), then packages PACK_DIR into RELEASES_DIR,
 #   with the section of CHANGELOG for PACK_VERSION as release notes
 # ACTION=publish : uploads RELEASES_DIR as the vPACK_VERSION GitHub release, published unless
-#   SOUNDBUDDY_RELEASE_DRAFT environment variable is set; named as unsigned when UNSIGNED is set
+#   SOUNDBUDDY_RELEASE_DRAFT environment variable is set; named as unsigned when UNSIGNED is set; tagged on the
+#   SOUNDBUDDY_RELEASE_COMMIT environment variable if set, else on the tip of the default branch
 #
 # The GitHub token comes from GITHUB_TOKEN environment variable, else from GitHub CLI (gh auth token)
 
@@ -144,6 +145,10 @@ elseif(ACTION STREQUAL "publish")
         --releaseName "${release_name}"
         --merge
     )
+
+    if(NOT "$ENV{SOUNDBUDDY_RELEASE_COMMIT}" STREQUAL "")
+        list(APPEND upload_args --targetCommitish "$ENV{SOUNDBUDDY_RELEASE_COMMIT}")
+    endif()
 
     if(NOT "$ENV{SOUNDBUDDY_RELEASE_DRAFT}")
         list(APPEND upload_args --publish)
