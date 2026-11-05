@@ -1,17 +1,17 @@
 // SPDX-FileCopyrightText: 2018-2026 Guillaume Vara <guillaume.vara@gmail.com>
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-// executable icon (the first icon group, in names order), window and tray icons : generated from icons/svg (see icons/generate.ts)
-APP                     ICON    "icons/app.ico"
-TRAY_DARK               ICON    "icons/tray_dark.ico"
-TRAY_DARK_OK            ICON    "icons/tray_dark_ok.ico"
-TRAY_DARK_ISSUE         ICON    "icons/tray_dark_issue.ico"
-TRAY_LIGHT              ICON    "icons/tray_light.ico"
-TRAY_LIGHT_OK           ICON    "icons/tray_light_ok.ico"
-TRAY_LIGHT_ISSUE        ICON    "icons/tray_light_issue.ico"
-TRAY_ACTIVE             ICON    "icons/tray_active.ico"
-TRAY_ACTIVE_OK          ICON    "icons/tray_active_ok.ico"
-TRAY_ACTIVE_ISSUE       ICON    "icons/tray_active_issue.ico"
+// executable icon (the first icon group, in names order), window and tray icons : generated from icons/svg (see cmake/Icons.cmake)
+APP                     ICON    "icons/build/app.ico"
+TRAY_DARK               ICON    "icons/build/tray_dark.ico"
+TRAY_DARK_OK            ICON    "icons/build/tray_dark_ok.ico"
+TRAY_DARK_ISSUE         ICON    "icons/build/tray_dark_issue.ico"
+TRAY_LIGHT              ICON    "icons/build/tray_light.ico"
+TRAY_LIGHT_OK           ICON    "icons/build/tray_light_ok.ico"
+TRAY_LIGHT_ISSUE        ICON    "icons/build/tray_light_issue.ico"
+TRAY_ACTIVE             ICON    "icons/build/tray_active.ico"
+TRAY_ACTIVE_OK          ICON    "icons/build/tray_active_ok.ico"
+TRAY_ACTIVE_ISSUE       ICON    "icons/build/tray_active_issue.ico"
 
 // visual styles of the dialogs, DPI awareness
 1                       24      "soundbuddy.manifest"

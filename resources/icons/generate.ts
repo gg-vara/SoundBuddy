@@ -1,8 +1,8 @@
 // SPDX-FileCopyrightText: 2018-2026 Guillaume Vara <guillaume.vara@gmail.com>
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-// Generates the icons of SoundBuddy from svg/ : each size is rendered from the drawing, rather than scaled from one image.
-// Run "bun run icons" from this folder after changing a drawing, then commit what it wrote.
+// Generates the icons of SoundBuddy from svg/ into build/, not versioned : each size is rendered from the drawing, rather than
+// scaled from one image. The build runs it when needed (cmake/Icons.cmake, which lists these outputs).
 import { Resvg } from '@resvg/resvg-js';
 
 const folder = import.meta.dir;
@@ -109,6 +109,6 @@ const outputs: Record<string, () => Promise<Buffer>> = {
 
 for (const [name, generate] of Object.entries(outputs)) {
   const data = await generate();
-  await Bun.write(`${folder}/${name}`, data);
+  await Bun.write(`${folder}/build/${name}`, data);
   console.log(`${name} : ${(data.length / 1024).toFixed(1)} KB`);
 }

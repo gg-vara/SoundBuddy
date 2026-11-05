@@ -106,7 +106,7 @@ if(WIN32)
         -DCHANNEL=win
         -DRUNTIME=win-x64
         -DPACK_DIR=$<TARGET_FILE_DIR:appExec>
-        -DICON=${CMAKE_SOURCE_DIR}/resources/icons/package.ico
+        -DICON=${ICONS_BUILD_DIR}/package.ico
         # the user interface is a page in WebView2, part of Windows 10 and 11 : installed if missing
         -DFRAMEWORK=webview2
     )
@@ -136,7 +136,7 @@ elseif(APPLE)
         -DCHANNEL=osx
         -DRUNTIME=${VELOPACK_RUNTIME}
         -DPACK_DIR=$<TARGET_BUNDLE_DIR:appExec>
-        -DICON=${CMAKE_SOURCE_DIR}/resources/icons/package.icns
+        -DICON=${ICONS_BUILD_DIR}/package.icns
         # Velopack signs the bundle and the installer, then has them notarized, as these variables tell (see README.md) :
         # left out, the packages are not signed, which Gatekeeper refuses
         "-DSIGN_APP_IDENTITY=$ENV{APPLE_CERT_APP_CODE_SIGN_IDENTITY}"

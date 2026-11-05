@@ -114,7 +114,7 @@ Its dependencies are locked in `src/ui/page/bun.lock`; CMake installs them and b
 
 ## Icons
 
-Icons are drawn in SVG (`resources/icons/svg`) : `bun run icons` (from `resources/icons`) renders each size from the drawings into the Windows (`.ico`) and macOS (`.icns`) icons, committed with them. Windows picks the image fitting its scaling, and the tray icon follows the taskbar theme.
+Icons are drawn in SVG (`resources/icons/svg`) : the build renders each size from the drawings into the Windows (`.ico`) and macOS (`.icns`) icons, in `resources/icons/build`, not versioned (see `cmake/Icons.cmake`). `bun run icons` (from `resources/icons`) does it alone, to look at them. Windows picks the image fitting its scaling, and the tray icon follows the taskbar theme.
 
 ## Translations
 
