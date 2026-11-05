@@ -2,6 +2,25 @@
 
 Each section becomes the notes of its GitHub release, and of the update that installed copies download (see `cmake/velopack/vpk.cmake`).
 
+## 0.12.0
+
+> **Requires SoundVitrine 0.10 or newer** : older servers refuse the libraries this version uploads.
+
+> **Unsigned build** : this installer is not code-signed yet. Windows SmartScreen may block it ("Windows protected your PC") : choose **More info**, then **Run anyway**.
+
+### New
+
+- About panel, opened from the tray menu or the ⋯ menu : version, build type, system, data folder, license, source code
+- Checking for updates moves to the About panel, which shows the result. The question to restart for a downloaded update stays a dialog
+- The window title, the tray tooltip and the first tray menu item show the version, and "(Debug)" on a debug build
+- The tray icon tells what the app is doing : an orange circle while connected to iTunes, a green dot when connected to SoundVitrine, a red one when refused or unreachable
+- Icons across the interface
+- `--data-dir <folder>` keeps a run away from your real settings and data, `--library <file>` reads that library, and `--headless` runs without a window, driven through its standard input and output : to try or test the app safely
+
+### Changed
+
+- Compressed libraries are sent as `application/octet-stream`
+
 ## 0.11.0
 
 > **Unsigned build** : this installer is not code-signed yet. Windows SmartScreen may block it ("Windows protected your PC") : choose **More info**, then **Run anyway**.
