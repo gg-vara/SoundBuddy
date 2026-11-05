@@ -85,6 +85,49 @@ void postToMainQueue(std::function<void()> task) {
     });
 }
 
+namespace {
+
+// the menu bar icon. Alone, it is a template image, which follows the menu bar's appearance. With colors, a template image
+// would lose them : the note is then drawn in the color of the menu bar's labels, which follows it as well
+NSImage* menuBarImage(TrayState state) {
+    constexpr CGFloat side = 18;
+    NSImage* const base = [[NSImage imageNamed:state.shouting ? @"app_reverse_active" : @"app_reverse"] copy];
+    base.size = NSMakeSize(side, side);
+
+    if (state.dot == TrayState::Dot::None) {
+        [base setTemplate:!state.shouting];  // "template" is a C++ keyword
+        return base;
+    }
+
+    NSColor* const dotColor = state.dot == TrayState::Dot::Ok ? [NSColor colorWithSRGBRed:0x2f / 255.0 green:0x9e / 255.0 blue:0x62 / 255.0 alpha:1]
+                                                               : [NSColor colorWithSRGBRed:0xd2 / 255.0 green:0x3f / 255.0 blue:0x3f / 255.0 alpha:1];
+    const bool shouting = state.shouting;
+
+    return [NSImage imageWithSize:NSMakeSize(side, side)
+                          flipped:NO
+                   drawingHandler:^BOOL(NSRect rect) {
+                       [base drawInRect:rect];
+                       if (!shouting) {
+                           [NSColor.labelColor set];
+                           NSRectFillUsingOperation(rect, NSCompositingOperationSourceIn);
+                       }
+
+                       // a gap around the dot, in the lower right corner, keeps it apart from the note
+                       const NSRect gap = NSMakeRect(side * 0.66, 0, side * 0.34, side * 0.34);
+                       [NSColor.clearColor set];
+                       NSBezierPath* const gapPath = [NSBezierPath bezierPathWithOvalInRect:gap];
+                       NSGraphicsContext.currentContext.compositingOperation = NSCompositingOperationCopy;
+                       [gapPath fill];
+                       NSGraphicsContext.currentContext.compositingOperation = NSCompositingOperationSourceOver;
+
+                       [dotColor set];
+                       [[NSBezierPath bezierPathWithOvalInRect:NSInsetRect(gap, side * 0.045, side * 0.045)] fill];
+                       return YES;
+                   }];
+}
+
+}  // namespace
+
 class MacShell final : public Shell {
  public:
     // hidden, except in debug builds
@@ -131,6 +174,8 @@ class MacShell final : public Shell {
         _view->eval("sb.receive(" + event + ");");
         return true;
     }
+
+    void setTrayState(TrayState state) override { _statusItem.button.image = menuBarImage(state); }
 
     void showWindow() override {
         activate();
@@ -279,11 +324,7 @@ class MacShell final : public Shell {
     void _createStatusItem() {
         _statusItem = [NSStatusBar.systemStatusBar statusItemWithLength:NSSquareStatusItemLength];
 
-        // a template image follows the menu bar's appearance
-        NSImage* const image = [NSImage imageNamed:@"app_reverse"];
-        image.size = NSMakeSize(18, 18);
-        [image setTemplate:YES];  // "template" is a C++ keyword
-        _statusItem.button.image = image;
+        _statusItem.button.image = menuBarImage({});
         _statusItem.button.toolTip = toNSString(Controller::versionLabel());
 
         _statusMenu = [[NSMenu alloc] init];

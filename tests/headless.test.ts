@@ -214,6 +214,8 @@ test(
     await app.command('savePreferences', preferences());
 
     await app.wait(message => message.type === 'status' && message.status.connectivity === 'connected', 'connected status');
+    await app.wait(message => message.type === 'tray' && message.dot === 'ok', 'green dot');
+    expect(app.messages.some(message => message.type === 'tray' && message.shouting)).toBe(false);
     const check = received.find(request => request.path === '/hb/creds') as Received;
     expect(check.headers.get('x-client-id')).toBe('SoundBuddy');
     expect(check.headers.get('x-client-version')).toBeTruthy();
@@ -226,6 +228,7 @@ test(
       'refused status',
     );
     expect(refused).toBeTruthy();
+    await app.wait(message => message.type === 'tray' && message.dot === 'issue', 'red dot');
   },
   TIMEOUT_MS,
 );

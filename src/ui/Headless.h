@@ -17,6 +17,7 @@ namespace ui {
 //     {"type":"done","line":2}                    of a command
 //     {"type":"error","line":3,"message":"..."}   of a line which is neither
 //     {"type":"dialog",...}                       what a window would ask or tell : questions are answered yes
+//     {"type":"tray","shouting":false,"dot":"ok"} what a tray icon would show ("dot" : none, ok or issue)
 //
 // Ends when told to quit, or at the end of the input : returns the exit code
 int runHeadless();

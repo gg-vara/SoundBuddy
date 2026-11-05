@@ -31,6 +31,7 @@ class MainWindow final : public Shell {
     // Shell
     bool sendToPage(const std::string& event) override;
     void showWindow() override;
+    void setTrayState(TrayState state) override;
     bool ask(std::string_view title, std::string_view question, Answer byDefault) override;
     void tell(std::string_view title, std::string_view text, Severity severity) override;
     void quit() override;
@@ -38,6 +39,7 @@ class MainWindow final : public Shell {
  private:
     HWND _window = nullptr;
     NOTIFYICONDATAW _trayIcon {};
+    TrayState _trayState;
     UINT _taskbarCreatedMessage = 0;
     bool _centered = false;
 

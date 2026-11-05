@@ -27,6 +27,15 @@ enum class Severity { Information, Error };
 
 enum class Answer { Yes, No };
 
+// what the tray icon tells, as the page does
+struct TrayState {
+    // the dot of the connection with the platform : none until known
+    enum class Dot { None, Ok, Issue };
+
+    bool shouting = false;  // the circle behind the icon
+    Dot dot = Dot::None;
+};
+
 // what the native shell offers, on the user interface thread
 class Shell {
  public:
@@ -36,6 +45,8 @@ class Shell {
     virtual bool sendToPage(const std::string& event) = 0;
 
     virtual void showWindow() = 0;
+
+    virtual void setTrayState(TrayState state) = 0;
 
     // modal question, "byDefault" being focused : true if the user answers yes
     virtual bool ask(std::string_view title, std::string_view question, Answer byDefault) = 0;
@@ -101,6 +112,7 @@ class Controller {
     mbeat::Status _status { .text = {}, .connectivity = mbeat::Connectivity::Checking };
     std::string _nowPlaying;  // last shout, as JSON
     std::optional<Panel> _pendingPanel;
+    TrayState::Dot _trayDot = TrayState::Dot::None;
     bool _searchingUpdates = false;
     std::optional<page::UpdateResult> _updateResult;
     bool _quitting = false;
@@ -131,6 +143,8 @@ class Controller {
 
     // updates
     void _onUpdateChecked(const UpdateChecker::CheckResults& results);
+
+    void _sendTrayState();
 
     // state changes, sent to the page
     void _log(Tab tab, const workers::Message& message);

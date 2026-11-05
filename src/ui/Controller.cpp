@@ -308,6 +308,12 @@ void Controller::_runMBeat() {
             _status = status;
 
             _shell.sendToPage(page::statusEvent(status));
+
+            // while checking, the last answer stands : the heartbeat would otherwise make the dot blink
+            if (status.connectivity != mbeat::Connectivity::Checking) {
+                _trayDot = status.connectivity == mbeat::Connectivity::Connected ? TrayState::Dot::Ok : TrayState::Dot::Issue;
+                _sendTrayState();
+            }
         });
     });
 }
@@ -459,6 +465,7 @@ int Controller::_runStarted(Tab tab) {
     state.shown.log.clear();
     state.shown.running = true;
     _shell.sendToPage(page::runEvent(tab, /*running=*/true));
+    if (tab == Tab::Shout) _sendTrayState();
 
     return ++state.run;
 }
@@ -469,6 +476,11 @@ void Controller::_runFinished(Tab tab, int run) {
     if (run != state.run) return;
     state.shown.running = false;
     _shell.sendToPage(page::runEvent(tab, /*running=*/false));
+    if (tab == Tab::Shout) _sendTrayState();
+}
+
+void Controller::_sendTrayState() {
+    _shell.setTrayState({ .shouting = _shoutTab.shown.running, .dot = _trayDot });
 }
 
 void Controller::_sendSettings() {

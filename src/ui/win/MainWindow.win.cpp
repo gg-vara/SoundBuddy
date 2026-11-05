@@ -115,9 +115,13 @@ HICON loadIcon(const wchar_t* name, int metric) {
     return icon;
 }
 
-// on the taskbar's theme
-const wchar_t* trayIconName() {
-    return isDark(L"SystemUsesLightTheme") ? L"TRAY_DARK" : L"TRAY_LIGHT";
+// on the taskbar's theme, unless shouting : that one suits both
+std::wstring trayIconName(TrayState state) {
+    std::wstring name = isDark(L"SystemUsesLightTheme") ? L"TRAY_DARK" : L"TRAY_LIGHT";
+    if (state.shouting) name = L"TRAY_ACTIVE";
+    if (state.dot == TrayState::Dot::Ok) name += L"_OK";
+    if (state.dot == TrayState::Dot::Issue) name += L"_ISSUE";
+    return name;
 }
 
 void postToWindow(std::function<void()> task) {
@@ -517,7 +521,7 @@ void MainWindow::_addTrayIcon() {
             .uID = 1,
             .uFlags = NIF_ICON | NIF_MESSAGE | NIF_TIP | NIF_SHOWTIP,
             .uCallbackMessage = trayIconMessage,
-            .hIcon = loadIcon(trayIconName(), LIM_SMALL),
+            .hIcon = loadIcon(trayIconName(_trayState).c_str(), LIM_SMALL),
         };
         const auto tip = platform::widen(Controller::versionLabel());
         std::copy_n(tip.c_str(), std::min(tip.size() + 1, std::size(_trayIcon.szTip) - 1), std::begin(_trayIcon.szTip));
@@ -529,9 +533,15 @@ void MainWindow::_addTrayIcon() {
 }
 
 // the taskbar's theme changed
+void MainWindow::setTrayState(TrayState state) {
+    if (state.shouting == _trayState.shouting && state.dot == _trayState.dot) return;
+    _trayState = state;
+    _updateTrayIcon();
+}
+
 void MainWindow::_updateTrayIcon() {
     auto* const previous = _trayIcon.hIcon;
-    _trayIcon.hIcon = loadIcon(trayIconName(), LIM_SMALL);
+    _trayIcon.hIcon = loadIcon(trayIconName(_trayState).c_str(), LIM_SMALL);
     Shell_NotifyIconW(NIM_MODIFY, &_trayIcon);
     if (previous) DestroyIcon(previous);
 }

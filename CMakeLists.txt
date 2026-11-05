@@ -137,7 +137,9 @@ elseif(APPLE)
     set(APP_ICON ${PROJECT_SOURCE_DIR}/resources/icons/app.icns)
     # menu bar icon, a template image
     set(APP_MENU_BAR_ICON ${PROJECT_SOURCE_DIR}/resources/icons/app_reverse.png)
-    set_source_files_properties(${APP_ICON} ${APP_MENU_BAR_ICON} PROPERTIES MACOSX_PACKAGE_LOCATION "Resources")
+    # while shouting, in its own colors
+    set(APP_MENU_BAR_ACTIVE_ICON ${PROJECT_SOURCE_DIR}/resources/icons/app_reverse_active.png)
+    set_source_files_properties(${APP_ICON} ${APP_MENU_BAR_ICON} ${APP_MENU_BAR_ACTIVE_ICON} PROPERTIES MACOSX_PACKAGE_LOCATION "Resources")
 
     target_sources(appExec PRIVATE
         src/ui/mac/MainWindow.mac.mm
@@ -145,6 +147,7 @@ elseif(APPLE)
         src/ui/mac/WebView.mac.cpp
         ${APP_ICON}
         ${APP_MENU_BAR_ICON}
+        ${APP_MENU_BAR_ACTIVE_ICON}
     )
 
     set_target_properties(appExec PROPERTIES

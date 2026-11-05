@@ -4,7 +4,14 @@
 // executable icon (the first icon group, in names order), window and tray icons : generated from icons/svg (see icons/generate.ts)
 APP                     ICON    "icons/app.ico"
 TRAY_DARK               ICON    "icons/tray_dark.ico"
+TRAY_DARK_OK            ICON    "icons/tray_dark_ok.ico"
+TRAY_DARK_ISSUE         ICON    "icons/tray_dark_issue.ico"
 TRAY_LIGHT              ICON    "icons/tray_light.ico"
+TRAY_LIGHT_OK           ICON    "icons/tray_light_ok.ico"
+TRAY_LIGHT_ISSUE        ICON    "icons/tray_light_issue.ico"
+TRAY_ACTIVE             ICON    "icons/tray_active.ico"
+TRAY_ACTIVE_OK          ICON    "icons/tray_active_ok.ico"
+TRAY_ACTIVE_ISSUE       ICON    "icons/tray_active_issue.ico"
 
 // visual styles of the dialogs, DPI awareness
 1                       24      "soundbuddy.manifest"

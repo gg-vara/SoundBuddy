@@ -106,6 +106,13 @@ class HeadlessShell final : public Shell {
 
     void showWindow() override {}
 
+    void setTrayState(TrayState state) override {
+        const char* dot = "none";
+        if (state.dot == TrayState::Dot::Ok) dot = "ok";
+        if (state.dot == TrayState::Dot::Issue) dot = "issue";
+        writeLine(std::string { R"({"type":"tray","shouting":)" } + (state.shouting ? "true" : "false") + R"(,"dot":")" + dot + R"("})");
+    }
+
     bool ask(std::string_view title, std::string_view question, Answer /*byDefault*/) override {
         writeLine(dialog("ask", title, question));
         return true;
