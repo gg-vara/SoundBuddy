@@ -21,6 +21,7 @@ function(soundbuddy_add_core target scope)
         ${src}/i18n/Translations.cpp
         ${src}/logs/Logs.cpp
         ${src}/net/HttpClient.cpp
+        ${src}/net/PlatformSession.cpp
         ${src}/net/SseParser.cpp
         ${src}/settings/Settings.cpp
         ${src}/ui/PageMessages.cpp
@@ -43,6 +44,7 @@ function(soundbuddy_add_core target scope)
             ${src}/helpers/AppSettings.win.cpp
             ${src}/helpers/Compression.win.cpp
             ${src}/helpers/Platform.win.cpp
+            ${src}/helpers/SecretStore.win.cpp
             ${src}/net/HttpClient.win.cpp
             ${src}/workers/shout/ShoutWatcher.win.cpp
             ${src}/workers/shout/win/iTunesCOMClient.cpp
@@ -60,12 +62,15 @@ function(soundbuddy_add_core target scope)
             cabinet
             # platform services : shell, registry
             shell32 advapi32
+            # the stored login
+            crypt32
         )
     elseif(APPLE)
         target_sources(${target} PRIVATE
             ${src}/helpers/AppSettings.mac.cpp
             ${src}/helpers/Compression.mac.cpp
             ${src}/helpers/Platform.mac.mm
+            ${src}/helpers/SecretStore.mac.cpp
             ${src}/net/HttpClient.mac.mm
             ${src}/workers/shout/ShoutWatcher.mac.cpp
         )
@@ -77,6 +82,8 @@ function(soundbuddy_add_core target scope)
             "-framework Foundation"
             # platform services
             "-framework AppKit"
+            # the stored login
+            "-framework Security"
             # library compression (libz of the macOS SDK)
             z
         )

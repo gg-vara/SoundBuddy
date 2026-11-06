@@ -12,25 +12,10 @@
 #include "src/i18n/Translations.h"
 #include "src/logs/Logs.h"
 #include "src/net/HttpClient.h"
-#include "src/net/Multipart.h"
+#include "src/net/PlatformSession.h"
 #include "src/workers/base/Wait.h"
 
 #include "version.h"
-
-namespace mbeat {
-
-std::string credentialsUrl(const AppSettings::ConnectivityInfos& connectivityInfos) {
-    const auto url = connectivityInfos.getSoundHeartbeatUrl() + "/creds";
-
-    const auto schemeEnd = url.find("://");
-    const auto address = schemeEnd == std::string::npos ? url : url.substr(schemeEnd + 3);
-    const auto host = address.substr(0, address.find_first_of(":/"));
-
-    const auto wantsUnsecure = host == "localhost" || host == "127.0.0.1";
-    return (wantsUnsecure ? "http://" : "https://") + address;
-}
-
-}  // namespace mbeat
 
 MBeatThread::MBeatThread(AppSettings::ConnectivityInfos connectivityInfos, mbeat::OnStatus onStatus) :
     _connectivityInfos(std::move(connectivityInfos)),
@@ -54,18 +39,20 @@ void MBeatThread::_run(const std::stop_token& stop) {
         return;
     }
 
-    const auto request = _createRequest();
+    net::Request request { .method = "GET", .url = _connectivityInfos.session->apiUrl() + "/api/v1/me" };
+    request.timeout = requestTimeout;  // setup an earlier timeout
+    request.headers = { { .name = "Accept-Language", .value = std::string { i18n::languageCode() } } };
 
     while (!stop.stop_requested()) {
         logs::debug("MBeat", "Checking credentials");
         notify(std::string { i18n::tr("Asking for credentials validation...") }, mbeat::Connectivity::Checking);
 
-        const auto response = _client.send(request, stop);
+        const auto response = _connectivityInfos.session->send(_client, request, stop);
         if (stop.stop_requested()) break;
 
         if (response.status != 200) {
-            // body first, as the platform explains why credentials are refused
-            std::string details = response.body;
+            // first, as the platform explains why credentials are refused
+            std::string details = net::PlatformSession::explain(response);
             if (details.empty()) {
                 details = response.error.empty() ? std::format("HTTP {}", response.status) : response.error;
             }
@@ -89,22 +76,4 @@ void MBeatThread::_run(const std::stop_token& stop) {
     }
 
     logs::debug("MBeat", "Shutdown");
-}
-
-net::Request MBeatThread::_createRequest() const {
-    net::Request request { .method = "POST", .url = mbeat::credentialsUrl(_connectivityInfos) };
-    request.timeout = requestTimeout;  // setup an earlier timeout
-    request.headers = {
-        { .name = "Accept-Language", .value = std::string { i18n::languageCode() } },
-        { .name = "X-Client-Id", .value = APP_NAME },
-        { .name = "X-Client-Version", .value = APP_CURRENT_VERSION },
-    };
-
-    // credentials
-    net::Multipart form;
-    form.addField("username", _connectivityInfos.username);
-    form.addField("password", _connectivityInfos.password);
-    form.applyTo(request);
-
-    return request;
 }

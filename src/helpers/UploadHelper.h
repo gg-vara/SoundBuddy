@@ -4,60 +4,62 @@
 #pragma once
 
 #include <format>
+#include <stop_token>
 #include <string>
 #include <string_view>
-#include <utility>
 
 #include "src/helpers/AppSettings.h"
 #include "src/i18n/Translations.h"
 #include "src/net/HttpClient.h"
 #include "src/net/Multipart.h"
+#include "src/net/PlatformSession.h"
 
-// uploads files to the platform, as multipart forms
+// sends to the platform, with its API. Blocking; a stop requested on "stop" aborts the upload
 class UploadHelper {
  public:
-    struct UploadInstructions {
-        const AppSettings::ConnectivityInfos& connectivityInfos;
-        const AppSettings::UploadInfos& uploadInfos;
-        std::string_view dataToUpload;
-
-        std::string getUploadUrl() const { return connectivityInfos.getPlaformHomeUrl() + uploadInfos.path; }
-    };
-
-    // blocking; a stop requested on "stop" aborts the upload
-    static net::Response uploadDataToPlatform(
-        net::HttpClient& client, const UploadInstructions& instructions, AppSettings::FeedFormat format, const std::stop_token& stop = {}
+    // answers { "changed": false } when it is what is already there
+    static net::Response uploadLibrary(
+        net::HttpClient& client, const AppSettings::ConnectivityInfos& infos, std::string_view library, AppSettings::FeedFormat format,
+        const std::stop_token& stop = {}
     ) {
-        //
-        const auto& fileName = instructions.uploadInfos.outputFileName;
-        const auto fileExtension = AppSettings::getFeedOutputExtension(format);
-        const auto contentType = AppSettings::getFeedOutputContentType(format);
-
         net::Multipart form;
-        form.addFile(fileName, fileName + std::string { fileExtension }, contentType, instructions.dataToUpload);
+        form.addFile(
+            "file", "library" + std::string { AppSettings::getFeedOutputExtension(format) }, AppSettings::getFeedOutputContentType(format),
+            library
+        );
 
-        // password...
-        form.addField("password", instructions.connectivityInfos.password);
-
-        // headless flag
-        form.addField("headless", "1");
-
-        // build request
-        net::Request request { .method = "POST", .url = instructions.getUploadUrl() };
-        request.headers.push_back({ .name = "Accept-Language", .value = std::string { i18n::languageCode() } });
+        auto request = _request("PUT", infos, "/api/v1/me/library");
         form.applyTo(request);
 
-        return client.send(request, stop);
+        return infos.session->send(client, request, stop);
+    }
+
+    static net::Response uploadShout(
+        net::HttpClient& client, const AppSettings::ConnectivityInfos& infos, std::string_view shoutAsJson, const std::stop_token& stop = {}
+    ) {
+        auto request = _request("POST", infos, "/api/v1/me/shouts");
+        request.headers.push_back({ .name = "Content-Type", .value = "application/json" });
+        request.body = std::string { shoutAsJson };
+
+        return infos.session->send(client, request, stop);
     }
 
     // why an upload failed, for logs : transport error or HTTP status, followed by the platform explanations if any
     static std::string describeFailure(const net::Response& response) {
         auto description = response.error.empty() ? std::format("HTTP {}", response.status) : response.error;
 
-        if (!response.body.empty()) {
-            description += " >> " + response.body;
+        const auto explanation = net::PlatformSession::explain(response);
+        if (!explanation.empty()) {
+            description += " >> " + explanation;
         }
 
         return description;
+    }
+
+ private:
+    static net::Request _request(const char* method, const AppSettings::ConnectivityInfos& infos, std::string_view path) {
+        net::Request request { .method = method, .url = infos.session->apiUrl() + std::string { path } };
+        request.headers.push_back({ .name = "Accept-Language", .value = std::string { i18n::languageCode() } });
+        return request;
     }
 };

@@ -4,12 +4,15 @@
 #pragma once
 
 #include <filesystem>
+#include <functional>
+#include <memory>
 #include <optional>
 #include <string>
 #include <string_view>
 #include <utility>
 
 #include "src/helpers/Platform.h"
+#include "src/net/PlatformSession.h"
 #include "src/settings/Settings.h"
 #include "version.h"
 
@@ -29,15 +32,12 @@ class AppSettings {
     struct ConnectivityInfos {
         std::string platformHostUrl;
         std::string username;
-        std::string password;
+
+        // how to call the platform, as long as the login lasts
+        std::shared_ptr<net::PlatformSession> session;
 
         // Whenever infos are considered valid for usage
         bool areOK = false;
-
-        std::string getSoundHeartbeatUrl() const {
-            if (!areOK) return {};
-            return platformHostUrl + "/hb";
-        }
 
         std::string getPlaformHomeUrl() const {
             if (!areOK) return {};
@@ -45,32 +45,20 @@ class AppSettings {
         }
     };
 
-    struct UploadInfos {
-        const std::string path;
-        const std::string outputFileName;
-    };
-
     ConnectivityInfos getConnectivityInfos() const {
-        if (_values.platformUsername.empty() || _values.platformHostUrl.empty() || _values.platformPassword.empty()) {
-            return {};
-        }
+        if (_values.platformUsername.empty() || _values.platformHostUrl.empty() || !_session || !_session->hasLogin()) return {};
 
-        return { .platformHostUrl = _values.platformHostUrl,
-                 .username = _values.platformUsername,
-                 .password = _values.platformPassword,
-                 .areOK = true };
+        return { .platformHostUrl = _values.platformHostUrl, .username = _values.platformUsername, .session = _session, .areOK = true };
     }
+
+    // from the current values, the password being exchanged for tokens : "onPasswordUsed" tells when it can go.
+    // Workers keep the session they got for as long as they run
+    void startSession(std::function<void()> onPasswordUsed);
 
 #ifdef __APPLE__
     // preferences domain where QSettings stored the settings of previous versions
     static std::string legacyDomain();
 #endif
-
-    static UploadInfos getShoutUploadInfos() { return { .path = "/uploadShout", .outputFileName = "shout_file" }; }
-
-    static UploadInfos getFeederUploadInfos() {
-        return { .path = "/uploadMusicLibrary", .outputFileName = DEST_PLATFORM_PRODUCT_NAME "_file" };
-    }
 
     static std::filesystem::path getFeedWarningFilePath() { return platform::dataDirectory() / feedWarningFileName; }
 
@@ -95,6 +83,7 @@ class AppSettings {
  private:
     std::filesystem::path _file;
     settings::Settings _values;
+    std::shared_ptr<net::PlatformSession> _session;
 
     // previous versions stored their settings with QSettings (registry on Windows, plist on macOS) : read once, to create the settings file
     static std::optional<settings::Settings> _readLegacySettings();

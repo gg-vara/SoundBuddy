@@ -30,6 +30,7 @@ export const texts = [
   'No warnings found',
   'Nothing playing',
   'Password',
+  'Password (empty keeps your login)',
   'Preferences',
   'Production',
   'Quit',

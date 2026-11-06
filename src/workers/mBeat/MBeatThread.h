@@ -28,9 +28,6 @@ struct Status {
 // receives the connectivity status, on the heartbeat's thread
 using OnStatus = std::function<void(const Status&)>;
 
-// URL checking the credentials : in HTTPS, or in HTTP for a platform running locally
-std::string credentialsUrl(const AppSettings::ConnectivityInfos& connectivityInfos);
-
 }  // namespace mbeat
 
 // Periodically checks the platform credentials on its own thread, from construction until
@@ -55,5 +52,4 @@ class MBeatThread {
     std::jthread _worker;
 
     void _run(const std::stop_token& stop);
-    net::Request _createRequest() const;
 };

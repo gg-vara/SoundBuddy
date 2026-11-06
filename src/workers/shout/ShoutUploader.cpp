@@ -68,10 +68,7 @@ void ShoutUploader::_uploadQueuedShouts(const std::stop_token& stop) {
         }
 
         //
-        const auto response = UploadHelper::uploadDataToPlatform(
-            _client, { .connectivityInfos = _connectivityInfos, .uploadInfos = AppSettings::getShoutUploadInfos(), .dataToUpload = shout },
-            AppSettings::FeedFormat::Json, stop
-        );
+        const auto response = UploadHelper::uploadShout(_client, _connectivityInfos, shout, stop);
 
         if (response.ok()) {
             logs::debug("ShoutUploader", "Uploaded, HTTP {}", response.status);

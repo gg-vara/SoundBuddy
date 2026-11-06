@@ -9,6 +9,7 @@
 #include <vector>
 
 #include "Check.h"
+#include "TestSession.h"
 #include "src/workers/base/Message.h"
 #include "src/workers/shout/ShoutUploader.h"
 
@@ -44,8 +45,7 @@ int main() {
     // refused connection : the failure is reported, then the queue is drained
     {
         Messages messages;
-        ShoutUploader uploader { { .platformHostUrl = "http://127.0.0.1:9", .username = "user", .password = "password", .areOK = true },
-                                 messages.sink() };
+        ShoutUploader uploader { connectedTo("http://127.0.0.1:9"), messages.sink() };
 
         uploader.upload("{}");
         uploader.upload("{}");
@@ -65,9 +65,7 @@ int main() {
         Messages messages;
         auto start = std::chrono::steady_clock::now();
         {
-            ShoutUploader uploader {
-                { .platformHostUrl = "http://10.255.255.1", .username = "user", .password = "password", .areOK = true }, messages.sink()
-            };
+            ShoutUploader uploader { connectedTo("http://10.255.255.1"), messages.sink() };
             uploader.upload("{}");
             uploader.upload("{}");
             CHECK(!uploader.waitForDrain(300ms), "upload still in progress");

@@ -79,6 +79,7 @@ PageCall parseCall(std::string_view request) {
 
 Controller::Controller(Shell& shell) :
     _shell(shell) {
+    _startSession();
     _runMBeat();
     checkForUpdates();
 
@@ -371,13 +372,33 @@ void Controller::_runFeeder() {
 
 void Controller::_savePreferences(yyjson_val* values) {
     auto& settings = _appSettings.values();
+    const auto previous = settings;
     settings.platformHostUrl = json::string(yyjson_obj_get(values, "platformHostUrl"));
     settings.platformUsername = json::string(yyjson_obj_get(values, "platformUsername"));
     settings.platformPassword = json::string(yyjson_obj_get(values, "platformPassword"));
     _appSettings.save();
 
+    // the same login stays the same session, or a worker renewing its tokens would leave the new one with those it just used up
+    const auto sameLogin = settings.platformHostUrl == previous.platformHostUrl && settings.platformUsername == previous.platformUsername &&
+                           settings.platformPassword == previous.platformPassword;
+    if (!sameLogin) _startSession();
+
     _sendSettings();
     _onConnectivityChanged();
+}
+
+void Controller::_startSession() {
+    _appSettings.startSession([this, used = _appSettings.values().platformPassword] {
+        post([this, used] {
+            // unless another one was given since
+            auto& settings = _appSettings.values();
+            if (used.empty() || settings.platformPassword != used) return;
+
+            settings.platformPassword.clear();
+            _appSettings.save();
+            _sendSettings();
+        });
+    });
 }
 
 void Controller::_setRunAtStartup(bool enabled) {

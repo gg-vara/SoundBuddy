@@ -137,7 +137,7 @@ int main() {
 
     legacy::clear();
     {
-        const AppSettings appSettings;
+        AppSettings appSettings;
         CHECK(appSettings.values().platformHostUrl.empty() && !std::filesystem::exists(dataFile), "nothing to import : defaults");
     }
 
@@ -147,7 +147,7 @@ int main() {
     legacy::write(LEGACY_NAME("AutoRunShout"), "true");
     legacy::write(LEGACY_NAME("MustRunAtStartup"), "false");
     {
-        const AppSettings appSettings;
+        AppSettings appSettings;
         const auto& imported = appSettings.values();
         CHECK(
             imported.platformHostUrl == "https://legacy.example" && imported.platformUsername == "l\xC3\xA9gacy" &&
@@ -155,6 +155,7 @@ int main() {
             "previous versions settings imported"
         );
         CHECK(std::filesystem::exists(dataFile), "settings file created by the import");
+        appSettings.startSession({});
         CHECK(
             appSettings.getConnectivityInfos().areOK &&
                 appSettings.getConnectivityInfos().getPlaformHomeUrl() == "https://legacy.example/u/l\xC3\xA9gacy",

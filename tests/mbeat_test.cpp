@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2018-2026 Guillaume Vara <guillaume.vara@gmail.com>
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-// MBeatThread : credentials URL, statuses, stopped quickly while waiting or requesting
+// MBeatThread : statuses, stopped quickly while waiting or requesting
 
 #include <chrono>
 #include <cstddef>
@@ -10,6 +10,7 @@
 #include <vector>
 
 #include "Check.h"
+#include "TestSession.h"
 #include "src/workers/mBeat/MBeatThread.h"
 
 using namespace std::chrono_literals;
@@ -51,18 +52,6 @@ long long millisecondsSince(std::chrono::steady_clock::time_point start) {
 }  // namespace
 
 int main() {
-    // credentials URL
-    const auto url = [](const char* host) {
-        return mbeat::credentialsUrl({ .platformHostUrl = host, .username = "user", .password = "password", .areOK = true });
-    };
-    CHECK(url("https://soundvitrine.com") == "https://soundvitrine.com/hb/creds", "HTTPS kept");
-    CHECK(url("http://soundvitrine.com") == "https://soundvitrine.com/hb/creds", "HTTP upgraded to HTTPS");
-    CHECK(url("soundvitrine.com") == "https://soundvitrine.com/hb/creds", "HTTPS added");
-    CHECK(
-        url("https://localhost:3000") == "http://localhost:3000/hb/creds" && url("127.0.0.1") == "http://127.0.0.1/hb/creds",
-        "HTTP for a local platform"
-    );
-
     // no credentials : refused right away, then the thread ends
     {
         Statuses statuses;
@@ -77,9 +66,7 @@ int main() {
         Statuses statuses;
         auto start = std::chrono::steady_clock::now();
         {
-            const MBeatThread heartbeat {
-                { .platformHostUrl = "http://127.0.0.1:9", .username = "user", .password = "password", .areOK = true }, statuses.sink()
-            };
+            const MBeatThread heartbeat { connectedTo("http://127.0.0.1:9"), statuses.sink() };
             CHECK(statuses.waitFor(2, 10s), "two statuses");
             start = std::chrono::steady_clock::now();
         }
@@ -99,9 +86,7 @@ int main() {
         Statuses statuses;
         auto start = std::chrono::steady_clock::now();
         {
-            const MBeatThread heartbeat {
-                { .platformHostUrl = "http://10.255.255.1", .username = "user", .password = "password", .areOK = true }, statuses.sink()
-            };
+            const MBeatThread heartbeat { connectedTo("http://10.255.255.1"), statuses.sink() };
             CHECK(statuses.waitFor(1, 2s), "checking");
             std::this_thread::sleep_for(300ms);
             start = std::chrono::steady_clock::now();
