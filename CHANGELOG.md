@@ -2,6 +2,23 @@
 
 Each section becomes the notes of its GitHub release, and of the update that installed copies download (see `cmake/velopack/vpk.cmake`).
 
+## 0.13.0
+
+> **Requires SoundVitrine 0.13 or newer** : this version logs in with OAuth, which older servers do not offer. It cannot connect to them.
+
+> **Unsigned build** : this installer is not code-signed yet. Windows SmartScreen may block it ("Windows protected your PC") : choose **More info**, then **Run anyway**.
+
+### New
+
+- Your password is no longer kept : it is exchanged once for tokens, then removed from the settings file, including one saved by a previous version. If it is refused, Preferences ask for it again
+- The tokens are stored by the system : encrypted for your Windows user, in the Keychain on macOS
+- Saving Preferences with an empty password keeps your login
+
+### Changed
+
+- Library and shouts are sent with SoundVitrine's new API, and the password no longer travels with each of them
+- The feed tells whether your library was updated, or was already up to date
+
 ## 0.12.0
 
 > **Requires SoundVitrine 0.10 or newer** : older servers refuse the libraries this version uploads.
