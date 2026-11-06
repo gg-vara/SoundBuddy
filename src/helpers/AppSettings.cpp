@@ -3,9 +3,12 @@
 
 #include "AppSettings.h"
 
+#include <functional>
+#include <memory>
 #include <utility>
 
 #include "src/helpers/Platform.h"
+#include "src/net/PlatformSession.h"
 #include "src/settings/Settings.h"
 
 AppSettings::AppSettings() :
@@ -18,4 +21,11 @@ AppSettings::AppSettings() :
             save();
         }
     }
+}
+
+void AppSettings::startSession(std::function<void()> onPasswordUsed) {
+    _session = std::make_shared<net::PlatformSession>(
+        _values.platformHostUrl, _values.platformUsername, platform::dataDirectory() / "session.dat", _values.platformPassword,
+        std::move(onPasswordUsed)
+    );
 }

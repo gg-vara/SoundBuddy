@@ -13,6 +13,7 @@
 #include <vector>
 
 #include "Check.h"
+#include "TestSession.h"
 #include "TestData.h"
 #include "src/helpers/AppSettings.h"
 #include "src/helpers/Platform.h"
@@ -84,8 +85,7 @@ int main() {
     // full run, against a closed port
     {
         Report report;
-        const FeederThread feeder { { .platformHostUrl = "http://127.0.0.1:9", .username = "user", .password = "password", .areOK = true },
-                                    report.callbacks() };
+        const FeederThread feeder { connectedTo("http://127.0.0.1:9"), report.callbacks() };
 
         CHECK(report.waitUntil([&] { return report.finished; }, 60s), "run finished");
         CHECK(!feeder.isRunning(), "no longer running");
@@ -110,9 +110,7 @@ int main() {
         Report report;
         auto start = std::chrono::steady_clock::now();
         {
-            const FeederThread feeder {
-                { .platformHostUrl = "http://10.255.255.1", .username = "user", .password = "password", .areOK = true }, report.callbacks()
-            };
+            const FeederThread feeder { connectedTo("http://10.255.255.1"), report.callbacks() };
             const auto sending = std::string { i18n::tr("Sending... Waiting for response.") };
             CHECK(
                 report.waitUntil([&] { return !report.messages.empty() && report.messages.back().text == sending; }, 60s), "upload started"

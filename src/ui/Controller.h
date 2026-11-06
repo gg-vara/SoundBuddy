@@ -128,6 +128,7 @@ class Controller {
 
     // workers
     workers::MessageSink _messageSink(Tab tab);
+    void _startSession();
     void _runMBeat();
     void _runShouts();
     void _stopShouts();

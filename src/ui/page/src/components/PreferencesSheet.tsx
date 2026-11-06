@@ -63,7 +63,7 @@ export function PreferencesSheet(props: { view: View }) {
           <div class="password">
             <input
               type={revealed() ? 'text' : 'password'}
-              placeholder={t('Password')}
+              placeholder={t(data().canOpenPlatform ? 'Password (empty keeps your login)' : 'Password')}
               value={password()}
               onInput={event => setPassword(event.currentTarget.value)}
             />

@@ -5,7 +5,7 @@
 // SOUNDBUDDY_EXE and SOUNDBUDDY_LIBRARY are set by tests/CMakeLists.txt
 
 import { afterAll, afterEach, beforeAll, expect, test } from 'bun:test';
-import { existsSync, mkdtempSync, rmSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 
@@ -115,21 +115,72 @@ const start = async (dataDir = dataFolder(), library = true) => {
   return app;
 };
 
-const preferences = (password = 'right-password') => ({
+const PASSWORD = 'right&pass=word %é';
+
+const preferences = (password = PASSWORD, username = 'tester') => ({
   platformHostUrl: `http://localhost:${server.port}`,
-  platformUsername: 'tester',
+  platformUsername: username,
   platformPassword: password,
 });
+
+// an OAuth platform : refresh tokens work once, and using one again ends the login, as SoundVitrine does
+let validAccess = new Set<string>();
+let validRefresh = new Set<string>();
+let usedRefresh = new Set<string>();
+let tokenCount = 0;
+let replays = 0;
+let expiresIn = 3600;
+let refreshDelayMs = 0;
+
+const tokensAnswer = () => {
+  tokenCount += 1;
+  const access = `access-${tokenCount}`;
+  const refresh = `refresh-${tokenCount}`;
+  validAccess.add(access);
+  validRefresh.add(refresh);
+  return Response.json({ access_token: access, refresh_token: refresh, token_type: 'Bearer', expires_in: expiresIn, scope: 'all' });
+};
+
+const oauthError = (description: string, status = 400) => Response.json({ error: 'invalid_grant', error_description: description }, { status });
 
 beforeAll(() => {
   server = Bun.serve({
     port: 0,
     async fetch(request) {
-      const body = Buffer.from(await request.arrayBuffer()).toString('latin1');
+      const raw = await request.arrayBuffer();
+      const body = Buffer.from(raw).toString('latin1');
       const path = new URL(request.url).pathname;
       received.push({ path, headers: request.headers, body });
-      if (path === '/hb/creds' && !body.includes('right-password')) return new Response('Refused by the server', { status: 403 });
-      return new Response('Bon appétit!');
+
+      if (path === '/oauth/token') {
+        const fields = new URLSearchParams(Buffer.from(raw).toString('utf8'));
+        if (fields.get('client_id') !== 'soundbuddy') return oauthError('Unknown client', 401);
+
+        if (fields.get('grant_type') === 'password') {
+          return fields.get('username') === 'tester' && fields.get('password') === PASSWORD ? tokensAnswer() : oauthError('Refused by the server');
+        }
+
+        const token = fields.get('refresh_token') ?? '';
+
+        // long enough for another worker to want one meanwhile
+        await Bun.sleep(refreshDelayMs);
+        if (usedRefresh.has(token)) {
+          replays += 1;
+          return oauthError('This refresh token is no longer valid');
+        }
+        if (!validRefresh.has(token)) return oauthError('This refresh token is no longer valid');
+        validRefresh.delete(token);
+        usedRefresh.add(token);
+        return tokensAnswer();
+      }
+
+      const token = /^Bearer (.+)$/.exec(request.headers.get('authorization') ?? '')?.[1] ?? '';
+      if (!validAccess.has(token)) {
+        return Response.json({ type: 'about:blank', title: 'UNAUTHORIZED', status: 401, detail: 'Expired token' }, { status: 401 });
+      }
+      if (path === '/api/v1/me') return Response.json({ username: 'tester', scopes: [] });
+      if (path === '/api/v1/me/library') return Response.json({ changed: true });
+      return new Response('', { status: 404 });
     },
   });
 });
@@ -137,6 +188,12 @@ beforeAll(() => {
 afterEach(async () => {
   for (const app of apps.splice(0)) app.process.kill();
   received = [];
+  validAccess = new Set();
+  validRefresh = new Set();
+  usedRefresh = new Set();
+  replays = 0;
+  expiresIn = 3600;
+  refreshDelayMs = 0;
 });
 
 afterAll(() => {
@@ -207,28 +264,185 @@ test(
   TIMEOUT_MS,
 );
 
+const settingsOf = (folder: string) => readFileSync(join(folder, 'settings.json'), 'utf8');
+
+const connected = (app: App) => app.wait(message => message.type === 'status' && message.status.connectivity === 'connected', 'connected status');
+
 test(
-  'checks credentials as the server expects, and says when they are refused',
+  'exchanges the password for tokens, then forgets it',
   async () => {
-    const app = await start();
+    const folder = dataFolder();
+    const app = await start(folder);
     await app.command('savePreferences', preferences());
 
-    await app.wait(message => message.type === 'status' && message.status.connectivity === 'connected', 'connected status');
+    await connected(app);
     await app.wait(message => message.type === 'tray' && message.dot === 'ok', 'green dot');
     expect(app.messages.some(message => message.type === 'tray' && message.shouting)).toBe(false);
-    const check = received.find(request => request.path === '/hb/creds') as Received;
-    expect(check.headers.get('x-client-id')).toBe('SoundBuddy');
-    expect(check.headers.get('x-client-version')).toBeTruthy();
-    expect(check.body).toContain('name="username"');
-    expect(check.body).toContain('tester');
 
+    const login = received.find(request => request.path === '/oauth/token') as Received;
+    expect(login.headers.get('content-type')).toBe('application/x-www-form-urlencoded');
+    const check = received.find(request => request.path === '/api/v1/me') as Received;
+    expect(check.headers.get('authorization')).toBe('Bearer access-' + tokenCount);
+    expect(check.body).toBe('');
+
+    await app.wait(message => message.type === 'settings' && message.settings.platformPassword === '', 'password forgotten');
+    expect(settingsOf(folder)).not.toContain('right');
+    expect(settingsOf(folder)).toContain('"platformPassword": ""');
+
+    // nothing else carries it
+    expect(received.filter(request => request.path !== '/oauth/token').some(request => request.body.includes('right'))).toBe(false);
+
+    // the tokens are not readable on Windows, where the file holds them
+    const stored = join(folder, 'session.dat');
+    if (process.platform === 'win32') expect(readFileSync(stored, 'latin1')).not.toContain('refresh-');
+  },
+  TIMEOUT_MS,
+);
+
+test(
+  'says when the password is refused, and does not keep it',
+  async () => {
+    const folder = dataFolder();
+    const app = await start(folder);
     await app.command('savePreferences', preferences('wrong-password'));
-    const refused = await app.wait(
+
+    await app.wait(
       message => message.type === 'status' && message.status.connectivity === 'refused' && message.status.text.includes('Refused by the server'),
       'refused status',
     );
-    expect(refused).toBeTruthy();
     await app.wait(message => message.type === 'tray' && message.dot === 'issue', 'red dot');
+    await app.wait(message => message.type === 'settings' && message.settings.platformPassword === '', 'password forgotten');
+    expect(settingsOf(folder)).not.toContain('wrong-password');
+  },
+  TIMEOUT_MS,
+);
+
+test(
+  'an older settings file gets rid of its password on the first run',
+  async () => {
+    const folder = dataFolder();
+    mkdirSync(folder, { recursive: true });
+    writeFileSync(join(folder, 'settings.json'), JSON.stringify({ ...preferences(), autoRunShout: false, runAtStartup: false }));
+
+    const app = await start(folder);
+    await connected(app);
+    await app.wait(message => message.type === 'settings' && message.settings.platformPassword === '', 'password forgotten');
+    expect(settingsOf(folder)).not.toContain('right');
+  },
+  TIMEOUT_MS,
+);
+
+test(
+  'keeps the password while the platform cannot answer',
+  async () => {
+    const folder = dataFolder();
+    mkdirSync(folder, { recursive: true });
+    const unreachable = { ...preferences(), platformHostUrl: 'http://127.0.0.1:9' };
+    writeFileSync(join(folder, 'settings.json'), JSON.stringify({ ...unreachable, autoRunShout: false, runAtStartup: false }));
+
+    const app = await start(folder);
+    await app.wait(message => message.type === 'status' && message.status.connectivity === 'refused', 'refused status');
+    await Bun.sleep(300);
+    expect(settingsOf(folder)).toContain('right');
+  },
+  TIMEOUT_MS,
+);
+
+test(
+  'a new start keeps the login, without any password',
+  async () => {
+    const folder = dataFolder();
+    const first = await start(folder);
+    await first.command('savePreferences', preferences());
+    await connected(first);
+    await first.wait(message => message.type === 'settings' && message.settings.platformPassword === '', 'password forgotten');
+    first.process.kill();
+    await first.process.exited;
+    received = [];
+
+    const second = await start(folder);
+    await connected(second);
+    expect(received.some(request => request.path === '/oauth/token')).toBe(false);
+    expect((await second.query('ready', [])).settings.platformPassword).toBe('');
+  },
+  TIMEOUT_MS,
+);
+
+test(
+  'saving without a password keeps the login, but not for another user',
+  async () => {
+    const app = await start();
+    await app.command('savePreferences', preferences());
+    await connected(app);
+    await app.wait(message => message.type === 'settings' && message.settings.platformPassword === '', 'password forgotten');
+
+    app.messages.length = 0;
+    received = [];
+    await app.command('savePreferences', preferences(''));
+    await connected(app);
+    expect(received.some(request => request.path === '/oauth/token')).toBe(false);
+
+    app.messages.length = 0;
+    await app.command('savePreferences', preferences('', 'somebody'));
+    await app.wait(message => message.type === 'status' && message.status.connectivity === 'refused', 'asks for credentials');
+  },
+  TIMEOUT_MS,
+);
+
+test(
+  'an access token refused is renewed, once',
+  async () => {
+    const app = await start();
+    await app.command('savePreferences', preferences());
+    await connected(app);
+    validAccess.clear();
+
+    received = [];
+    app.messages.length = 0;
+    await app.command('savePreferences', preferences(''));
+    await connected(app);
+    expect(received.filter(request => request.path === '/oauth/token')).toHaveLength(1);
+    expect(replays).toBe(0);
+  },
+  TIMEOUT_MS,
+);
+
+test(
+  'workers needing a new token at once never use a refresh token twice',
+  async () => {
+    // always about to expire : each call asks for a new one
+    expiresIn = 1;
+    refreshDelayMs = 150;
+    const app = await start();
+    await app.command('savePreferences', preferences());
+    await connected(app);
+
+    for (let round = 0; round < 3; round++) {
+      await app.command('runFeeder');
+      await app.command('savePreferences', preferences(''));
+      await app.wait(message => message.type === 'run' && message.tab === 'feeder' && message.running === false, 'end of the feed');
+    }
+
+    expect(received.filter(request => request.path === '/oauth/token').length).toBeGreaterThan(3);
+    expect(replays).toBe(0);
+  },
+  TIMEOUT_MS,
+);
+
+test(
+  'a login the platform ended asks for credentials again',
+  async () => {
+    const folder = dataFolder();
+    const app = await start(folder);
+    await app.command('savePreferences', preferences());
+    await connected(app);
+
+    validAccess.clear();
+    validRefresh.clear();
+    app.messages.length = 0;
+    await app.command('savePreferences', preferences(''));
+    await app.wait(message => message.type === 'status' && message.status.connectivity === 'refused', 'refused status');
+    expect((await app.query('ready', [])).canOpenPlatform).toBe(false);
   },
   TIMEOUT_MS,
 );
@@ -243,15 +457,15 @@ test(
 
     await app.wait(message => message.type === 'run' && message.tab === 'feeder' && message.running === false, 'end of the feed');
 
-    const upload = received.find(request => request.path === '/u/tester/uploadMusicLibrary') as Received;
+    const upload = received.find(request => request.path === '/api/v1/me/library') as Received;
     expect(upload).toBeTruthy();
-    expect(upload.body).toContain('name="SoundVitrine_file"');
+    expect(upload.headers.get('authorization')).toStartWith('Bearer ');
+    expect(upload.body).toContain('name="file"');
     expect(upload.body).toContain('Content-Type: application/octet-stream');
-    expect(upload.body).toContain('name="headless"');
-    expect(upload.body).toContain('right-password');
+    expect(upload.body).not.toContain('right');
 
     const logged = app.messages.filter(message => message.type === 'log' && message.tab === 'feeder').map(message => message.message.text);
-    expect(logged.join('\n')).toContain('Bon appétit!');
+    expect(logged.join('\n')).toContain('bon appétit');
     expect(existsSync(join(folder, 'logs', 'soundbuddy.log'))).toBe(true);
   },
   TIMEOUT_MS,
@@ -266,7 +480,7 @@ test(
 
     const issue = await app.wait(message => message.type === 'log' && message.tab === 'feeder' && message.message.kind === 'issue', 'issue');
     expect(issue.message.text).toContain('--library');
-    expect(received.some(request => request.path.includes('uploadMusicLibrary'))).toBe(false);
+    expect(received.some(request => request.path.includes('/library'))).toBe(false);
   },
   TIMEOUT_MS,
 );

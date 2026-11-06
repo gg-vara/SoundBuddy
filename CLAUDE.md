@@ -58,7 +58,7 @@ Shouts still need the real music app : `runShouts` watches iTunes, so nothing re
 
 ## What SoundVitrine expects
 
-Released versions must keep working : `POST /hb/creds`, `/u/{user}/uploadMusicLibrary` and `/u/{user}/uploadShout` are multipart forms answered in plain text, which the app shows to its users. To try them, SoundVitrine's `bun run dev:seed` gives a local server with a test account.
+SoundVitrine's `/oauth/token`, `/api/v1/me`, `/api/v1/me/library` and `/api/v1/me/shouts`, so a version with them on the server is required. `src/net/PlatformSession` holds the login : the password is exchanged once, then removed from `settings.json`, and the tokens are kept by `src/helpers/SecretStore` (DPAPI, Keychain), named after the data folder so that `--data-dir` never reaches the real ones. A refresh token works once and using one twice ends the login : all workers share one session, which must stay the same object for as long as the login does. To try them, SoundVitrine's `bun run dev:seed`.
 
 ## Conventions
 

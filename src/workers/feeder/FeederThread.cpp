@@ -13,11 +13,14 @@
 #include <system_error>
 #include <utility>
 
+#include <yyjson.h>
+
 #include <ITunesXMLLibrary.hpp>
 #include <JSONLibrary.hpp>
 
 #include "src/helpers/AppSettings.h"
 #include "src/helpers/Compression.h"
+#include "src/helpers/Json.h"
 #include "src/helpers/Platform.h"
 #include "src/helpers/UploadHelper.h"
 #include "src/i18n/Translations.h"
@@ -140,15 +143,8 @@ void FeederThread::_feed(const std::stop_token& stop) {
 
     _say(tr("Sending... Waiting for response."));
 
-    const auto response = UploadHelper::uploadDataToPlatform(
-        client,
-        {
-            .connectivityInfos = _connectivityInfos,
-            .uploadInfos = AppSettings::getFeederUploadInfos(),
-            .dataToUpload = compressedData,
-        },
-        AppSettings::FeedFormat::Compressed, stop
-    );
+    const auto response =
+        UploadHelper::uploadLibrary(client, _connectivityInfos, compressedData, AppSettings::FeedFormat::Compressed, stop);
 
     if (stop.stop_requested()) return;
 
@@ -160,10 +156,10 @@ void FeederThread::_feed(const std::stop_token& stop) {
             ),
             workers::MessageKind::Issue
         );
-    } else if (!response.body.empty()) {
-        logs::info("Feeder", "Uploaded, HTTP {}", response.status);
-        _say(i18n::format(i18n::tr("Server responded: %1"), { response.body }));
     } else {
-        _say(tr("No feedback from the server ? Strange... Please check the targeted host."), workers::MessageKind::Warning);
+        logs::info("Feeder", "Uploaded, HTTP {}", response.status);
+        const auto answer = json::parse(response.body);
+        const auto changed = json::boolean(yyjson_obj_get(json::root(answer), "changed"), /*fallback=*/true);
+        _say(tr(changed ? "Your library is online, bon appétit !" : "Your library online is already up to date."));
     }
 }
