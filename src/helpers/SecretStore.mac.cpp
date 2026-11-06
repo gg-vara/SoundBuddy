@@ -8,10 +8,12 @@
 #include <CoreFoundation/CoreFoundation.h>
 #include <Security/Security.h>
 
+#include <cstddef>
 #include <filesystem>
 #include <optional>
 #include <string>
 #include <string_view>
+#include <utility>
 
 #include "version.h"
 
@@ -28,6 +30,8 @@ class Owned {
     ~Owned() {
         if (_ref) CFRelease(_ref);
     }
+    Owned(Owned&& other) noexcept :
+        _ref(std::exchange(other._ref, nullptr)) {}
     Owned(const Owned&) = delete;
     void operator=(const Owned&) = delete;
 
