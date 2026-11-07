@@ -9,7 +9,7 @@
 #include <string>
 #include <thread>
 
-#include "src/helpers/AppSettings.h"
+#include "src/settings/AppSettings.h"
 #include "src/net/HttpClient.h"
 
 namespace mbeat {

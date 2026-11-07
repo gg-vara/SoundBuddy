@@ -14,7 +14,7 @@
 
 #include "Check.h"
 #include "TestData.h"
-#include "src/helpers/AppSettings.h"
+#include "src/settings/AppSettings.h"
 #include "src/helpers/Options.h"
 #include "src/helpers/Platform.h"
 #include "version.h"

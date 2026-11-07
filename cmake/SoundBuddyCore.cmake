@@ -14,7 +14,6 @@ function(soundbuddy_add_core target scope)
     set(src ${SOUNDBUDDY_CORE_DIR})
 
     target_sources(${target} PRIVATE
-        ${src}/helpers/AppSettings.cpp
         ${src}/helpers/Hash.cpp
         ${src}/helpers/Options.cpp
         ${src}/helpers/Platform.cpp
@@ -23,6 +22,7 @@ function(soundbuddy_add_core target scope)
         ${src}/net/HttpClient.cpp
         ${src}/net/PlatformSession.cpp
         ${src}/net/SseParser.cpp
+        ${src}/settings/AppSettings.cpp
         ${src}/settings/Settings.cpp
         ${src}/ui/PageMessages.cpp
         ${src}/workers/base/Message.cpp
@@ -41,7 +41,7 @@ function(soundbuddy_add_core target scope)
 
     if(WIN32)
         target_sources(${target} PRIVATE
-            ${src}/helpers/AppSettings.win.cpp
+            ${src}/settings/AppSettings.win.cpp
             ${src}/helpers/Compression.win.cpp
             ${src}/helpers/Platform.win.cpp
             ${src}/helpers/SecretStore.win.cpp
@@ -67,7 +67,7 @@ function(soundbuddy_add_core target scope)
         )
     elseif(APPLE)
         target_sources(${target} PRIVATE
-            ${src}/helpers/AppSettings.mac.cpp
+            ${src}/settings/AppSettings.mac.cpp
             ${src}/helpers/Compression.mac.cpp
             ${src}/helpers/Platform.mac.mm
             ${src}/helpers/SecretStore.mac.cpp

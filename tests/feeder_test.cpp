@@ -15,7 +15,7 @@
 #include "Check.h"
 #include "TestSession.h"
 #include "TestData.h"
-#include "src/helpers/AppSettings.h"
+#include "src/settings/AppSettings.h"
 #include "src/helpers/Platform.h"
 #include "src/i18n/Translations.h"
 #include "src/workers/base/Message.h"

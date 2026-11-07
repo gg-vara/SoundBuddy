@@ -10,7 +10,7 @@
 #include <string>
 #include <string_view>
 
-#include "src/helpers/AppSettings.h"
+#include "src/settings/AppSettings.h"
 #include "src/ui/PageMessages.h"
 #include "src/workers/base/Message.h"
 #include "src/workers/base/UpdateChecker.h"

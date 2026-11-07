@@ -7,7 +7,7 @@
 #include <memory>
 #include <string>
 
-#include "src/helpers/AppSettings.h"
+#include "src/settings/AppSettings.h"
 #include "src/net/PlatformSession.h"
 
 // what a worker gets to reach "host", with a password yet to exchange
