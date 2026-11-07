@@ -10,7 +10,7 @@
 #include <string>
 #include <string_view>
 
-#include "src/ui/Controller.h"
+#include "src/app/Controller.h"
 
 namespace ui {
 

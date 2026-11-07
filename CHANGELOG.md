@@ -2,6 +2,19 @@
 
 Each section becomes the notes of its GitHub release, and of the update that installed copies download (see `cmake/velopack/vpk.cmake`).
 
+## 0.14.0
+
+> **Requires SoundVitrine 0.13 or newer** : this version logs in with OAuth, which older servers do not offer. It cannot connect to them.
+
+> **Unsigned build** : this installer is not code-signed yet. Windows SmartScreen may block it ("Windows protected your PC") : choose **More info**, then **Run anyway**.
+
+This version includes 0.13.0, which was never published : see below for what it brings.
+
+### Changed
+
+- Releases are published as soon as they are built
+- The installer and the portable archive carry the version in their names, and say there that they are unsigned, rather than the title of the release
+
 ## 0.13.0
 
 > **Requires SoundVitrine 0.13 or newer** : this version logs in with OAuth, which older servers do not offer. It cannot connect to them.

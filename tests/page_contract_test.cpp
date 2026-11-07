@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2018-2026 Guillaume Vara <guillaume.vara@gmail.com>
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-// The messages between the application and its page (src/ui/PageMessages.h), against the page's types : every message
+// The messages between the application and its page (src/app/PageMessages.h), against the page's types : every message
 // the application can send, and the calls it handles, are written as TypeScript into the file given as argument, each
 // value "satisfies" its type. The page-contract-types test then checks them with tsc (see tests/CMakeLists.txt)
 
@@ -18,9 +18,9 @@
 #include "TestData.h"
 #include "src/helpers/Platform.h"
 #include "src/settings/Settings.h"
-#include "src/ui/PageMessages.h"
+#include "src/app/PageMessages.h"
 #include "src/workers/base/Message.h"
-#include "src/workers/mBeat/MBeatThread.h"
+#include "src/workers/heartbeat/HeartbeatThread.h"
 #include "src/workers/shout/ShoutPayload.h"
 
 namespace {
@@ -88,7 +88,8 @@ int main(int argc, char* argv[]) {
 
     // events : every variant
     std::vector<std::string> events;
-    for (const auto connectivity : { mbeat::Connectivity::Refused, mbeat::Connectivity::Checking, mbeat::Connectivity::Connected }) {
+    for (const auto connectivity :
+         { heartbeat::Connectivity::Refused, heartbeat::Connectivity::Checking, heartbeat::Connectivity::Connected }) {
         events.push_back(ui::page::statusEvent({ .text = "Status", .connectivity = connectivity }));
     }
     for (const auto tab : { Tab::Shout, Tab::Feeder }) {
@@ -130,7 +131,7 @@ int main(int argc, char* argv[]) {
                  .repositoryUrl = "https://example.invalid",
                  .dataFolder = "folder" },
         .translations = { { "Shout", "Crier" } },
-        .status = { .text = "Connected", .connectivity = mbeat::Connectivity::Connected },
+        .status = { .text = "Connected", .connectivity = heartbeat::Connectivity::Connected },
         .shout = { .log = { { .message = { .text = "Shouting", .kind = workers::MessageKind::Standard }, .time = 1700000000000 } },
                    .running = true },
         .feeder = {},

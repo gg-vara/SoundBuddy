@@ -5,8 +5,8 @@
 
 #include "Check.h"
 #include "TestSession.h"
-#include "src/helpers/AppSettings.h"
-#include "src/helpers/UploadHelper.h"
+#include "src/settings/AppSettings.h"
+#include "src/net/UploadHelper.h"
 #include "src/net/HttpClient.h"
 
 int main() {

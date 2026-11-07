@@ -26,8 +26,8 @@
 #endif
 
 #include "src/helpers/Json.h"
-#include "src/ui/Controller.h"
-#include "src/ui/Post.h"
+#include "src/app/Controller.h"
+#include "src/app/Post.h"
 #include "version.h"
 
 namespace ui {

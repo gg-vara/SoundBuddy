@@ -9,10 +9,10 @@
 #include <string>
 #include <thread>
 
-#include "src/helpers/AppSettings.h"
+#include "src/settings/AppSettings.h"
 #include "src/net/HttpClient.h"
 
-namespace mbeat {
+namespace heartbeat {
 
 enum class Connectivity {
     Refused,  // no credentials, refused ones, or platform unreachable
@@ -28,16 +28,16 @@ struct Status {
 // receives the connectivity status, on the heartbeat's thread
 using OnStatus = std::function<void(const Status&)>;
 
-}  // namespace mbeat
+}  // namespace heartbeat
 
 // Periodically checks the platform credentials on its own thread, from construction until
 // destruction, or until the credentials are refused
-class MBeatThread {
+class HeartbeatThread {
  public:
-    MBeatThread(AppSettings::ConnectivityInfos connectivityInfos, mbeat::OnStatus onStatus);
+    HeartbeatThread(AppSettings::ConnectivityInfos connectivityInfos, heartbeat::OnStatus onStatus);
 
     // stops right away, even while waiting for the next heartbeat or a response
-    ~MBeatThread();
+    ~HeartbeatThread();
 
     // heartbeats
     static inline const std::chrono::milliseconds heartbeatInterval { 30000 };
@@ -45,7 +45,7 @@ class MBeatThread {
 
  private:
     const AppSettings::ConnectivityInfos _connectivityInfos;
-    const mbeat::OnStatus _onStatus;
+    const heartbeat::OnStatus _onStatus;
     net::HttpClient _client;
 
     // declared last : started once the members it uses are initialized, stopped and joined first

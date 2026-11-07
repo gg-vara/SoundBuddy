@@ -1,5 +1,5 @@
 # When the version changes in CMakeLists.txt : builds the unsigned Windows installer, keeps it as an artifact of the run, and
-# creates the GitHub release as a draft. Publishing it stays a click, as it updates every installed copy.
+# publishes the GitHub release, which updates every installed copy.
 # Also started by hand, whatever the version (Actions > Package > Run workflow), with the release as an option.
 name: Package
 
@@ -10,7 +10,7 @@ on:
   workflow_dispatch:
     inputs:
       release:
-        description: Create the draft release too
+        description: Publish the release too
         type: boolean
         default: false
 
@@ -71,7 +71,7 @@ jobs:
     runs-on: windows-latest
     timeout-minutes: 45
     permissions:
-      # the draft release
+      # the release
       contents: write
     defaults:
       run:
@@ -122,16 +122,15 @@ jobs:
       - uses: actions/upload-artifact@v7
         with:
           name: SoundBuddy-v${{ needs.version.outputs.version }}-windows-x64-unsigned
-          path: build_release_unsigned/releases/SoundBuddy-win-Setup.exe
+          path: build_release_unsigned/releases/SoundBuddy-${{ needs.version.outputs.version }}-win-Setup-unsigned.exe
           if-no-files-found: error
           # already compressed
           compression-level: 0
 
-      - name: Draft release
+      - name: Release
         if: github.event_name == 'push' || inputs.release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          SOUNDBUDDY_RELEASE_DRAFT: 1
-          # a draft gets its tag when published : on what was built here, not on what main has become
+          # tagged on what was built here, not on what main has become
           SOUNDBUDDY_RELEASE_COMMIT: ${{ github.sha }}
         run: cmake --build --preset windows-release-unsigned-publish

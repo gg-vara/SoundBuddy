@@ -68,7 +68,7 @@ Builds are described by CMake presets (`CMakePresets.json`), also used by the VS
 
 GitHub Actions (`.github/workflows/ci.yml`) builds and tests every push to `main` and every pull request, with the prerequisites and presets above : on Windows in MSYS2 CLANG64 (`msys2/setup-msys2`, then `prerequisites/msys2/*.txt`) through `windows-ci`, on macOS with Homebrew (`prerequisites/Brewfile`) through `macos-test`.
 
-When the version changes in `CMakeLists.txt` on `main`, `.github/workflows/package.yml` also runs the unit tests, then builds the unsigned Windows installer through `windows-package`, kept as an artifact of the run, and creates the `vX.Y.Z` GitHub release as a draft : publishing it, from the Releases page, is what updates installed copies. It can be started by hand from the Actions tab, the release being then an option.
+When the version changes in `CMakeLists.txt` on `main`, `.github/workflows/package.yml` also runs the unit tests, then builds the unsigned Windows installer through `windows-package`, kept as an artifact of the run, and publishes the `vX.Y.Z` GitHub release, which updates installed copies : bumping the version on `main` is what ships it. It can be started by hand from the Actions tab, the release being then an option.
 
 ### Visual Studio Code
 
@@ -85,7 +85,7 @@ On Windows, clangd and CMake are taken from the CLANG64 environment of `MSYS2_RO
 
 `SoundBuddy --data-dir <folder>` keeps to that folder : settings of previous versions are not imported, start at login stays off, nothing opens in other apps, no update is looked for, and it runs beside another instance. Add `--library <file>` to read that iTunes XML library, as the real one is otherwise left alone.
 
-`--headless` then removes the window : the app is driven through its standard input and output (see `src/ui/Headless.h`), as `tests/headless.test.ts` does.
+`--headless` then removes the window : the app is driven through its standard input and output (see `src/app/Headless.h`), as `tests/headless.test.ts` does.
 
 ### Static analysis and layout
 
@@ -105,7 +105,7 @@ Tests run under their own identity (`tests/support/version.h`) : they never touc
 
 ## User interface
 
-The user interface is a web page shown in the system webview, hosted by a native shell : a window and a tray icon on Windows (WebView2, `src/ui/win`), a window and a menu bar item on macOS (WKWebView, `src/ui/mac`). The application state and its workers live in C++ (`src/ui/Controller.cpp`); the page shows it, and asks for changes :
+The user interface is a web page shown in the system webview, hosted by a native shell : a window and a tray icon on Windows (WebView2, `src/ui/win`), a window and a menu bar item on macOS (WKWebView, `src/ui/mac`). The application state and its workers live in C++ (`src/app/Controller.cpp`); the page shows it, and asks for changes :
 
 - `src/ui/page` : the page, in TypeScript with [Solid](https://www.solidjs.com), its states in an [XState](https://stately.ai/docs/xstate) machine (`src/machine.ts`), built by [Vite](https://vite.dev) into a single HTML file embedded in the executable
 - `bun run dev` (from `src/ui/page`) : the page in a browser, with live reload, against a stand-in of the application (`src/dev/fakeNative.ts`)
@@ -136,7 +136,7 @@ Requirements, in addition to the build dependencies :
 Then, after bumping the version in `CMakeLists.txt` (`project(... VERSION X.Y.Z`) and describing it in a `## X.Y.Z` section of `CHANGELOG.md` (its release notes) :
 - `cmake --workflow --preset windows-package` builds in Release and packages the app into `build_release_unsigned/releases`, without signing nor publishing anything : useful to check a release locally
 - `cmake --workflow --preset windows-publish` builds, signs, packages, and publishes the `vX.Y.Z` GitHub release. Set the `SOUNDBUDDY_RELEASE_DRAFT` environment variable to create it as a draft instead
-- `cmake --workflow --preset windows-publish-unsigned` does the same without signing, the release being named `SoundBuddy vX.Y.Z (unsigned)`
+- `cmake --workflow --preset windows-publish-unsigned` does the same without signing, the installer and the portable archive being named so (`SoundBuddy-X.Y.Z-win-Setup-unsigned.exe`)
 - on macOS, `macos-package` / `macos-publish` add the macOS packages to the same release
 
 Packaging fetches the previous release (`vpk download github`) to generate delta updates, then runs `vpk pack`; publishing runs `vpk upload github` (see `cmake/Velopack.cmake`).

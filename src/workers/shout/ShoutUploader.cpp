@@ -9,8 +9,8 @@
 #include <string>
 #include <utility>
 
-#include "src/helpers/AppSettings.h"
-#include "src/helpers/UploadHelper.h"
+#include "src/settings/AppSettings.h"
+#include "src/net/UploadHelper.h"
 #include "src/i18n/Translations.h"
 #include "src/logs/Logs.h"
 

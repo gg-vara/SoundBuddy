@@ -39,7 +39,7 @@
 { "An error occured while sending tracks infos to %1 platform : %2",
   "Une erreur s'est produite pendant l'envoi des informations de morceaux à la plateforme %1 : %2" },
 
-// MBeatThread
+// HeartbeatThread
 { "Logged as \"%1\"",
   "Connecté en tant que \"%1\"" },
 { "Waiting for appropriate credentials.",

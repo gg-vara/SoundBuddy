@@ -57,7 +57,7 @@ soundbuddy_test(sse)
 
 # workers, against unreachable platforms : local closed port, unroutable address
 soundbuddy_test(shout_uploader)
-soundbuddy_test(mbeat)
+soundbuddy_test(heartbeat)
 soundbuddy_test(feeder)
 soundbuddy_test(shout_watcher)
 

@@ -36,7 +36,7 @@ build_ci/out/SoundBuddy.exe --headless --data-dir <empty folder> --library "deps
 
 No window, and nothing of the session's real data : see `platform::isolate()`. Without `--library`, the feed fails rather than reading the real library. `--data-dir` alone gives the real window, as isolated.
 
-It is driven by lines on its standard input, and answers with JSON lines (`src/ui/Headless.h`, `tests/headless.test.ts`) :
+It is driven by lines on its standard input, and answers with JSON lines (`src/app/Headless.h`, `tests/headless.test.ts`) :
 
 ```
 command ["savePreferences",{"platformHostUrl":"http://localhost:3000","platformUsername":"testcurator","platformPassword":"testpassword"}]
@@ -50,9 +50,10 @@ Shouts still need the real music app : `runShouts` watches iTunes, so nothing re
 
 ## Structure
 
-- `src/ui/Controller` : the application state and its workers, independent of the platform. It talks to the window through the `ui::Shell` interface
-- `src/ui/PageMessages` : every message between the page and the application. `tests/page_contract_test.cpp` checks them against the page's TypeScript types
-- `src/ui/win`, `src/ui/mac` : the native windows. `src/ui/Headless` : the same application without one
+- `src/app/Controller` : the application state and its workers, independent of the platform. It talks to the window through the `ui::Shell` interface
+- `src/app/PageMessages` : every message between the page and the application. `tests/page_contract_test.cpp` checks them against the page's TypeScript types
+- `src/ui/win`, `src/ui/mac` : the native windows. `src/app/Headless` : the same application without one
+- `src/settings` : what the user sets, and where it is kept. `src/net` : HTTP, the login, uploads
 - `src/workers` : heartbeat, library feed, shouts. `*.win.cpp` and `*.mac.cpp` are the platform parts
 - `tests/` : one program per test, run by ctest. The `network` label reaches public services, and is left out of default runs
 

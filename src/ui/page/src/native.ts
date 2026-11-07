@@ -3,7 +3,7 @@
 
 // Calls to the application, bound by the native shell (src/ui/win/MainWindow.win.cpp) :
 // sbQuery(name, argument) answers, sbCommand(name, argument) acts; the application calls sb.receive(event).
-// The application handles these names (src/ui/PageMessages.h), as tests/page_contract_test.cpp checks
+// The application handles these names (src/app/PageMessages.h), as tests/page_contract_test.cpp checks
 import type { NativeEvent, NativeState, WarningsReport } from './state';
 
 export type QueryName = 'ready' | 'warnings';

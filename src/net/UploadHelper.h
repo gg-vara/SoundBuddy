@@ -8,7 +8,7 @@
 #include <string>
 #include <string_view>
 
-#include "src/helpers/AppSettings.h"
+#include "src/settings/AppSettings.h"
 #include "src/i18n/Translations.h"
 #include "src/net/HttpClient.h"
 #include "src/net/Multipart.h"

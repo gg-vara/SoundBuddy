@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2018-2026 Guillaume Vara <guillaume.vara@gmail.com>
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-// MBeatThread : statuses, stopped quickly while waiting or requesting
+// HeartbeatThread : statuses, stopped quickly while waiting or requesting
 
 #include <chrono>
 #include <cstddef>
@@ -11,7 +11,7 @@
 
 #include "Check.h"
 #include "TestSession.h"
-#include "src/workers/mBeat/MBeatThread.h"
+#include "src/workers/heartbeat/HeartbeatThread.h"
 
 using namespace std::chrono_literals;
 
@@ -20,16 +20,16 @@ namespace {
 // collects the statuses of a heartbeat, from its thread
 struct Statuses {
     std::mutex mutex;
-    std::vector<mbeat::Status> received;
+    std::vector<heartbeat::Status> received;
 
-    mbeat::OnStatus sink() {
-        return [this](const mbeat::Status& status) {
+    heartbeat::OnStatus sink() {
+        return [this](const heartbeat::Status& status) {
             const std::scoped_lock lock { mutex };
             received.push_back(status);
         };
     }
 
-    std::vector<mbeat::Status> get() {
+    std::vector<heartbeat::Status> get() {
         const std::scoped_lock lock { mutex };
         return received;
     }
@@ -55,10 +55,10 @@ int main() {
     // no credentials : refused right away, then the thread ends
     {
         Statuses statuses;
-        const MBeatThread heartbeat { {}, statuses.sink() };
+        const HeartbeatThread heartbeat { {}, statuses.sink() };
         CHECK(statuses.waitFor(1, 2s), "status without credentials");
         const auto received = statuses.get();
-        CHECK(received.size() == 1 && received[0].connectivity == mbeat::Connectivity::Refused, "refused for lack of credentials");
+        CHECK(received.size() == 1 && received[0].connectivity == heartbeat::Connectivity::Refused, "refused for lack of credentials");
     }
 
     // platform unreachable : checking, refused, then waits for the next heartbeat (30 s), destruction must not
@@ -66,7 +66,7 @@ int main() {
         Statuses statuses;
         auto start = std::chrono::steady_clock::now();
         {
-            const MBeatThread heartbeat { connectedTo("http://127.0.0.1:9"), statuses.sink() };
+            const HeartbeatThread heartbeat { connectedTo("http://127.0.0.1:9"), statuses.sink() };
             CHECK(statuses.waitFor(2, 10s), "two statuses");
             start = std::chrono::steady_clock::now();
         }
@@ -74,8 +74,8 @@ int main() {
 
         const auto received = statuses.get();
         CHECK(
-            received.size() == 2 && received[0].connectivity == mbeat::Connectivity::Checking &&
-                received[1].connectivity == mbeat::Connectivity::Refused,
+            received.size() == 2 && received[0].connectivity == heartbeat::Connectivity::Checking &&
+                received[1].connectivity == heartbeat::Connectivity::Refused,
             "checking, then refused"
         );
         CHECK(received.size() == 2 && received[1].text.find("SoundVitrine") != std::string::npos, "refusal names the platform");
@@ -86,7 +86,7 @@ int main() {
         Statuses statuses;
         auto start = std::chrono::steady_clock::now();
         {
-            const MBeatThread heartbeat { connectedTo("http://10.255.255.1"), statuses.sink() };
+            const HeartbeatThread heartbeat { connectedTo("http://10.255.255.1"), statuses.sink() };
             CHECK(statuses.waitFor(1, 2s), "checking");
             std::this_thread::sleep_for(300ms);
             start = std::chrono::steady_clock::now();

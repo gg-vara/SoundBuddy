@@ -7,7 +7,7 @@ namespace ui {
 
 // Runs the application without a window, to test it or drive it from a program, one line per message :
 //
-//   on the standard input, as the page calls the application (src/ui/PageMessages.h, src/ui/page/src/native.ts) :
+//   on the standard input, as the page calls the application (src/app/PageMessages.h, src/ui/page/src/native.ts) :
 //     query ["ready",[]]
 //     command ["runFeeder",null]
 //   on the standard output, JSON objects with a "type" :

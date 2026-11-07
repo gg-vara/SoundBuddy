@@ -14,7 +14,7 @@
 
 #include "src/settings/Settings.h"
 #include "src/workers/base/Message.h"
-#include "src/workers/mBeat/MBeatThread.h"
+#include "src/workers/heartbeat/HeartbeatThread.h"
 
 namespace ui {
 
@@ -114,7 +114,7 @@ struct TabState {
 struct State {
     AppInfo app;
     std::vector<std::pair<std::string, std::string>> translations;  // source text, translation
-    mbeat::Status status;
+    heartbeat::Status status;
     TabState shout;
     TabState feeder;
     std::string nowPlaying;  // the last shout, as JSON : empty if none
@@ -132,7 +132,7 @@ std::string state(const State& state);
 // State changes, as events
 //
 
-std::string statusEvent(const mbeat::Status& status);
+std::string statusEvent(const heartbeat::Status& status);
 // appended to the tab's log, or replacing its last entry, as the message says
 std::string logEvent(Tab tab, const LogEntry& entry);
 // a run starts with a new log
