@@ -4,7 +4,7 @@
 // The real executable, without a window, against a local server standing in for SoundVitrine.
 // SOUNDBUDDY_EXE and SOUNDBUDDY_LIBRARY are set by tests/CMakeLists.txt
 
-import { afterAll, afterEach, beforeAll, expect, test } from 'bun:test';
+import { afterAll, afterEach, beforeAll, describe, expect, test } from 'bun:test';
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
@@ -131,6 +131,7 @@ let tokenCount = 0;
 let replays = 0;
 let expiresIn = 3600;
 let refreshDelayMs = 0;
+let tokensDelayMs = 0;
 
 const tokensAnswer = () => {
   tokenCount += 1;
@@ -153,6 +154,7 @@ beforeAll(() => {
       received.push({ path, headers: request.headers, body });
 
       if (path === '/oauth/token') {
+        await Bun.sleep(tokensDelayMs);
         const fields = new URLSearchParams(Buffer.from(raw).toString('utf8'));
         if (fields.get('client_id') !== 'soundbuddy') return oauthError('Unknown client', 401);
 
@@ -194,6 +196,7 @@ afterEach(async () => {
   replays = 0;
   expiresIn = 3600;
   refreshDelayMs = 0;
+  tokensDelayMs = 0;
 });
 
 afterAll(() => {
@@ -331,6 +334,47 @@ test(
   },
   TIMEOUT_MS,
 );
+
+// the window lives on the thread answering these calls : what a slow platform delays, it freezes
+describe('with a platform slow to give tokens', () => {
+  const slowStart = async () => {
+    tokensDelayMs = 3000;
+    const folder = dataFolder();
+    mkdirSync(folder, { recursive: true });
+    writeFileSync(join(folder, 'settings.json'), JSON.stringify({ ...preferences(), autoRunShout: false, runAtStartup: false }));
+    const app = await start(folder);
+    // the heartbeat is now asking for them
+    await Bun.sleep(300);
+    return app;
+  };
+
+  const timeOf = async (action: () => Promise<unknown>) => {
+    const begin = performance.now();
+    await action();
+    return performance.now() - begin;
+  };
+
+  test(
+    'the page gets its state right away',
+    async () => {
+      const app = await slowStart();
+      expect(await timeOf(() => app.query('ready', []))).toBeLessThan(500);
+    },
+    TIMEOUT_MS,
+  );
+
+  test(
+    'a worker waiting for them stops right away',
+    async () => {
+      const app = await slowStart();
+      await app.command('runFeeder');
+      // long enough to read the library, and wait for tokens
+      await Bun.sleep(1000);
+      expect(await timeOf(() => app.command('runFeeder'))).toBeLessThan(500);
+    },
+    TIMEOUT_MS,
+  );
+});
 
 test(
   'keeps the password while the platform cannot answer',
