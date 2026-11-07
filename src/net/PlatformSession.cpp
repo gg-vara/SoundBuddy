@@ -63,22 +63,6 @@ Response refused(std::string why) {
     return response;
 }
 
-// runs "action" when leaving the scope, however it is left
-template <typename Action>
-class Finally {
- public:
-    explicit Finally(Action action) :
-        _action(std::move(action)) {}
-    Finally(const Finally&) = delete;
-    Finally(Finally&&) = delete;
-    Finally& operator=(const Finally&) = delete;
-    Finally& operator=(Finally&&) = delete;
-    ~Finally() { _action(); }
-
- private:
-    Action _action;
-};
-
 }  // namespace
 
 std::string PlatformSession::apiUrlOf(std::string_view hostUrl) {
@@ -149,8 +133,7 @@ Response PlatformSession::send(HttpClient& client, const Request& request, const
 PlatformSession::Access PlatformSession::_access(HttpClient& client, const std::stop_token& stop, const std::string& tokenRefused) {
     std::unique_lock lock { _mutex };
 
-    // stoppable : whoever stops this worker must not end up waiting for the request of another one
-    if (!_exchangeEnded.wait(lock, stop, [this] { return !_exchanging; })) {
+    if (!_exchange.waitForTurn(lock, stop)) {
         Response cancelled;
         cancelled.error = "Request cancelled";
         return { .failure = std::move(cancelled) };
@@ -164,23 +147,12 @@ PlatformSession::Access PlatformSession::_access(HttpClient& client, const std::
         if (stillGood) return { .token = _accessToken };
     }
 
-    const auto password = _password;
-    const auto refreshToken = _refreshToken;
-    _exchanging = true;
-    lock.unlock();
-
-    const Finally ended { [this] {
-        {
-            const std::scoped_lock relock { _mutex };
-            _exchanging = false;
-        }
-        _exchangeEnded.notify_all();
-    } };
-
-    return _exchange(client, stop, password, refreshToken);
+    return _exchange.fly(lock, [this, &client, &stop, password = _password, refreshToken = _refreshToken] {
+        return _exchangeTokens(client, stop, password, refreshToken);
+    });
 }
 
-PlatformSession::Access PlatformSession::_exchange(
+PlatformSession::Access PlatformSession::_exchangeTokens(
     HttpClient& client, const std::stop_token& stop, const std::string& password, const std::string& refreshToken
 ) {
     if (!password.empty()) {
