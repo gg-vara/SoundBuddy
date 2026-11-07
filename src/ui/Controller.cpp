@@ -28,7 +28,7 @@
 #include "src/ui/Post.h"
 #include "src/workers/base/Message.h"
 #include "src/workers/feeder/FeederThread.h"
-#include "src/workers/mBeat/MBeatThread.h"
+#include "src/workers/heartbeat/HeartbeatThread.h"
 #include "version.h"
 
 namespace ui {
@@ -80,7 +80,7 @@ PageCall parseCall(std::string_view request) {
 Controller::Controller(Shell& shell) :
     _shell(shell) {
     _startSession();
-    _runMBeat();
+    _runHeartbeat();
     checkForUpdates();
 
     if (_appSettings.values().autoRunShout) _runShouts();
@@ -91,7 +91,7 @@ Controller::~Controller() {
     _shoutWorker.reset();
     _shoutUploader.reset();
     _feederWorker.reset();
-    _mbeatWorker.reset();
+    _heartbeatWorker.reset();
 }
 
 //
@@ -278,7 +278,7 @@ void Controller::requestQuit() {
     }
 
     // stops the heartbeat, aborting its request in progress if any
-    _mbeatWorker.reset();
+    _heartbeatWorker.reset();
 
     _shell.quit();
 }
@@ -300,19 +300,19 @@ workers::MessageSink Controller::_messageSink(Tab tab) {
     return [this, tab](const workers::Message& message) { post([this, tab, message] { _log(tab, message); }); };
 }
 
-void Controller::_runMBeat() {
+void Controller::_runHeartbeat() {
     // the previous heartbeat stops first
-    _mbeatWorker.reset();
+    _heartbeatWorker.reset();
 
-    _mbeatWorker = std::make_unique<MBeatThread>(_appSettings.getConnectivityInfos(), [this](const mbeat::Status& status) {
+    _heartbeatWorker = std::make_unique<HeartbeatThread>(_appSettings.getConnectivityInfos(), [this](const heartbeat::Status& status) {
         post([this, status] {
             _status = status;
 
             _shell.sendToPage(page::statusEvent(status));
 
             // while checking, the last answer stands : the heartbeat would otherwise make the dot blink
-            if (status.connectivity != mbeat::Connectivity::Checking) {
-                _trayDot = status.connectivity == mbeat::Connectivity::Connected ? TrayState::Dot::Ok : TrayState::Dot::Issue;
+            if (status.connectivity != heartbeat::Connectivity::Checking) {
+                _trayDot = status.connectivity == heartbeat::Connectivity::Connected ? TrayState::Dot::Ok : TrayState::Dot::Issue;
                 _sendTrayState();
             }
         });
@@ -416,7 +416,7 @@ void Controller::_setAutoRunShout(bool enabled) {
 
 void Controller::_onConnectivityChanged() {
     // workers restart with the new connectivity infos
-    _runMBeat();
+    _runHeartbeat();
     if (_shoutWorker && _shoutWorker->isRunning()) _runShouts();
     if (_feederWorker && _feederWorker->isRunning()) _runFeeder();
 }

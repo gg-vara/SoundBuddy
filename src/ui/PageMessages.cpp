@@ -12,7 +12,7 @@
 #include "src/helpers/Json.h"
 #include "src/settings/Settings.h"
 #include "src/workers/base/Message.h"
-#include "src/workers/mBeat/MBeatThread.h"
+#include "src/workers/heartbeat/HeartbeatThread.h"
 
 namespace ui::page {
 
@@ -34,13 +34,13 @@ const char* kindName(workers::MessageKind kind) {
     return "standard";
 }
 
-const char* connectivityName(mbeat::Connectivity connectivity) {
+const char* connectivityName(heartbeat::Connectivity connectivity) {
     switch (connectivity) {
-        case mbeat::Connectivity::Refused:
+        case heartbeat::Connectivity::Refused:
             break;
-        case mbeat::Connectivity::Checking:
+        case heartbeat::Connectivity::Checking:
             return "checking";
-        case mbeat::Connectivity::Connected:
+        case heartbeat::Connectivity::Connected:
             return "connected";
     }
     return "refused";
@@ -119,7 +119,7 @@ yyjson_mut_val* logEntryValue(yyjson_mut_doc* doc, const LogEntry& entry) {
     return value;
 }
 
-yyjson_mut_val* statusValue(yyjson_mut_doc* doc, const mbeat::Status& status) {
+yyjson_mut_val* statusValue(yyjson_mut_doc* doc, const heartbeat::Status& status) {
     auto* const value = yyjson_mut_obj(doc);
     addString(doc, value, "text", status.text);
     addString(doc, value, "connectivity", connectivityName(status.connectivity));
@@ -230,7 +230,7 @@ std::string state(const State& state) {
 // State changes
 //
 
-std::string statusEvent(const mbeat::Status& status) {
+std::string statusEvent(const heartbeat::Status& status) {
     const auto changed = event("status");
     yyjson_mut_obj_add_val(changed.doc(), changed.root(), "status", statusValue(changed.doc(), status));
     return changed.write();

@@ -15,7 +15,7 @@
 #include "src/workers/base/Message.h"
 #include "src/workers/base/UpdateChecker.h"
 #include "src/workers/feeder/FeederThread.h"
-#include "src/workers/mBeat/MBeatThread.h"
+#include "src/workers/heartbeat/HeartbeatThread.h"
 #include "src/workers/shout/ShoutUploader.h"
 #include "src/workers/shout/ShoutWatcher.h"
 
@@ -109,7 +109,7 @@ class Controller {
 
     TabState _shoutTab;
     TabState _feederTab;
-    mbeat::Status _status { .text = {}, .connectivity = mbeat::Connectivity::Checking };
+    heartbeat::Status _status { .text = {}, .connectivity = heartbeat::Connectivity::Checking };
     std::string _nowPlaying;  // last shout, as JSON
     std::optional<Panel> _pendingPanel;
     TrayState::Dot _trayDot = TrayState::Dot::None;
@@ -118,7 +118,7 @@ class Controller {
     bool _quitting = false;
 
     // workers, stopped by the destructor : the watcher, which hands shouts to the uploader, stops first
-    std::unique_ptr<MBeatThread> _mbeatWorker;
+    std::unique_ptr<HeartbeatThread> _heartbeatWorker;
     std::unique_ptr<FeederThread> _feederWorker;
     std::unique_ptr<ShoutUploader> _shoutUploader;
     std::unique_ptr<ShoutWatcher> _shoutWorker;
@@ -129,7 +129,7 @@ class Controller {
     // workers
     workers::MessageSink _messageSink(Tab tab);
     void _startSession();
-    void _runMBeat();
+    void _runHeartbeat();
     void _runShouts();
     void _stopShouts();
     void _runFeeder();

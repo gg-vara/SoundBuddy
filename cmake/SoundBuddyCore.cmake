@@ -27,7 +27,7 @@ function(soundbuddy_add_core target scope)
         ${src}/ui/PageMessages.cpp
         ${src}/workers/base/Message.cpp
         ${src}/workers/feeder/FeederThread.cpp
-        ${src}/workers/mBeat/MBeatThread.cpp
+        ${src}/workers/heartbeat/HeartbeatThread.cpp
         ${src}/workers/shout/ShoutPayload.cpp
         ${src}/workers/shout/ShoutPayloadConsumer.cpp
         ${src}/workers/shout/ShoutUploader.cpp
