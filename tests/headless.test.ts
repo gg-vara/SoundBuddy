@@ -147,6 +147,8 @@ const oauthError = (description: string, status = 400) => Response.json({ error:
 beforeAll(() => {
   server = Bun.serve({
     port: 0,
+    // longer than what is tested : Bun would otherwise end the connection first
+    idleTimeout: 60,
     async fetch(request) {
       const raw = await request.arrayBuffer();
       const body = Buffer.from(raw).toString('latin1');
@@ -359,6 +361,24 @@ describe('with a platform slow to give tokens', () => {
     async () => {
       const app = await slowStart();
       expect(await timeOf(() => app.query('ready', []))).toBeLessThan(500);
+    },
+    TIMEOUT_MS,
+  );
+
+  test(
+    'gives up on them, rather than saying it is checking for long',
+    async () => {
+      tokensDelayMs = 15_000;
+      const folder = dataFolder();
+      mkdirSync(folder, { recursive: true });
+      writeFileSync(join(folder, 'settings.json'), JSON.stringify({ ...preferences(), autoRunShout: false, runAtStartup: false }));
+
+      const begin = performance.now();
+      const app = await start(folder);
+      await app.wait(message => message.type === 'status' && message.status.connectivity !== 'checking', 'end of the check');
+      const taken = performance.now() - begin;
+      expect(taken).toBeGreaterThan(9000);
+      expect(taken).toBeLessThan(14_000);
     },
     TIMEOUT_MS,
   );

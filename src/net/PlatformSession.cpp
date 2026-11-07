@@ -31,6 +31,9 @@ constexpr std::string_view clientId = "soundbuddy";
 // renewed that long before it ends, not to send what expires on the way
 constexpr std::int64_t expiryMarginSeconds = 60;
 
+// what is waiting for tokens is told sooner than the default, while a platform checking a password has the time it needs
+constexpr std::chrono::seconds tokensTimeout { 10 };
+
 std::int64_t nowSeconds() {
     return std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
 }
@@ -193,6 +196,7 @@ PlatformSession::Access PlatformSession::_exchangeTokens(
 
 Response PlatformSession::_askTokens(HttpClient& client, const std::stop_token& stop, std::string_view fields) {
     Request request { .method = "POST", .url = _apiUrl + "/oauth/token" };
+    request.timeout = tokensTimeout;
     request.headers = {
         { .name = "Content-Type", .value = "application/x-www-form-urlencoded" },
         { .name = "Accept-Language", .value = std::string { i18n::languageCode() } },
