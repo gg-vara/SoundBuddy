@@ -17,7 +17,6 @@
 #include <string>
 #include <string_view>
 #include <system_error>
-#include <thread>
 #include <utility>
 
 #include "src/helpers/Json.h"
@@ -94,7 +93,6 @@ Controller::~Controller() {
     // the watcher stops first, as it feeds the uploader
     _shoutWorker.reset();
     _shoutUploader.reset();
-    if (_retiredUploaders.joinable()) _retiredUploaders.join();
     _feederWorker.reset();
     _heartbeatWorker.reset();
 }
@@ -347,14 +345,11 @@ void Controller::_stopShouts() {
     // the watcher stops first, as it feeds the uploader
     _shoutWorker.reset();
 
-    if (!_shoutUploader) return;
-
-    // the last shout ("nothing playing") gets a chance to be uploaded, without the user interface waiting for it
-    _retiredUploaders = std::jthread([previous = std::move(_retiredUploaders), uploader = std::move(_shoutUploader)]() mutable {
-        if (previous.joinable()) previous.join();
-        uploader->waitForDrain(std::chrono::seconds { 1 });
-        uploader.reset();
-    });
+    // the last shout ("nothing playing") gets a chance to be uploaded
+    if (_shoutUploader) {
+        _shoutUploader->waitForDrain(std::chrono::seconds { 1 });
+        _shoutUploader.reset();
+    }
 }
 
 void Controller::_runFeeder() {
