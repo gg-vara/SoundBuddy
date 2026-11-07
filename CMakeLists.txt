@@ -90,6 +90,7 @@ SET(ICONS_BUILD_DIR ${PROJECT_SOURCE_DIR}/resources/icons/build)
 
 add_executable(appExec
     src/main.cpp
+    src/app/AppThread.cpp
     src/app/Controller.cpp
     src/app/Headless.cpp
     src/app/Post.cpp
