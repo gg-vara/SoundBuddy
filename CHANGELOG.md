@@ -2,6 +2,22 @@
 
 Each section becomes the notes of its GitHub release, and of the update that installed copies download (see `cmake/velopack/vpk.cmake`).
 
+## 0.14.2
+
+> **Requires SoundVitrine 0.13 or newer** : this version logs in with OAuth, which older servers do not offer. It cannot connect to them.
+
+> **Unsigned build** : this installer is not code-signed yet. Windows SmartScreen may block it ("Windows protected your PC") : choose **More info**, then **Run anyway**.
+
+### Changed
+
+- The window only displays, the application running apart : it stays responsive whatever the application is doing, as stopping shouts or a library upload
+- When SoundVitrine cannot be reached, it is said in plain words, in amber rather than red as a refusal would, and it keeps trying
+- Waiting for a login ends after about 10 seconds, rather than saying it is checking for much longer
+
+### Fixed
+
+- A failure of the application ends it with an error code again
+
 ## 0.14.1
 
 > **Requires SoundVitrine 0.13 or newer** : this version logs in with OAuth, which older servers do not offer. It cannot connect to them.
