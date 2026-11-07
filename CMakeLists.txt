@@ -8,7 +8,7 @@ set(GITHUB_REPO_OWNER "gg-vara")
 set(GITHUB_REPO_NAME "SoundBuddy")
 
 # the version of a release is bumped here (see README.md)
-project(${GITHUB_REPO_NAME} VERSION 0.14.0
+project(${GITHUB_REPO_NAME} VERSION 0.14.1
     DESCRIPTION "Small companion app that feeds SoundVitrine with iTunes / Music library metadata"
     HOMEPAGE_URL https://github.com/${GITHUB_REPO_OWNER}/${GITHUB_REPO_NAME}
     LANGUAGES CXX

@@ -2,6 +2,17 @@
 
 Each section becomes the notes of its GitHub release, and of the update that installed copies download (see `cmake/velopack/vpk.cmake`).
 
+## 0.14.1
+
+> **Requires SoundVitrine 0.13 or newer** : this version logs in with OAuth, which older servers do not offer. It cannot connect to them.
+
+> **Unsigned build** : this installer is not code-signed yet. Windows SmartScreen may block it ("Windows protected your PC") : choose **More info**, then **Run anyway**.
+
+### Fixed
+
+- The window no longer freezes while SoundVitrine is slow or unreachable, at startup or later
+- Stopping shouts no longer freezes the window while the last one is being sent
+
 ## 0.14.0
 
 > **Requires SoundVitrine 0.13 or newer** : this version logs in with OAuth, which older servers do not offer. It cannot connect to them.
