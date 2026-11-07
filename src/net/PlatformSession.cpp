@@ -63,6 +63,22 @@ Response refused(std::string why) {
     return response;
 }
 
+// runs "action" when leaving the scope, however it is left
+template <typename Action>
+class Finally {
+ public:
+    explicit Finally(Action action) :
+        _action(std::move(action)) {}
+    Finally(const Finally&) = delete;
+    Finally(Finally&&) = delete;
+    Finally& operator=(const Finally&) = delete;
+    Finally& operator=(Finally&&) = delete;
+    ~Finally() { _action(); }
+
+ private:
+    Action _action;
+};
+
 }  // namespace
 
 std::string PlatformSession::apiUrlOf(std::string_view hostUrl) {
@@ -131,34 +147,71 @@ Response PlatformSession::send(HttpClient& client, const Request& request, const
 }
 
 PlatformSession::Access PlatformSession::_access(HttpClient& client, const std::stop_token& stop, const std::string& tokenRefused) {
-    const std::scoped_lock lock { _mutex };
+    std::unique_lock lock { _mutex };
 
-    if (!_password.empty()) {
+    // stoppable : whoever stops this worker must not end up waiting for the request of another one
+    if (!_exchangeEnded.wait(lock, stop, [this] { return !_exchanging; })) {
+        Response cancelled;
+        cancelled.error = "Request cancelled";
+        return { .failure = std::move(cancelled) };
+    }
+
+    if (_password.empty()) {
+        if (_refreshToken.empty()) return { .failure = refused(std::string { i18n::tr("Waiting for appropriate credentials.") }) };
+
+        // another thread may have renewed it meanwhile
+        const auto stillGood = _accessToken != tokenRefused && nowSeconds() < _accessExpiresAt - expiryMarginSeconds;
+        if (stillGood) return { .token = _accessToken };
+    }
+
+    const auto password = _password;
+    const auto refreshToken = _refreshToken;
+    _exchanging = true;
+    lock.unlock();
+
+    const Finally ended { [this] {
+        {
+            const std::scoped_lock relock { _mutex };
+            _exchanging = false;
+        }
+        _exchangeEnded.notify_all();
+    } };
+
+    return _exchange(client, stop, password, refreshToken);
+}
+
+PlatformSession::Access PlatformSession::_exchange(
+    HttpClient& client, const std::stop_token& stop, const std::string& password, const std::string& refreshToken
+) {
+    if (!password.empty()) {
         auto response = _askTokens(
             client, stop,
             std::format(
                 "{}&{}&{}&{}", field("grant_type", "password"), field("client_id", clientId), field("username", _username),
-                field("password", _password)
+                field("password", password)
             )
         );
         if (!response.ok() && !isRefusal(response)) return { .failure = std::move(response) };
 
-        _password.clear();
+        {
+            const std::scoped_lock lock { _mutex };
+            _password.clear();
+        }
         if (_onPasswordUsed) _onPasswordUsed();
         if (!response.ok()) return { .failure = refused(explain(response)) };
+
+        const std::scoped_lock lock { _mutex };
+        return { .token = _accessToken };
     }
-
-    if (_refreshToken.empty()) return { .failure = refused(std::string { i18n::tr("Waiting for appropriate credentials.") }) };
-
-    // another thread may have renewed it meanwhile
-    const auto stillGood = _accessToken != tokenRefused && nowSeconds() < _accessExpiresAt - expiryMarginSeconds;
-    if (stillGood) return { .token = _accessToken };
 
     auto response = _askTokens(
         client, stop,
-        std::format("{}&{}&{}", field("grant_type", "refresh_token"), field("client_id", clientId), field("refresh_token", _refreshToken))
+        std::format("{}&{}&{}", field("grant_type", "refresh_token"), field("client_id", clientId), field("refresh_token", refreshToken))
     );
-    if (response.ok()) return { .token = _accessToken };
+    if (response.ok()) {
+        const std::scoped_lock lock { _mutex };
+        return { .token = _accessToken };
+    }
     if (!isRefusal(response)) return { .failure = std::move(response) };
 
     logs::warning("Session", "The platform ended this login : {}", explain(response));
@@ -183,27 +236,37 @@ void PlatformSession::_keepTokens(const Response& response) {
     const auto doc = json::parse(response.body);
     auto* const root = json::root(doc);
 
-    _accessToken = json::string(yyjson_obj_get(root, "access_token"));
-    _refreshToken = json::string(yyjson_obj_get(root, "refresh_token"));
-    _accessExpiresAt = nowSeconds() + json::integer(yyjson_obj_get(root, "expires_in"));
+    const std::string access { json::string(yyjson_obj_get(root, "access_token")) };
+    const std::string refresh { json::string(yyjson_obj_get(root, "refresh_token")) };
+    const auto expiresAt = nowSeconds() + json::integer(yyjson_obj_get(root, "expires_in"));
+
+    {
+        const std::scoped_lock lock { _mutex };
+        _accessToken = access;
+        _refreshToken = refresh;
+        _accessExpiresAt = expiresAt;
+    }
 
     const auto stored = json::create();
     auto* const object = yyjson_mut_obj(stored.get());
     yyjson_mut_doc_set_root(stored.get(), object);
     yyjson_mut_obj_add_strncpy(stored.get(), object, "host", _hostUrl.data(), _hostUrl.size());
     yyjson_mut_obj_add_strncpy(stored.get(), object, "username", _username.data(), _username.size());
-    yyjson_mut_obj_add_strncpy(stored.get(), object, "access", _accessToken.data(), _accessToken.size());
-    yyjson_mut_obj_add_strncpy(stored.get(), object, "refresh", _refreshToken.data(), _refreshToken.size());
-    yyjson_mut_obj_add_sint(stored.get(), object, "accessExpiresAt", _accessExpiresAt);
+    yyjson_mut_obj_add_strncpy(stored.get(), object, "access", access.data(), access.size());
+    yyjson_mut_obj_add_strncpy(stored.get(), object, "refresh", refresh.data(), refresh.size());
+    yyjson_mut_obj_add_sint(stored.get(), object, "accessExpiresAt", expiresAt);
 
     // works until the next start : the login is then asked again
     if (!secrets::store(_tokensFile, json::write(stored))) logs::warning("Session", "The login could not be stored");
 }
 
 void PlatformSession::_forgetTokens() {
-    _accessToken.clear();
-    _refreshToken.clear();
-    _accessExpiresAt = 0;
+    {
+        const std::scoped_lock lock { _mutex };
+        _accessToken.clear();
+        _refreshToken.clear();
+        _accessExpiresAt = 0;
+    }
     secrets::remove(_tokensFile);
 }
 

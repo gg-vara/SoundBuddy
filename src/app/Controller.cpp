@@ -17,6 +17,7 @@
 #include <string>
 #include <string_view>
 #include <system_error>
+#include <thread>
 #include <utility>
 
 #include "src/helpers/Json.h"
@@ -29,6 +30,7 @@
 #include "src/workers/base/Message.h"
 #include "src/workers/feeder/FeederThread.h"
 #include "src/workers/heartbeat/HeartbeatThread.h"
+#include "src/workers/shout/ShoutUploader.h"
 #include "version.h"
 
 namespace ui {
@@ -90,6 +92,7 @@ Controller::~Controller() {
     // the watcher stops first, as it feeds the uploader
     _shoutWorker.reset();
     _shoutUploader.reset();
+    if (_retiredUploaders.joinable()) _retiredUploaders.join();
     _feederWorker.reset();
     _heartbeatWorker.reset();
 }
@@ -271,10 +274,7 @@ void Controller::requestQuit() {
         }
 
         // makes sure to wait for the watcher to end : limits COM app retention on Windows
-        _shoutWorker.reset();
-
-        // the last shout ("nothing playing") gets a chance to be uploaded
-        if (_shoutUploader) _shoutUploader->waitForDrain(std::chrono::seconds { 1 });
+        _stopShouts();
     }
 
     // stops the heartbeat, aborting its request in progress if any
@@ -345,10 +345,14 @@ void Controller::_stopShouts() {
     // the watcher stops first, as it feeds the uploader
     _shoutWorker.reset();
 
-    if (_shoutUploader) {
-        _shoutUploader->waitForDrain(std::chrono::seconds { 1 });
-        _shoutUploader.reset();
-    }
+    if (!_shoutUploader) return;
+
+    // the last shout ("nothing playing") gets a chance to be uploaded, without the user interface waiting for it
+    _retiredUploaders = std::jthread([previous = std::move(_retiredUploaders), uploader = std::move(_shoutUploader)]() mutable {
+        if (previous.joinable()) previous.join();
+        uploader->waitForDrain(std::chrono::seconds { 1 });
+        uploader.reset();
+    });
 }
 
 void Controller::_runFeeder() {
