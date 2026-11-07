@@ -38,6 +38,8 @@ const char* connectivityName(heartbeat::Connectivity connectivity) {
     switch (connectivity) {
         case heartbeat::Connectivity::Refused:
             break;
+        case heartbeat::Connectivity::Unreachable:
+            return "unreachable";
         case heartbeat::Connectivity::Checking:
             return "checking";
         case heartbeat::Connectivity::Connected:
@@ -216,12 +218,6 @@ std::string state(const State& state) {
     yyjson_mut_obj_add_bool(doc, root, "hasWarnings", state.hasWarnings);
     yyjson_mut_obj_add_bool(doc, root, "searchingUpdates", state.searchingUpdates);
     yyjson_mut_obj_add_val(doc, root, "updateResult", updateResultValue(doc, state.updateResult));
-
-    if (state.panel) {
-        addString(doc, root, "panel", panelName(*state.panel));
-    } else {
-        yyjson_mut_obj_add_null(doc, root, "panel");
-    }
 
     return object.write();
 }

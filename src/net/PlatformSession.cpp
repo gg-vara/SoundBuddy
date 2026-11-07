@@ -31,6 +31,9 @@ constexpr std::string_view clientId = "soundbuddy";
 // renewed that long before it ends, not to send what expires on the way
 constexpr std::int64_t expiryMarginSeconds = 60;
 
+// what is waiting for tokens is told sooner than the default, while a platform checking a password has the time it needs
+constexpr std::chrono::seconds tokensTimeout { 10 };
+
 std::int64_t nowSeconds() {
     return std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
 }
@@ -62,22 +65,6 @@ Response refused(std::string why) {
     response.body = std::move(why);
     return response;
 }
-
-// runs "action" when leaving the scope, however it is left
-template <typename Action>
-class Finally {
- public:
-    explicit Finally(Action action) :
-        _action(std::move(action)) {}
-    Finally(const Finally&) = delete;
-    Finally(Finally&&) = delete;
-    Finally& operator=(const Finally&) = delete;
-    Finally& operator=(Finally&&) = delete;
-    ~Finally() { _action(); }
-
- private:
-    Action _action;
-};
 
 }  // namespace
 
@@ -149,8 +136,7 @@ Response PlatformSession::send(HttpClient& client, const Request& request, const
 PlatformSession::Access PlatformSession::_access(HttpClient& client, const std::stop_token& stop, const std::string& tokenRefused) {
     std::unique_lock lock { _mutex };
 
-    // stoppable : whoever stops this worker must not end up waiting for the request of another one
-    if (!_exchangeEnded.wait(lock, stop, [this] { return !_exchanging; })) {
+    if (!_exchange.waitForTurn(lock, stop)) {
         Response cancelled;
         cancelled.error = "Request cancelled";
         return { .failure = std::move(cancelled) };
@@ -164,23 +150,12 @@ PlatformSession::Access PlatformSession::_access(HttpClient& client, const std::
         if (stillGood) return { .token = _accessToken };
     }
 
-    const auto password = _password;
-    const auto refreshToken = _refreshToken;
-    _exchanging = true;
-    lock.unlock();
-
-    const Finally ended { [this] {
-        {
-            const std::scoped_lock relock { _mutex };
-            _exchanging = false;
-        }
-        _exchangeEnded.notify_all();
-    } };
-
-    return _exchange(client, stop, password, refreshToken);
+    return _exchange.fly(lock, [this, &client, &stop, password = _password, refreshToken = _refreshToken] {
+        return _exchangeTokens(client, stop, password, refreshToken);
+    });
 }
 
-PlatformSession::Access PlatformSession::_exchange(
+PlatformSession::Access PlatformSession::_exchangeTokens(
     HttpClient& client, const std::stop_token& stop, const std::string& password, const std::string& refreshToken
 ) {
     if (!password.empty()) {
@@ -221,6 +196,7 @@ PlatformSession::Access PlatformSession::_exchange(
 
 Response PlatformSession::_askTokens(HttpClient& client, const std::stop_token& stop, std::string_view fields) {
     Request request { .method = "POST", .url = _apiUrl + "/oauth/token" };
+    request.timeout = tokensTimeout;
     request.headers = {
         { .name = "Content-Type", .value = "application/x-www-form-urlencoded" },
         { .name = "Accept-Language", .value = std::string { i18n::languageCode() } },

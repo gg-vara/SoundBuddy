@@ -5,9 +5,11 @@
 
 #include <yyjson.h>
 
+#include <cassert>
 #include <chrono>
 #include <cstddef>
 #include <cstdint>
+#include <cstdlib>
 #include <filesystem>
 #include <format>
 #include <fstream>
@@ -17,9 +19,9 @@
 #include <string>
 #include <string_view>
 #include <system_error>
-#include <thread>
 #include <utility>
 
+#include "src/app/AppThread.h"
 #include "src/helpers/Json.h"
 #include "src/helpers/Platform.h"
 #include "src/i18n/Translations.h"
@@ -86,13 +88,14 @@ Controller::Controller(Shell& shell) :
     checkForUpdates();
 
     if (_appSettings.values().autoRunShout) _runShouts();
+
+    _sendTrayState();
 }
 
 Controller::~Controller() {
     // the watcher stops first, as it feeds the uploader
     _shoutWorker.reset();
     _shoutUploader.reset();
-    if (_retiredUploaders.joinable()) _retiredUploaders.join();
     _feederWorker.reset();
     _heartbeatWorker.reset();
 }
@@ -102,6 +105,8 @@ Controller::~Controller() {
 //
 
 std::string Controller::query(std::string_view request) {
+    assert(AppThread::isCurrent());
+
     const auto call = parseCall(request);
 
     const auto query = page::query(call.name);
@@ -126,6 +131,8 @@ std::string Controller::query(std::string_view request) {
 }
 
 void Controller::command(std::string_view request) {
+    assert(AppThread::isCurrent());
+
     const auto call = parseCall(request);
 
     const auto command = page::command(call.name);
@@ -191,13 +198,11 @@ std::string Controller::_state(yyjson_val* translationKeys) {
         .feeder = _feederTab.shown,
         .nowPlaying = _nowPlaying,
         .settings = _shownSettings(),
-        .canOpenPlatform = canOpenPlatform(),
+        .canOpenPlatform = _canOpenPlatform(),
         .hasWarnings = hasWarnings(),
         .searchingUpdates = _searchingUpdates,
         .updateResult = _updateResult,
-        .panel = _pendingPanel,
     };
-    _pendingPanel.reset();
 
     // texts of the page, in the user interface language
     std::size_t index = 0;
@@ -220,13 +225,6 @@ settings::Settings Controller::_shownSettings() const {
 //
 // Native menus
 //
-
-void Controller::openPanel(Panel panel) {
-    // a page loading meanwhile finds it in the state
-    if (!_shell.sendToPage(page::panelEvent(panel))) _pendingPanel = panel;
-
-    _shell.showWindow();
-}
 
 void Controller::openPlatform() {
     const auto platformHomeUrl = _appSettings.getConnectivityInfos().getPlaformHomeUrl();
@@ -260,6 +258,8 @@ void Controller::checkForUpdates() {
 }
 
 void Controller::requestQuit() {
+    assert(AppThread::isCurrent());
+
     // already asking
     if (_quitting) return;
     _quitting = true;
@@ -280,10 +280,10 @@ void Controller::requestQuit() {
     // stops the heartbeat, aborting its request in progress if any
     _heartbeatWorker.reset();
 
-    _shell.quit();
+    _shell.quit(EXIT_SUCCESS);
 }
 
-bool Controller::canOpenPlatform() const {
+bool Controller::_canOpenPlatform() const {
     return !_appSettings.getConnectivityInfos().getPlaformHomeUrl().empty();
 }
 
@@ -345,14 +345,11 @@ void Controller::_stopShouts() {
     // the watcher stops first, as it feeds the uploader
     _shoutWorker.reset();
 
-    if (!_shoutUploader) return;
-
-    // the last shout ("nothing playing") gets a chance to be uploaded, without the user interface waiting for it
-    _retiredUploaders = std::jthread([previous = std::move(_retiredUploaders), uploader = std::move(_shoutUploader)]() mutable {
-        if (previous.joinable()) previous.join();
-        uploader->waitForDrain(std::chrono::seconds { 1 });
-        uploader.reset();
-    });
+    // the last shout ("nothing playing") gets a chance to be uploaded
+    if (_shoutUploader) {
+        _shoutUploader->waitForDrain(std::chrono::seconds { 1 });
+        _shoutUploader.reset();
+    }
 }
 
 void Controller::_runFeeder() {
@@ -505,11 +502,12 @@ void Controller::_runFinished(Tab tab, int run) {
 }
 
 void Controller::_sendTrayState() {
-    _shell.setTrayState({ .shouting = _shoutTab.shown.running, .dot = _trayDot });
+    _shell.setTrayState({ .shouting = _shoutTab.shown.running, .canOpenPlatform = _canOpenPlatform(), .dot = _trayDot });
 }
 
 void Controller::_sendSettings() {
-    _shell.sendToPage(page::settingsEvent(_shownSettings(), canOpenPlatform()));
+    _shell.sendToPage(page::settingsEvent(_shownSettings(), _canOpenPlatform()));
+    _sendTrayState();
 }
 
 void Controller::_sendWarnings() {

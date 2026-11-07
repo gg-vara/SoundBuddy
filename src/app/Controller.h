@@ -9,7 +9,6 @@
 #include <optional>
 #include <string>
 #include <string_view>
-#include <thread>
 
 #include "src/settings/AppSettings.h"
 #include "src/app/PageMessages.h"
@@ -33,33 +32,32 @@ struct TrayState {
     // the dot of the connection with the platform : none until known
     enum class Dot { None, Ok, Issue };
 
-    bool shouting = false;  // the circle behind the icon
+    bool shouting = false;         // the circle behind the icon
+    bool canOpenPlatform = false;  // the entry of its menu
     Dot dot = Dot::None;
 };
 
-// what the native shell offers, on the user interface thread
+// what the native shell offers : called from the application thread, it hands these over to the user interface thread
 class Shell {
  public:
     virtual ~Shell() = default;
 
-    // "event" (a JSON object with a "type") to the page : false if no page is loaded
-    virtual bool sendToPage(const std::string& event) = 0;
-
-    virtual void showWindow() = 0;
+    // "event" (a JSON object with a "type") to the page, if one is loaded
+    virtual void sendToPage(const std::string& event) = 0;
 
     virtual void setTrayState(TrayState state) = 0;
 
-    // modal question, "byDefault" being focused : true if the user answers yes
+    // modal question, "byDefault" being focused : true if the user answers yes. Waits for it, unless the user interface is closing
     virtual bool ask(std::string_view title, std::string_view question, Answer byDefault) = 0;
 
     // modal message
     virtual void tell(std::string_view title, std::string_view text, Severity severity) = 0;
 
-    // ends the user interface
-    virtual void quit() = 0;
+    // ends the user interface, and the process with "exitCode"
+    virtual void quit(int exitCode) = 0;
 };
 
-// The application state and its workers, on the user interface thread
+// The application state and its workers, on the application thread (AppThread) : it may wait there, the window stays responsive
 class Controller {
  public:
     // starts the heartbeat, the update check, and the shouts if set so
@@ -76,13 +74,10 @@ class Controller {
     // answers right away, without side effects : returns JSON
     std::string query(std::string_view request);
 
-    // acts : not within a page call, as it may wait for workers or open modal dialogs
+    // acts : it may wait for workers or modal dialogs
     void command(std::string_view request);
 
     // native menus
-
-    // shows the window, on "panel"
-    void openPanel(Panel panel);
 
     void openPlatform();
     static void openDataFolder();
@@ -94,7 +89,6 @@ class Controller {
     // name and version, and the build type when it is not a production one : "SoundBuddy 1.0.0 (Debug)"
     static std::string versionLabel();
 
-    bool canOpenPlatform() const;
     static bool hasWarnings();
 
  private:
@@ -112,7 +106,6 @@ class Controller {
     TabState _feederTab;
     heartbeat::Status _status { .text = {}, .connectivity = heartbeat::Connectivity::Checking };
     std::string _nowPlaying;  // last shout, as JSON
-    std::optional<Panel> _pendingPanel;
     TrayState::Dot _trayDot = TrayState::Dot::None;
     bool _searchingUpdates = false;
     std::optional<page::UpdateResult> _updateResult;
@@ -122,7 +115,6 @@ class Controller {
     std::unique_ptr<HeartbeatThread> _heartbeatWorker;
     std::unique_ptr<FeederThread> _feederWorker;
     std::unique_ptr<ShoutUploader> _shoutUploader;
-    std::jthread _retiredUploaders;  // finishing what they were sending : each joins the one before
     std::unique_ptr<ShoutWatcher> _shoutWorker;
     UpdateChecker _updateChecker;
 
@@ -147,6 +139,7 @@ class Controller {
     // updates
     void _onUpdateChecked(const UpdateChecker::CheckResults& results);
 
+    bool _canOpenPlatform() const;
     void _sendTrayState();
 
     // state changes, sent to the page

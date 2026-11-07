@@ -132,6 +132,7 @@ let replays = 0;
 let expiresIn = 3600;
 let refreshDelayMs = 0;
 let tokensDelayMs = 0;
+let tokensAnswerOverride: (() => Response) | null = null;
 
 const tokensAnswer = () => {
   tokenCount += 1;
@@ -147,6 +148,8 @@ const oauthError = (description: string, status = 400) => Response.json({ error:
 beforeAll(() => {
   server = Bun.serve({
     port: 0,
+    // longer than what is tested : Bun would otherwise end the connection first
+    idleTimeout: 60,
     async fetch(request) {
       const raw = await request.arrayBuffer();
       const body = Buffer.from(raw).toString('latin1');
@@ -155,6 +158,7 @@ beforeAll(() => {
 
       if (path === '/oauth/token') {
         await Bun.sleep(tokensDelayMs);
+        if (tokensAnswerOverride) return tokensAnswerOverride();
         const fields = new URLSearchParams(Buffer.from(raw).toString('utf8'));
         if (fields.get('client_id') !== 'soundbuddy') return oauthError('Unknown client', 401);
 
@@ -197,6 +201,7 @@ afterEach(async () => {
   expiresIn = 3600;
   refreshDelayMs = 0;
   tokensDelayMs = 0;
+  tokensAnswerOverride = null;
 });
 
 afterAll(() => {
@@ -364,6 +369,24 @@ describe('with a platform slow to give tokens', () => {
   );
 
   test(
+    'gives up on them, rather than saying it is checking for long',
+    async () => {
+      tokensDelayMs = 15_000;
+      const folder = dataFolder();
+      mkdirSync(folder, { recursive: true });
+      writeFileSync(join(folder, 'settings.json'), JSON.stringify({ ...preferences(), autoRunShout: false, runAtStartup: false }));
+
+      const begin = performance.now();
+      const app = await start(folder);
+      await app.wait(message => message.type === 'status' && message.status.connectivity !== 'checking', 'end of the check');
+      const taken = performance.now() - begin;
+      expect(taken).toBeGreaterThan(9000);
+      expect(taken).toBeLessThan(14_000);
+    },
+    TIMEOUT_MS,
+  );
+
+  test(
     'a worker waiting for them stops right away',
     async () => {
       const app = await slowStart();
@@ -377,6 +400,26 @@ describe('with a platform slow to give tokens', () => {
 });
 
 test(
+  'a platform that fails is not a refusal : it says so in its own words, and keeps the password',
+  async () => {
+    // what Cloudflare answers when the server behind it is down
+    tokensAnswerOverride = () => new Response('error code: 522', { status: 522 });
+
+    const folder = dataFolder();
+    mkdirSync(folder, { recursive: true });
+    writeFileSync(join(folder, 'settings.json'), JSON.stringify({ ...preferences(), autoRunShout: false, runAtStartup: false }));
+
+    const app = await start(folder);
+    const { status } = await app.wait(message => message.type === 'status' && message.status.connectivity !== 'checking', 'end of the check');
+    expect(status.connectivity).toBe('unreachable');
+    expect(status.text).not.toContain('522');
+    await app.wait(message => message.type === 'tray' && message.dot === 'issue', 'dot');
+    expect(settingsOf(folder)).toContain('right');
+  },
+  TIMEOUT_MS,
+);
+
+test(
   'keeps the password while the platform cannot answer',
   async () => {
     const folder = dataFolder();
@@ -385,7 +428,7 @@ test(
     writeFileSync(join(folder, 'settings.json'), JSON.stringify({ ...unreachable, autoRunShout: false, runAtStartup: false }));
 
     const app = await start(folder);
-    await app.wait(message => message.type === 'status' && message.status.connectivity === 'refused', 'refused status');
+    await app.wait(message => message.type === 'status' && message.status.connectivity === 'unreachable', 'unreachable status');
     await Bun.sleep(300);
     expect(settingsOf(folder)).toContain('right');
   },

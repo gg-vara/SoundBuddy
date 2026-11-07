@@ -9,7 +9,6 @@
 #include <condition_variable>
 #include <cstddef>
 #include <cstdio>
-#include <deque>
 #include <functional>
 #include <mutex>
 #include <string>
@@ -27,51 +26,12 @@
 
 #include "src/helpers/Json.h"
 #include "src/app/Controller.h"
-#include "src/app/Post.h"
+#include "src/app/AppThread.h"
 #include "version.h"
 
 namespace ui {
 
 namespace {
-
-// tasks of the workers and of the input, run in turn
-struct Tasks {
-    std::mutex mutex;
-    std::condition_variable changed;
-    std::deque<std::function<void()>> queue;
-    bool accepting = false;
-};
-
-Tasks& tasks() {
-    static Tasks instance;
-    return instance;
-}
-
-void postToQueue(std::function<void()> task) {
-    auto& all = tasks();
-    {
-        const std::scoped_lock lock { all.mutex };
-        if (!all.accepting) return;
-        all.queue.push_back(std::move(task));
-    }
-    all.changed.notify_one();
-}
-
-void setAccepting(bool accepting) {
-    auto& all = tasks();
-    const std::scoped_lock lock { all.mutex };
-    all.accepting = accepting;
-    if (!accepting) all.queue.clear();
-}
-
-std::function<void()> nextTask() {
-    auto& all = tasks();
-    std::unique_lock lock { all.mutex };
-    all.changed.wait(lock, [&all] { return !all.queue.empty(); });
-    auto task = std::move(all.queue.front());
-    all.queue.pop_front();
-    return task;
-}
 
 // a whole line, then flushed : another program waits for it
 void writeLine(std::string_view line) {
@@ -99,12 +59,7 @@ std::string dialog(std::string_view kind, std::string_view title, std::string_vi
 
 class HeadlessShell final : public Shell {
  public:
-    bool sendToPage(const std::string& event) override {
-        writeLine(oneLine(event));
-        return true;
-    }
-
-    void showWindow() override {}
+    void sendToPage(const std::string& event) override { writeLine(oneLine(event)); }
 
     void setTrayState(TrayState state) override {
         const char* dot = "none";
@@ -122,12 +77,27 @@ class HeadlessShell final : public Shell {
         writeLine(dialog(severity == Severity::Error ? "error" : "information", title, text));
     }
 
-    void quit() override { _running = false; }
+    void quit(int exitCode) override {
+        {
+            const std::scoped_lock lock { _mutex };
+            _exitCode = exitCode;
+            _quit = true;
+        }
+        _stopped.notify_all();
+    }
 
-    bool isRunning() const { return _running; }
+    // the exit code it was asked to quit with
+    int waitUntilQuit() {
+        std::unique_lock lock { _mutex };
+        _stopped.wait(lock, [this] { return _quit; });
+        return _exitCode;
+    }
 
  private:
-    bool _running = true;
+    std::mutex _mutex;
+    std::condition_variable _stopped;
+    bool _quit = false;
+    int _exitCode = 0;
 };
 
 void handleLine(Controller& controller, std::size_t number, std::string_view line) {
@@ -159,7 +129,7 @@ std::size_t readInput(std::array<char, 4096>& buffer) {
 }
 
 // reads lines until the end of the input, which it may never reach : never joined, it ends with the process
-void readLines(Controller& controller) {
+void readLines(AppThread& app) {
     std::string pending;
     std::size_t number = 0;
     std::array<char, 4096> buffer {};
@@ -173,11 +143,11 @@ void readLines(Controller& controller) {
             if (line.ends_with('\r')) line.pop_back();
             if (line.empty()) continue;
 
-            post([&controller, number = ++number, line = std::move(line)] { handleLine(controller, number, line); });
+            app.run([number = ++number, line = std::move(line)](Controller& controller) { handleLine(controller, number, line); });
         }
     }
 
-    post([&controller] { controller.requestQuit(); });
+    app.run([](Controller& controller) { controller.requestQuit(); });
 }
 
 }  // namespace
@@ -188,24 +158,19 @@ int runHeadless() {
     _setmode(_fileno(stdout), _O_BINARY);
 #endif
 
-    setPoster(&postToQueue);
-    setAccepting(/*accepting=*/true);
-
+    HeadlessShell shell;
+    int exitCode = 0;
     {
-        HeadlessShell shell;
-        Controller controller { shell };
+        AppThread app { shell };
 
-        writeLine(R"({"type":"started","version":")" APP_CURRENT_VERSION R"("})");
+        app.run([](Controller&) { writeLine(R"({"type":"started","version":")" APP_CURRENT_VERSION R"("})"); });
 
-        std::thread { [&controller] { readLines(controller); } }.detach();
+        std::thread { [&app] { readLines(app); } }.detach();
 
-        while (shell.isRunning()) nextTask()();
-
-        // the workers' last messages have nowhere to go
-        setAccepting(/*accepting=*/false);
+        exitCode = shell.waitUntilQuit();
     }
 
-    return 0;
+    return exitCode;
 }
 
 }  // namespace ui

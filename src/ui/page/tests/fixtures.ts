@@ -34,7 +34,6 @@ export function nativeState(changes: Partial<NativeState> = {}): NativeState {
     hasWarnings: false,
     searchingUpdates: false,
     updateResult: null,
-    panel: null,
     ...changes,
   };
 }

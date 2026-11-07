@@ -168,9 +168,4 @@ describe('menu and panels', () => {
     page.send({ type: 'ui.closePanel' });
     expect(regionState(page.getSnapshot(), 'panel')).toBe('closed');
   });
-
-  test('a panel requested before loading opens once loaded', async () => {
-    const { page } = await loadedPage(nativeState({ panel: 'preferences' }));
-    expect(regionState(page.getSnapshot(), 'panel')).toBe('preferences');
-  });
 });

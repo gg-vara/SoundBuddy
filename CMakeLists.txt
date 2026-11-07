@@ -8,7 +8,7 @@ set(GITHUB_REPO_OWNER "gg-vara")
 set(GITHUB_REPO_NAME "SoundBuddy")
 
 # the version of a release is bumped here (see README.md)
-project(${GITHUB_REPO_NAME} VERSION 0.14.1
+project(${GITHUB_REPO_NAME} VERSION 0.14.2
     DESCRIPTION "Small companion app that feeds SoundVitrine with iTunes / Music library metadata"
     HOMEPAGE_URL https://github.com/${GITHUB_REPO_OWNER}/${GITHUB_REPO_NAME}
     LANGUAGES CXX
@@ -90,9 +90,10 @@ SET(ICONS_BUILD_DIR ${PROJECT_SOURCE_DIR}/resources/icons/build)
 
 add_executable(appExec
     src/main.cpp
+    src/app/AppThread.cpp
     src/app/Controller.cpp
     src/app/Headless.cpp
-    src/app/Post.cpp
+    src/ui/NativeShell.cpp
     src/workers/base/UpdateChecker.cpp
 )
 soundbuddy_add_core(appExec PRIVATE)

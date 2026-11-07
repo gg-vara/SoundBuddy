@@ -15,7 +15,8 @@
 namespace heartbeat {
 
 enum class Connectivity {
-    Refused,  // no credentials, refused ones, or platform unreachable
+    Refused,      // no credentials, or refused ones : the user has something to do
+    Unreachable,  // the platform does not answer, or fails : it is tried again
     Checking,
     Connected
 };

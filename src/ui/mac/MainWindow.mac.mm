@@ -19,7 +19,7 @@
 #include "src/logs/Logs.h"
 #include "src/app/Controller.h"
 #include "src/app/PageMessages.h"
-#include "src/app/Post.h"
+#include "src/ui/NativeShell.h"
 #include "src/ui/Run.h"
 #include "src/ui/mac/WebView.h"
 #include "version.h"
@@ -39,8 +39,6 @@ namespace ui {
 namespace {
 
 // menu bar item's menu
-enum class MenuCommand : NSInteger { OpenMonitor = 1, Preferences, MyPlatform, Warnings, DataFolder, Quit, About };
-
 // size of the window, in points
 constexpr CGFloat defaultWidth = 760;
 constexpr CGFloat defaultHeight = 600;
@@ -54,11 +52,6 @@ constexpr bool devTools = false;
 #endif
 
 // tasks posted by the workers run on the main queue, while the user interface accepts them
-std::atomic<bool>& acceptingTasks() {
-    static std::atomic<bool> accepting { false };
-    return accepting;
-}
-
 NSString* toNSString(std::string_view text) {
     return [[NSString alloc] initWithBytes:text.data() length:text.size() encoding:NSUTF8StringEncoding];
 }
@@ -73,17 +66,6 @@ void activate() {
 }
 
 }  // namespace
-
-void postToMainQueue(std::function<void()> task) {
-    if (!acceptingTasks()) return;
-
-    auto* const posted =
-        new std::function<void()>(std::move(task));  // NOLINT(cppcoreguidelines-owning-memory) : owned by the queue until run
-    dispatch_async_f(dispatch_get_main_queue(), posted, [](void* context) {
-        const std::unique_ptr<std::function<void()>> task { static_cast<std::function<void()>*>(context) };
-        if (acceptingTasks()) (*task)();
-    });
-}
 
 namespace {
 
@@ -129,7 +111,7 @@ NSImage* menuBarImage(TrayState state) {
 
 }  // namespace
 
-class MacShell final : public Shell {
+class MacShell final : public NativeShell {
  public:
     // hidden, except in debug builds
     MacShell() {
@@ -140,18 +122,15 @@ class MacShell final : public Shell {
         _createWindow();
         _createStatusItem();
 
-        acceptingTasks() = true;
-        _controller = std::make_unique<Controller>(*this);
+        _startApplication();
 
 #ifdef _DEBUG
-        showWindow();
+        _showNow();
 #endif
     }
 
     ~MacShell() override {
-        // workers stop first, while their last tasks are dropped
-        _controller.reset();
-        acceptingTasks() = false;
+        _stopApplication();
 
         _destroyView();
         if (_statusItem) [NSStatusBar.systemStatusBar removeStatusItem:_statusItem];
@@ -162,29 +141,53 @@ class MacShell final : public Shell {
     MacShell(const MacShell&) = delete;
     void operator=(const MacShell&) = delete;
 
-    // runs the user interface until quit()
-    static int run() {
+    // runs the user interface until quit() : returns the exit code
+    int run() {
         [NSApp run];
-        return 0;
+        return _exitCode;
     }
 
-    // Shell
+    // SBShellTarget
 
-    bool sendToPage(const std::string& event) override {
-        if (!_view || !_pageLoaded) return false;
-        _view->eval("sb.receive(" + event + ");");
-        return true;
+    // the window hides in the menu bar
+    void onWindowClosing() {
+        [_window orderOut:nil];
+
+        // the page and its web content process go away until shown again
+        _destroyView();
     }
 
-    void setTrayState(TrayState state) override { _statusItem.button.image = menuBarImage(state); }
+    void onMenuOpening() {
+        [_statusMenu itemWithTag:static_cast<NSInteger>(MenuCommand::MyPlatform)].enabled = _canOpenPlatform();
+        [_statusMenu itemWithTag:static_cast<NSInteger>(MenuCommand::Warnings)].enabled = Controller::hasWarnings();
+    }
 
-    void showWindow() override {
+    void onMenuCommand(NSInteger command) { _runMenuCommand(static_cast<MenuCommand>(command)); }
+
+ protected:
+    void _wakeUiThread() override {
+        dispatch_async_f(dispatch_get_main_queue(), this, [](void* self) { static_cast<MacShell*>(self)->_runPosted(); });
+    }
+
+    bool _isUiThread() const override { return NSThread.isMainThread; }
+
+    void _evalNow(const std::string& script) override {
+        if (_view) _view->eval(script);
+    }
+
+    void _resolveNow(const std::string& id, const std::string& answer) override {
+        if (_view) _view->resolve(id, answer);
+    }
+
+    void _applyTrayState(TrayState state) override { _statusItem.button.image = menuBarImage(state); }
+
+    void _showNow() override {
         activate();
         if (!_view) _createView();
         [_window makeKeyAndOrderFront:nil];
     }
 
-    bool ask(std::string_view title, std::string_view question, Answer byDefault) override {
+    bool _askNow(const std::string& title, const std::string& question, Answer byDefault) override {
         NSAlert* const alert = [[NSAlert alloc] init];
         alert.alertStyle = NSAlertStyleWarning;
         alert.messageText = toNSString(title);
@@ -200,7 +203,7 @@ class MacShell final : public Shell {
         return [alert runModal] == NSAlertFirstButtonReturn;
     }
 
-    void tell(std::string_view title, std::string_view text, Severity severity) override {
+    void _tellNow(const std::string& title, const std::string& text, Severity severity) override {
         NSAlert* const alert = [[NSAlert alloc] init];
         alert.alertStyle = severity == Severity::Error ? NSAlertStyleCritical : NSAlertStyleInformational;
         alert.messageText = toNSString(title);
@@ -211,7 +214,9 @@ class MacShell final : public Shell {
         [alert runModal];
     }
 
-    void quit() override {
+    void _quitNow(int exitCode) override {
+        _exitCode = exitCode;
+
         [_window orderOut:nil];
         _destroyView();
 
@@ -229,47 +234,6 @@ class MacShell final : public Shell {
                  atStart:YES];
     }
 
-    // SBShellTarget
-
-    // the window hides in the menu bar
-    void onWindowClosing() {
-        [_window orderOut:nil];
-
-        // the page and its web content process go away until shown again
-        _destroyView();
-    }
-
-    void onMenuOpening() {
-        [_statusMenu itemWithTag:static_cast<NSInteger>(MenuCommand::MyPlatform)].enabled = _controller->canOpenPlatform();
-        [_statusMenu itemWithTag:static_cast<NSInteger>(MenuCommand::Warnings)].enabled = Controller::hasWarnings();
-    }
-
-    void onMenuCommand(NSInteger command) {
-        switch (static_cast<MenuCommand>(command)) {
-            case MenuCommand::OpenMonitor:
-                showWindow();
-                break;
-            case MenuCommand::Preferences:
-                _controller->openPanel(Panel::Preferences);
-                break;
-            case MenuCommand::MyPlatform:
-                _controller->openPlatform();
-                break;
-            case MenuCommand::Warnings:
-                _controller->openPanel(Panel::Warnings);
-                break;
-            case MenuCommand::DataFolder:
-                Controller::openDataFolder();
-                break;
-            case MenuCommand::About:
-                _controller->openPanel(Panel::About);
-                break;
-            case MenuCommand::Quit:
-                _controller->requestQuit();
-                break;
-        }
-    }
-
  private:
     SBShellTarget* _target = nil;
     NSWindow* _window = nil;
@@ -278,10 +242,7 @@ class MacShell final : public Shell {
 
     // the webview, while the window is shown
     std::unique_ptr<WebView> _view;
-    bool _pageLoaded = false;
-
-    // created once the window exists, destroyed first
-    std::unique_ptr<Controller> _controller;
+    int _exitCode = 0;
 
     // an agent application shows no menu bar, but its key equivalents work : quit, and editing the page's fields
     void _createMainMenu() {
@@ -353,42 +314,30 @@ class MacShell final : public Shell {
     }
 
     void _createView() {
-        _pageLoaded = false;
+        _viewCreated();
 
         try {
             // fills the window's content
             _view = std::make_unique<WebView>(devTools, (__bridge void*)_window);
         } catch (const std::runtime_error& e) {
             logs::error("UI", "Webview unavailable : {}", e.what());
-            tell(APP_NAME, e.what(), Severity::Error);
+            _tellNow(APP_NAME, e.what(), Severity::Error);
             return;
         }
 
-        // page queries are answered right away; commands may wait for workers or open dialogs, out of WebKit's callbacks
-        _view->bind("sbQuery", [this](const std::string& request) -> std::string {
-            auto answer = _controller->query(request);
-            _pageLoaded = true;
-            return answer;
-        });
-        _view->bind("sbCommand", [this](const std::string& request) -> std::string {
-            post([this, request] {
-                if (_controller) _controller->command(request);
-            });
-            return "null";
-        });
+        _view->bind("sbQuery", [this](const std::string& id, const std::string& request) { _pageQuery(id, request); });
+        _view->bind("sbCommand", [this](const std::string& id, const std::string& request) { _pageCommand(id, request); });
 
         _view->setHtml(page::html);
     }
 
     void _destroyView() {
-        _pageLoaded = false;
+        _viewDestroyed();
         _view.reset();
     }
 };
 
 int run(int /*argc*/, char** /*argv*/) {
-    setPoster(&postToMainQueue);
-
     @autoreleasepool {
         [NSApplication sharedApplication];
 
@@ -398,7 +347,7 @@ int run(int /*argc*/, char** /*argv*/) {
         int exitCode = 0;
         {
             MacShell shell;
-            exitCode = MacShell::run();
+            exitCode = shell.run();
         }
         return exitCode;
     }

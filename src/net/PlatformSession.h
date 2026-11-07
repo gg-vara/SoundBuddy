@@ -3,7 +3,6 @@
 
 #pragma once
 
-#include <condition_variable>
 #include <cstdint>
 #include <filesystem>
 #include <functional>
@@ -13,6 +12,7 @@
 #include <string_view>
 
 #include "HttpClient.h"
+#include "src/helpers/SingleFlight.h"
 
 namespace net {
 
@@ -51,8 +51,7 @@ class PlatformSession {
 
     // guards what follows. Never held during a request : the user interface reads hasLogin(), and must not wait for the platform
     mutable std::mutex _mutex;
-    std::condition_variable_any _exchangeEnded;
-    bool _exchanging = false;  // one request for tokens at a time, as a refresh token works once
+    SingleFlight _exchange;  // one request for tokens at a time, as a refresh token works once
     std::string _password;
     std::string _accessToken;
     std::string _refreshToken;
@@ -65,8 +64,8 @@ class PlatformSession {
 
     Access _access(HttpClient& client, const std::stop_token& stop, const std::string& tokenRefused);
 
-    // the request for tokens, with "_exchanging" set and the lock free
-    Access _exchange(HttpClient& client, const std::stop_token& stop, const std::string& password, const std::string& refreshToken);
+    // the request for tokens, on its turn, with the lock free
+    Access _exchangeTokens(HttpClient& client, const std::stop_token& stop, const std::string& password, const std::string& refreshToken);
 
     // "fields" sent to the token endpoint : a 200 keeps the tokens it comes with
     Response _askTokens(HttpClient& client, const std::stop_token& stop, std::string_view fields);

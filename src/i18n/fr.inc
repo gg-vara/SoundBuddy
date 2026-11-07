@@ -46,6 +46,8 @@
   "En attente d'identifiants appropriés." },
 { "Asking for credentials validation...",
   "Demande de validation des identifiants..." },
+{ "%1 cannot be reached for now : trying again soon.",
+  "%1 est injoignable pour le moment : nouvel essai bientôt." },
 { "An error occured while connecting with %1 platform : %2",
   "Une erreur s'est produite pendant la connexion à la plateforme %1 : %2" },
 

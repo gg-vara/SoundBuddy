@@ -58,10 +58,21 @@ void HeartbeatThread::_run(const std::stop_token& stop) {
             }
 
             logs::warning("Heartbeat", "Credentials check failed : {}", details);
-            notify(
-                i18n::format(i18n::tr("An error occured while connecting with %1 platform : %2"), { DEST_PLATFORM_PRODUCT_NAME, details }),
-                heartbeat::Connectivity::Refused
-            );
+
+            // its own words mean nothing to the user, as "error code: 522" from what stands in front of it
+            if (!response.error.empty() || response.status >= 500) {
+                notify(
+                    i18n::format(i18n::tr("%1 cannot be reached for now : trying again soon."), { DEST_PLATFORM_PRODUCT_NAME }),
+                    heartbeat::Connectivity::Unreachable
+                );
+            } else {
+                notify(
+                    i18n::format(
+                        i18n::tr("An error occured while connecting with %1 platform : %2"), { DEST_PLATFORM_PRODUCT_NAME, details }
+                    ),
+                    heartbeat::Connectivity::Refused
+                );
+            }
         } else {
             logs::info("Heartbeat", "Logged as \"{}\"", _connectivityInfos.username);
             notify(i18n::format(i18n::tr("Logged as \"%1\""), { _connectivityInfos.username }), heartbeat::Connectivity::Connected);

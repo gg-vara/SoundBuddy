@@ -60,7 +60,6 @@ export function fakeNative(): Native {
     hasWarnings: true,
     searchingUpdates: false,
     updateResult: null,
-    panel: null,
   };
 
   let shoutTimer: ReturnType<typeof setInterval> | undefined;

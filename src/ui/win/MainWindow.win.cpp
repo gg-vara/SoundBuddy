@@ -13,21 +13,18 @@
 
 #include <algorithm>
 #include <deque>
-#include <functional>
 #include <memory>
-#include <mutex>
 #include <stdexcept>
 #include <string>
 #include <string_view>
-#include <utility>
 
 #include "page.h"
 #include "src/helpers/Platform.h"
 #include "src/i18n/Translations.h"
 #include "src/logs/Logs.h"
 #include "src/app/Controller.h"
-#include "src/app/PageMessages.h"
-#include "src/app/Post.h"
+#include "src/app/AppThread.h"
+#include "src/ui/NativeShell.h"
 #include "src/ui/Run.h"
 #include "version.h"
 
@@ -35,12 +32,9 @@ namespace ui {
 
 namespace {
 
-// posted to the window
+// sent to the window
 constexpr UINT postedTasksMessage = WM_APP + 1;
 constexpr UINT trayIconMessage = WM_APP + 2;
-
-// tray menu
-enum class MenuCommand : UINT { OpenMonitor = 1, Preferences, MyPlatform, Warnings, DataFolder, Quit, About };
 
 // size of the window, in pixels at 96 DPI
 constexpr int defaultWidth = 760;
@@ -59,35 +53,6 @@ constexpr bool devTools = true;
 #else
 constexpr bool devTools = false;
 #endif
-
-// tasks posted by the workers, run by the window
-struct PostedTasks {
-    std::mutex mutex;
-    HWND window = nullptr;  // none : tasks are dropped
-    std::deque<std::function<void()>> tasks;
-};
-
-PostedTasks& postedTasks() {
-    static PostedTasks instance;
-    return instance;
-}
-
-void setPostTarget(HWND window) {
-    auto& posted = postedTasks();
-    const std::scoped_lock lock { posted.mutex };
-    posted.window = window;
-    if (!window) posted.tasks.clear();
-}
-
-void runPostedTasks() {
-    std::deque<std::function<void()>> tasks;
-    {
-        auto& posted = postedTasks();
-        const std::scoped_lock lock { posted.mutex };
-        tasks.swap(posted.tasks);
-    }
-    for (const auto& task : tasks) task();
-}
 
 // "setting" of the personalization : AppsUseLightTheme for windows, SystemUsesLightTheme for the taskbar
 bool isDark(const wchar_t* setting) {
@@ -122,15 +87,6 @@ std::wstring trayIconName(TrayState state) {
     if (state.dot == TrayState::Dot::Ok) name += L"_OK";
     if (state.dot == TrayState::Dot::Issue) name += L"_ISSUE";
     return name;
-}
-
-void postToWindow(std::function<void()> task) {
-    auto& posted = postedTasks();
-    const std::scoped_lock lock { posted.mutex };
-    if (!posted.window) return;
-
-    posted.tasks.push_back(std::move(task));
-    if (posted.tasks.size() == 1) PostMessageW(posted.window, postedTasksMessage, 0, 0);
 }
 
 // pointer carried by a message parameter, or a window data
@@ -176,18 +132,15 @@ MainWindow::MainWindow() {
     _taskbarCreatedMessage = RegisterWindowMessageW(L"TaskbarCreated");
     _addTrayIcon();
 
-    setPostTarget(_window);
-    _controller = std::make_unique<Controller>(*this);
+    _startApplication();
 
 #ifdef _DEBUG
-    showWindow();
+    _showNow();
 #endif
 }
 
 MainWindow::~MainWindow() {
-    // workers stop first, while their last tasks are dropped
-    _controller.reset();
-    setPostTarget(nullptr);
+    _stopApplication();
 
     _destroyView();
     Shell_NotifyIconW(NIM_DELETE, &_trayIcon);
@@ -208,13 +161,23 @@ int MainWindow::run() {
 // Shell
 //
 
-bool MainWindow::sendToPage(const std::string& event) {
-    if (!_view || !_pageLoaded) return false;
-    _view->browser.eval("sb.receive(" + event + ");");
-    return true;
+void MainWindow::_wakeUiThread() {
+    PostMessageW(_window, postedTasksMessage, 0, 0);
 }
 
-void MainWindow::showWindow() {
+bool MainWindow::_isUiThread() const {
+    return GetWindowThreadProcessId(_window, nullptr) == GetCurrentThreadId();
+}
+
+void MainWindow::_evalNow(const std::string& script) {
+    if (_view) _view->browser.eval(script);
+}
+
+void MainWindow::_resolveNow(const std::string& id, const std::string& answer) {
+    if (_view) _view->browser.resolve(id, 0, answer);
+}
+
+void MainWindow::_showNow() {
     if (!_centered) {
         _center();
         _centered = true;
@@ -227,7 +190,7 @@ void MainWindow::showWindow() {
     _focusView();
 }
 
-bool MainWindow::ask(std::string_view title, std::string_view question, Answer byDefault) {
+bool MainWindow::_askNow(const std::string& title, const std::string& question, Answer byDefault) {
     const UINT defaultButton = byDefault == Answer::No ? MB_DEFBUTTON2 : MB_DEFBUTTON1;
     const auto answer = MessageBoxW(
         _dialogOwner(), platform::widen(question).c_str(), platform::widen(title).c_str(),
@@ -236,22 +199,22 @@ bool MainWindow::ask(std::string_view title, std::string_view question, Answer b
     return answer == IDYES;
 }
 
-void MainWindow::tell(std::string_view title, std::string_view text, Severity severity) {
+void MainWindow::_tellNow(const std::string& title, const std::string& text, Severity severity) {
     const UINT icon = severity == Severity::Error ? MB_ICONERROR : MB_ICONINFORMATION;
     MessageBoxW(_dialogOwner(), platform::widen(text).c_str(), platform::widen(title).c_str(), MB_OK | MB_SETFOREGROUND | icon);
 }
 
-void MainWindow::quit() {
+void MainWindow::_quitNow(int exitCode) {
     // the webview pumps messages while it is created : it ends first
     if (_creatingView) {
-        post([this] { quit(); });
+        _postToUi([this, exitCode] { _quitNow(exitCode); });
         return;
     }
 
     ShowWindow(_window, SW_HIDE);
     _destroyView();
     Shell_NotifyIconW(NIM_DELETE, &_trayIcon);
-    PostQuitMessage(0);
+    PostQuitMessage(exitCode);
 }
 
 HWND MainWindow::_dialogOwner() const {
@@ -283,14 +246,14 @@ LRESULT MainWindow::_handle(UINT message, WPARAM wParam, LPARAM lParam) {
 
     switch (message) {
         case postedTasksMessage:
-            runPostedTasks();
+            _runPosted();
             return 0;
 
         case trayIconMessage:
             switch (LOWORD(lParam)) {
                 case NIN_SELECT:
                 case NIN_KEYSELECT:
-                    showWindow();
+                    _showNow();
                     break;
                 case WM_CONTEXTMENU:
                     _showTrayMenu();
@@ -354,8 +317,7 @@ LRESULT MainWindow::_handle(UINT message, WPARAM wParam, LPARAM lParam) {
         // the session ends : the process may be terminated once this returns
         case WM_ENDSESSION:
             if (wParam != FALSE) {
-                _controller.reset();
-                setPostTarget(nullptr);
+                _stopApplication();
                 Shell_NotifyIconW(NIM_DELETE, &_trayIcon);
             }
             return 0;
@@ -402,7 +364,7 @@ void MainWindow::_applyTheme() {
 
 void MainWindow::_createView() {
     _creatingView = true;
-    _pageLoaded = false;
+    _viewCreated();
 
     try {
         // pumps messages until WebView2 is ready
@@ -411,7 +373,7 @@ void MainWindow::_createView() {
         _creatingView = false;
         logs::error("UI", "Webview unavailable : {}", e.what());
         ShowWindow(_window, SW_HIDE);
-        tell(
+        _tellNow(
             APP_NAME,
             i18n::format(
                 i18n::tr("%1 needs the Microsoft Edge WebView2 Runtime to show its window. Please install it, then try again."),
@@ -433,25 +395,19 @@ void MainWindow::_createView() {
     _configureView();
     _resizeView();
 
-    // page queries are answered right away; commands may wait for workers or open dialogs, out of WebView2's callbacks
-    _view->browser.bind("sbQuery", [this](const std::string& request) -> std::string {
-        const auto answer = _controller->query(request);
-        _pageLoaded = true;
-        return answer;
-    });
-    _view->browser.bind("sbCommand", [this](const std::string& request) -> std::string {
-        post([this, request] {
-            if (_controller) _controller->command(request);
-        });
-        return "null";
-    });
+    _view->browser.bind(
+        "sbQuery", [this](const std::string& id, const std::string& request, void* /*argument*/) { _pageQuery(id, request); }, nullptr
+    );
+    _view->browser.bind(
+        "sbCommand", [this](const std::string& id, const std::string& request, void* /*argument*/) { _pageCommand(id, request); }, nullptr
+    );
 
     _view->browser.set_html(page::html);
     _focusView();
 }
 
 void MainWindow::_destroyView() {
-    _pageLoaded = false;
+    _viewDestroyed();
     _view.reset();
 }
 
@@ -533,10 +489,10 @@ void MainWindow::_addTrayIcon() {
 }
 
 // the taskbar's theme changed
-void MainWindow::setTrayState(TrayState state) {
-    if (state.shouting == _trayState.shouting && state.dot == _trayState.dot) return;
+void MainWindow::_applyTrayState(TrayState state) {
+    const auto sameIcon = state.shouting == _trayState.shouting && state.dot == _trayState.dot;
     _trayState = state;
-    _updateTrayIcon();
+    if (!sameIcon) _updateTrayIcon();
 }
 
 void MainWindow::_updateTrayIcon() {
@@ -557,7 +513,7 @@ void MainWindow::_showTrayMenu() {
     add(MenuCommand::OpenMonitor, i18n::tr("Open monitor..."));
     AppendMenuW(menu, MF_SEPARATOR, 0, nullptr);
     add(MenuCommand::Preferences, i18n::tr("Preferences"));
-    add(MenuCommand::MyPlatform, i18n::format(i18n::tr("My %1"), { DEST_PLATFORM_PRODUCT_NAME }), _controller->canOpenPlatform());
+    add(MenuCommand::MyPlatform, i18n::format(i18n::tr("My %1"), { DEST_PLATFORM_PRODUCT_NAME }), _canOpenPlatform());
     AppendMenuW(menu, MF_SEPARATOR, 0, nullptr);
     add(MenuCommand::Warnings, i18n::tr("Read latest upload warnings report"), Controller::hasWarnings());
     add(MenuCommand::DataFolder, i18n::tr("Access upload data folder"));
@@ -577,31 +533,7 @@ void MainWindow::_showTrayMenu() {
 }
 
 void MainWindow::_onMenuCommand(UINT command) {
-    switch (static_cast<MenuCommand>(command)) {
-        case MenuCommand::OpenMonitor:
-            showWindow();
-            break;
-        case MenuCommand::Preferences:
-            _controller->openPanel(Panel::Preferences);
-            break;
-        case MenuCommand::MyPlatform:
-            _controller->openPlatform();
-            break;
-        case MenuCommand::Warnings:
-            _controller->openPanel(Panel::Warnings);
-            break;
-        case MenuCommand::DataFolder:
-            Controller::openDataFolder();
-            break;
-        case MenuCommand::About:
-            _controller->openPanel(Panel::About);
-            break;
-        case MenuCommand::Quit:
-            _controller->requestQuit();
-            break;
-        default:
-            break;
-    }
+    _runMenuCommand(static_cast<MenuCommand>(command));
 }
 
 //
@@ -609,8 +541,6 @@ void MainWindow::_onMenuCommand(UINT command) {
 //
 
 int run(int /*argc*/, char** /*argv*/) {
-    setPoster(&postToWindow);
-
     SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
 
     // WebView2 runs in this single-threaded apartment
