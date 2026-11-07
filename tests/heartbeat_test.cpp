@@ -75,8 +75,8 @@ int main() {
         const auto received = statuses.get();
         CHECK(
             received.size() == 2 && received[0].connectivity == heartbeat::Connectivity::Checking &&
-                received[1].connectivity == heartbeat::Connectivity::Refused,
-            "checking, then refused"
+                received[1].connectivity == heartbeat::Connectivity::Unreachable,
+            "checking, then unreachable"
         );
         CHECK(received.size() == 2 && received[1].text.find("SoundVitrine") != std::string::npos, "refusal names the platform");
     }

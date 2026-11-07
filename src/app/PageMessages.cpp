@@ -38,6 +38,8 @@ const char* connectivityName(heartbeat::Connectivity connectivity) {
     switch (connectivity) {
         case heartbeat::Connectivity::Refused:
             break;
+        case heartbeat::Connectivity::Unreachable:
+            return "unreachable";
         case heartbeat::Connectivity::Checking:
             return "checking";
         case heartbeat::Connectivity::Connected:

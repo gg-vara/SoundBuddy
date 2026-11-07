@@ -5,7 +5,7 @@
 
 export type Tab = 'shout' | 'feeder';
 export type MessageKind = 'standard' | 'warning' | 'issue';
-export type Connectivity = 'refused' | 'checking' | 'connected';
+export type Connectivity = 'refused' | 'unreachable' | 'checking' | 'connected';
 export type PanelName = 'preferences' | 'warnings' | 'about';
 
 export interface LogMessage {

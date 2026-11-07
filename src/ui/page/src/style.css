@@ -146,6 +146,9 @@ h1 {
   background: var(--warn);
   animation: pulse 1s ease-in-out infinite;
 }
+.pill[data-state="unreachable"] .dot {
+  background: var(--warn);
+}
 .pill[data-state="refused"] .dot {
   background: var(--issue);
 }

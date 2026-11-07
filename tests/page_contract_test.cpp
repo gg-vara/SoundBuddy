@@ -88,8 +88,8 @@ int main(int argc, char* argv[]) {
 
     // events : every variant
     std::vector<std::string> events;
-    for (const auto connectivity :
-         { heartbeat::Connectivity::Refused, heartbeat::Connectivity::Checking, heartbeat::Connectivity::Connected }) {
+    for (const auto connectivity : { heartbeat::Connectivity::Refused, heartbeat::Connectivity::Unreachable,
+                                     heartbeat::Connectivity::Checking, heartbeat::Connectivity::Connected }) {
         events.push_back(ui::page::statusEvent({ .text = "Status", .connectivity = connectivity }));
     }
     for (const auto tab : { Tab::Shout, Tab::Feeder }) {
