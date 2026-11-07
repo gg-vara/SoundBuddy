@@ -122,7 +122,7 @@ if(WIN32)
             "-DSIGN_PARAMS=/f ${EXPECTED_PFX_PATH} /tr http://timestamp.acs.microsoft.com /td SHA256 /fd SHA256"
         )
     else()
-        # its GitHub release is named so
+        # its installer and portable archive are named so
         list(APPEND VELOPACK_SCRIPT_ARGS -DUNSIGNED=ON)
     endif()
 elseif(APPLE)
@@ -143,6 +143,10 @@ elseif(APPLE)
         "-DSIGN_INSTALL_IDENTITY=$ENV{APPLE_CERT_INSTALL_SIGN_IDENTITY}"
         "-DNOTARY_PROFILE=$ENV{APPLE_NOTARY_PROFILE}"
     )
+
+    if("$ENV{APPLE_CERT_APP_CODE_SIGN_IDENTITY}" STREQUAL "")
+        list(APPEND VELOPACK_SCRIPT_ARGS -DUNSIGNED=ON)
+    endif()
 endif()
 
 add_custom_target(velopack_pack

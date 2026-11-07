@@ -68,7 +68,7 @@ Builds are described by CMake presets (`CMakePresets.json`), also used by the VS
 
 GitHub Actions (`.github/workflows/ci.yml`) builds and tests every push to `main` and every pull request, with the prerequisites and presets above : on Windows in MSYS2 CLANG64 (`msys2/setup-msys2`, then `prerequisites/msys2/*.txt`) through `windows-ci`, on macOS with Homebrew (`prerequisites/Brewfile`) through `macos-test`.
 
-When the version changes in `CMakeLists.txt` on `main`, `.github/workflows/package.yml` also runs the unit tests, then builds the unsigned Windows installer through `windows-package`, kept as an artifact of the run, and creates the `vX.Y.Z` GitHub release as a draft : publishing it, from the Releases page, is what updates installed copies. It can be started by hand from the Actions tab, the release being then an option.
+When the version changes in `CMakeLists.txt` on `main`, `.github/workflows/package.yml` also runs the unit tests, then builds the unsigned Windows installer through `windows-package`, kept as an artifact of the run, and publishes the `vX.Y.Z` GitHub release, which updates installed copies : bumping the version on `main` is what ships it. It can be started by hand from the Actions tab, the release being then an option.
 
 ### Visual Studio Code
 
@@ -136,7 +136,7 @@ Requirements, in addition to the build dependencies :
 Then, after bumping the version in `CMakeLists.txt` (`project(... VERSION X.Y.Z`) and describing it in a `## X.Y.Z` section of `CHANGELOG.md` (its release notes) :
 - `cmake --workflow --preset windows-package` builds in Release and packages the app into `build_release_unsigned/releases`, without signing nor publishing anything : useful to check a release locally
 - `cmake --workflow --preset windows-publish` builds, signs, packages, and publishes the `vX.Y.Z` GitHub release. Set the `SOUNDBUDDY_RELEASE_DRAFT` environment variable to create it as a draft instead
-- `cmake --workflow --preset windows-publish-unsigned` does the same without signing, the release being named `SoundBuddy vX.Y.Z (unsigned)`
+- `cmake --workflow --preset windows-publish-unsigned` does the same without signing, the installer and the portable archive being named so (`SoundBuddy-X.Y.Z-win-Setup-unsigned.exe`)
 - on macOS, `macos-package` / `macos-publish` add the macOS packages to the same release
 
 Packaging fetches the previous release (`vpk download github`) to generate delta updates, then runs `vpk pack`; publishing runs `vpk upload github` (see `cmake/Velopack.cmake`).
