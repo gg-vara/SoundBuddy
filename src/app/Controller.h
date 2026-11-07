@@ -9,6 +9,7 @@
 #include <optional>
 #include <string>
 #include <string_view>
+#include <thread>
 
 #include "src/settings/AppSettings.h"
 #include "src/app/PageMessages.h"
@@ -121,6 +122,7 @@ class Controller {
     std::unique_ptr<HeartbeatThread> _heartbeatWorker;
     std::unique_ptr<FeederThread> _feederWorker;
     std::unique_ptr<ShoutUploader> _shoutUploader;
+    std::jthread _retiredUploaders;  // finishing what they were sending : each joins the one before
     std::unique_ptr<ShoutWatcher> _shoutWorker;
     UpdateChecker _updateChecker;
 
