@@ -86,6 +86,8 @@ Controller::Controller(Shell& shell) :
     checkForUpdates();
 
     if (_appSettings.values().autoRunShout) _runShouts();
+
+    _sendTrayState();
 }
 
 Controller::~Controller() {
@@ -191,7 +193,7 @@ std::string Controller::_state(yyjson_val* translationKeys) {
         .feeder = _feederTab.shown,
         .nowPlaying = _nowPlaying,
         .settings = _shownSettings(),
-        .canOpenPlatform = canOpenPlatform(),
+        .canOpenPlatform = _canOpenPlatform(),
         .hasWarnings = hasWarnings(),
         .searchingUpdates = _searchingUpdates,
         .updateResult = _updateResult,
@@ -283,7 +285,7 @@ void Controller::requestQuit() {
     _shell.quit();
 }
 
-bool Controller::canOpenPlatform() const {
+bool Controller::_canOpenPlatform() const {
     return !_appSettings.getConnectivityInfos().getPlaformHomeUrl().empty();
 }
 
@@ -505,11 +507,12 @@ void Controller::_runFinished(Tab tab, int run) {
 }
 
 void Controller::_sendTrayState() {
-    _shell.setTrayState({ .shouting = _shoutTab.shown.running, .dot = _trayDot });
+    _shell.setTrayState({ .shouting = _shoutTab.shown.running, .canOpenPlatform = _canOpenPlatform(), .dot = _trayDot });
 }
 
 void Controller::_sendSettings() {
-    _shell.sendToPage(page::settingsEvent(_shownSettings(), canOpenPlatform()));
+    _shell.sendToPage(page::settingsEvent(_shownSettings(), _canOpenPlatform()));
+    _sendTrayState();
 }
 
 void Controller::_sendWarnings() {

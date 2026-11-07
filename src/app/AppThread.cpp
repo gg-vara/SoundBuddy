@@ -34,16 +34,6 @@ Tasks& tasks() {
     return instance;
 }
 
-void postToQueue(std::function<void()> task) {
-    auto& all = tasks();
-    {
-        const std::scoped_lock lock { all.mutex };
-        if (!all.accepting) return;
-        all.queue.push_back(std::move(task));
-    }
-    all.changed.notify_one();
-}
-
 void startAccepting() {
     auto& all = tasks();
     const std::scoped_lock lock { all.mutex };
@@ -98,9 +88,18 @@ void runGuarded(Controller*& pointer, Shell& shell) {
 
 }  // namespace
 
+void post(std::function<void()> task) {
+    auto& all = tasks();
+    {
+        const std::scoped_lock lock { all.mutex };
+        if (!all.accepting) return;
+        all.queue.push_back(std::move(task));
+    }
+    all.changed.notify_one();
+}
+
 AppThread::AppThread(Shell& shell) {
     startAccepting();
-    setPoster(&postToQueue);
 
     _thread = std::jthread([this, &shell] {
 #ifdef _WIN32

@@ -93,7 +93,6 @@ add_executable(appExec
     src/app/AppThread.cpp
     src/app/Controller.cpp
     src/app/Headless.cpp
-    src/app/Post.cpp
     src/workers/base/UpdateChecker.cpp
 )
 soundbuddy_add_core(appExec PRIVATE)

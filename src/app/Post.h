@@ -5,14 +5,10 @@
 
 #include <functional>
 
-// Workers call back on their own threads : their callbacks reach the user interface thread through here
+// Workers call back on their own threads : their callbacks reach the application thread through here
 namespace ui {
 
-// runs "task" later on the user interface thread, unless the user interface is gone meanwhile
+// runs "task" later on the application thread (AppThread), unless it is stopping meanwhile
 void post(std::function<void()> task);
-
-// what post() hands tasks to : set by the running user interface, as a window or headless
-using Poster = void (*)(std::function<void()> task);
-void setPoster(Poster poster);
 
 }  // namespace ui

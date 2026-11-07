@@ -33,11 +33,12 @@ struct TrayState {
     // the dot of the connection with the platform : none until known
     enum class Dot { None, Ok, Issue };
 
-    bool shouting = false;  // the circle behind the icon
+    bool shouting = false;         // the circle behind the icon
+    bool canOpenPlatform = false;  // the entry of its menu
     Dot dot = Dot::None;
 };
 
-// what the native shell offers, on the user interface thread
+// what the native shell offers : called from the application thread, it hands these over to the user interface thread
 class Shell {
  public:
     virtual ~Shell() = default;
@@ -49,7 +50,7 @@ class Shell {
 
     virtual void setTrayState(TrayState state) = 0;
 
-    // modal question, "byDefault" being focused : true if the user answers yes
+    // modal question, "byDefault" being focused : true if the user answers yes. Waits for it, unless the user interface is closing
     virtual bool ask(std::string_view title, std::string_view question, Answer byDefault) = 0;
 
     // modal message
@@ -59,7 +60,7 @@ class Shell {
     virtual void quit() = 0;
 };
 
-// The application state and its workers, on the user interface thread
+// The application state and its workers, on the application thread (AppThread) : it may wait there, the window stays responsive
 class Controller {
  public:
     // starts the heartbeat, the update check, and the shouts if set so
@@ -76,7 +77,7 @@ class Controller {
     // answers right away, without side effects : returns JSON
     std::string query(std::string_view request);
 
-    // acts : not within a page call, as it may wait for workers or open modal dialogs
+    // acts : it may wait for workers or modal dialogs
     void command(std::string_view request);
 
     // native menus
@@ -94,7 +95,6 @@ class Controller {
     // name and version, and the build type when it is not a production one : "SoundBuddy 1.0.0 (Debug)"
     static std::string versionLabel();
 
-    bool canOpenPlatform() const;
     static bool hasWarnings();
 
  private:
@@ -147,6 +147,7 @@ class Controller {
     // updates
     void _onUpdateChecked(const UpdateChecker::CheckResults& results);
 
+    bool _canOpenPlatform() const;
     void _sendTrayState();
 
     // state changes, sent to the page

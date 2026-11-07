@@ -6,10 +6,13 @@
 #include <windows.h>
 #include <shellapi.h>
 
+#include <atomic>
+#include <cstdint>
 #include <memory>
 #include <string>
 #include <string_view>
 
+#include "src/app/AppThread.h"
 #include "src/app/Controller.h"
 
 namespace ui {
@@ -47,14 +50,22 @@ class MainWindow final : public Shell {
     struct View;
     std::unique_ptr<View> _view;
     bool _creatingView = false;
-    bool _pageLoaded = false;
+    std::atomic<bool> _pageLoaded = false;       // set from the application thread too
+    std::atomic<std::uint64_t> _viewNumber = 0;  // what is answered to a view gone meanwhile is dropped
+
+    std::atomic<bool> _closing = false;  // dialogs stop being waited for
 
     // created once the window exists, destroyed first
-    std::unique_ptr<Controller> _controller;
+    std::unique_ptr<AppThread> _app;
 
     static LRESULT CALLBACK _windowProc(HWND window, UINT message, WPARAM wParam, LPARAM lParam);
     LRESULT _handle(UINT message, WPARAM wParam, LPARAM lParam);
 
+    void _show();
+    void _quit();
+    void _stopApplication();
+    bool _ask(const std::string& title, const std::string& question, Answer byDefault);
+    void _tell(const std::string& title, const std::string& text, Severity severity);
     void _hideWindow();
     void _createView();
     void _destroyView();

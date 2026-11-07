@@ -50,7 +50,7 @@ Shouts still need the real music app : `runShouts` watches iTunes, so nothing re
 
 ## Structure
 
-- `src/app/Controller` : the application state and its workers, independent of the platform. It talks to the window through the `ui::Shell` interface. It runs on the user interface thread, which never waits for the network : nothing it calls may hold a lock during a request
+- `src/app/Controller` : the application state and its workers, independent of the platform. It talks to the window through the `ui::Shell` interface. It runs on the application thread (`src/app/AppThread`), and may wait there : the windows only display, and exchange messages with it. A page call may wait for a busy application, so no lock is held during a request either
 - `src/app/PageMessages` : every message between the page and the application. `tests/page_contract_test.cpp` checks them against the page's TypeScript types
 - `src/ui/win`, `src/ui/mac` : the native windows. `src/app/Headless` : the same application without one
 - `src/settings` : what the user sets, and where it is kept. `src/net` : HTTP, the login, uploads

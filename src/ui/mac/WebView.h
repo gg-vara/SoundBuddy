@@ -21,8 +21,10 @@ class WebView {
     WebView(const WebView&) = delete;
     void operator=(const WebView&) = delete;
 
-    // "function" answers the calls of the page to window.<name>(...), with their arguments as a JSON array
-    void bind(const std::string& name, std::function<std::string(const std::string&)> function);
+    // "function" gets the calls of the page to window.<name>(...), with their arguments as a JSON array : resolve() answers them, by their
+    // id
+    void bind(const std::string& name, std::function<void(const std::string& id, const std::string& request)> function);
+    void resolve(const std::string& id, const std::string& answer);
     void eval(const std::string& script);
     void setHtml(const std::string& html);
 

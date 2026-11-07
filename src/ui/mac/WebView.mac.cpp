@@ -28,8 +28,16 @@ WebView::WebView(bool devTools, void* window) {
 
 WebView::~WebView() = default;
 
-void WebView::bind(const std::string& name, std::function<std::string(const std::string&)> function) {
-    _engine->browser.bind(name, [function = std::move(function)](const std::string& request) { return function(request); });
+void WebView::bind(const std::string& name, std::function<void(const std::string& id, const std::string& request)> function) {
+    _engine->browser.bind(
+        name,
+        [function = std::move(function)](const std::string& id, const std::string& request, void* /*argument*/) { function(id, request); },
+        nullptr
+    );
+}
+
+void WebView::resolve(const std::string& id, const std::string& answer) {
+    _engine->browser.resolve(id, 0, answer);
 }
 
 void WebView::eval(const std::string& script) {
