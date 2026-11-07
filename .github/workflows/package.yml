@@ -1,5 +1,5 @@
-# When the version changes in CMakeLists.txt : builds the unsigned Windows installer, keeps it as an artifact of the run, and
-# publishes the GitHub release, which updates every installed copy.
+# When the version changes in CMakeLists.txt : once the whole CI passes, on every platform, builds the unsigned Windows installer, keeps
+# it as an artifact of the run, and publishes the GitHub release, which updates every installed copy.
 # Also started by hand, whatever the version (Actions > Package > Run workflow), with the release as an option.
 name: Package
 
@@ -17,10 +17,11 @@ on:
 permissions:
   contents: read
 
-# a newer push replaces the run in progress
+# one at a time, without cancelling : a newer push that does not change the version would otherwise lose the release in progress.
+# Not the group of the CI it calls, which takes this workflow's name
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
   # on a cheap runner : most changes of CMakeLists.txt do not touch the version
@@ -64,10 +65,16 @@ jobs:
             echo "changed=true" >> "$GITHUB_OUTPUT"
           fi
 
-  windows:
-    name: Windows installer
+  # nothing is released from a version failing on any platform
+  ci:
+    name: CI
     needs: version
     if: needs.version.outputs.changed == 'true'
+    uses: ./.github/workflows/ci.yml
+
+  windows:
+    name: Windows installer
+    needs: [version, ci]
     runs-on: windows-latest
     timeout-minutes: 45
     permissions:
@@ -111,10 +118,6 @@ jobs:
 
       - name: MSYS2 location, for the CMake presets
         run: echo "MSYS2_ROOT=$(cygpath -w /)" >> "$GITHUB_ENV"
-
-      # nothing is packaged from a version failing its tests
-      - name: Unit tests
-        run: cmake --workflow --preset windows-test
 
       - name: Build and package, unsigned
         run: cmake --workflow --preset windows-package

@@ -55,7 +55,7 @@ Shouts still need the real music app : `runShouts` watches iTunes, so nothing re
 - `src/ui/NativeShell` : what the native windows share, and how they exchange messages with the application thread. `src/ui/win`, `src/ui/mac` : what is theirs. `src/app/Headless` : the same application without one
 - `src/settings` : what the user sets, and where it is kept. `src/net` : HTTP, the login, uploads
 - `src/workers` : heartbeat, library feed, shouts. `*.win.cpp` and `*.mac.cpp` are the platform parts
-- `tests/` : one program per test, run by ctest. The `network` label reaches public services, and is left out of default runs
+- `tests/` : one program per test, run by ctest. `headless.test.ts` drives the real executable without a window, `window.test.ts` the real window on Windows, in Debug builds : windows flash and take the focus while it runs. The `network` label reaches public services, and is left out of default runs
 
 ## What SoundVitrine expects
 
