@@ -96,8 +96,9 @@ set_tests_properties(headless PROPERTIES ENVIRONMENT
     "SOUNDBUDDY_DEBUG_BUILD=$<CONFIG:Debug>;SOUNDBUDDY_EXE=$<TARGET_FILE:appExec>;SOUNDBUDDY_LIBRARY=${PROJECT_SOURCE_DIR}/deps/ItunesLibraryParser/tests/samples/iTunes Music Library (S).xml"
 )
 
-# the real window, which Debug builds open when they start : one test at a time, as it takes the focus
-if(WIN32 AND CMAKE_BUILD_TYPE STREQUAL "Debug")
+# the real window, which Debug builds open when they start : one test at a time, as it takes the focus.
+# Not on GitHub's runners, where WebView2 never shows a page
+if(WIN32 AND CMAKE_BUILD_TYPE STREQUAL "Debug" AND NOT DEFINED ENV{CI})
     add_test(NAME window COMMAND ${BUN_EXECUTABLE} test ./window.test.ts WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
     set_tests_properties(window PROPERTIES
         RUN_SERIAL TRUE
