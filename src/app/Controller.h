@@ -11,7 +11,7 @@
 #include <string_view>
 
 #include "src/settings/AppSettings.h"
-#include "src/ui/PageMessages.h"
+#include "src/app/PageMessages.h"
 #include "src/workers/base/Message.h"
 #include "src/workers/base/UpdateChecker.h"
 #include "src/workers/feeder/FeederThread.h"

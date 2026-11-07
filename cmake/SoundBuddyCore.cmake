@@ -14,6 +14,7 @@ function(soundbuddy_add_core target scope)
     set(src ${SOUNDBUDDY_CORE_DIR})
 
     target_sources(${target} PRIVATE
+        ${src}/app/PageMessages.cpp
         ${src}/helpers/Hash.cpp
         ${src}/helpers/Options.cpp
         ${src}/helpers/Platform.cpp
@@ -24,7 +25,6 @@ function(soundbuddy_add_core target scope)
         ${src}/net/SseParser.cpp
         ${src}/settings/AppSettings.cpp
         ${src}/settings/Settings.cpp
-        ${src}/ui/PageMessages.cpp
         ${src}/workers/base/Message.cpp
         ${src}/workers/feeder/FeederThread.cpp
         ${src}/workers/heartbeat/HeartbeatThread.cpp

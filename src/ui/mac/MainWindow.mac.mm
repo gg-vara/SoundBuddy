@@ -17,9 +17,9 @@
 #include "page.h"
 #include "src/i18n/Translations.h"
 #include "src/logs/Logs.h"
-#include "src/ui/Controller.h"
-#include "src/ui/PageMessages.h"
-#include "src/ui/Post.h"
+#include "src/app/Controller.h"
+#include "src/app/PageMessages.h"
+#include "src/app/Post.h"
 #include "src/ui/Run.h"
 #include "src/ui/mac/WebView.h"
 #include "version.h"
@@ -99,30 +99,31 @@ NSImage* menuBarImage(TrayState state) {
         return base;
     }
 
-    NSColor* const dotColor = state.dot == TrayState::Dot::Ok ? [NSColor colorWithSRGBRed:0x2f / 255.0 green:0x9e / 255.0 blue:0x62 / 255.0 alpha:1]
-                                                               : [NSColor colorWithSRGBRed:0xd2 / 255.0 green:0x3f / 255.0 blue:0x3f / 255.0 alpha:1];
+    NSColor* const dotColor = state.dot == TrayState::Dot::Ok
+                                  ? [NSColor colorWithSRGBRed:0x2f / 255.0 green:0x9e / 255.0 blue:0x62 / 255.0 alpha:1]
+                                  : [NSColor colorWithSRGBRed:0xd2 / 255.0 green:0x3f / 255.0 blue:0x3f / 255.0 alpha:1];
     const bool shouting = state.shouting;
 
     return [NSImage imageWithSize:NSMakeSize(side, side)
                           flipped:NO
                    drawingHandler:^BOOL(NSRect rect) {
-                       [base drawInRect:rect];
-                       if (!shouting) {
-                           [NSColor.labelColor set];
-                           NSRectFillUsingOperation(rect, NSCompositingOperationSourceIn);
-                       }
+                     [base drawInRect:rect];
+                     if (!shouting) {
+                         [NSColor.labelColor set];
+                         NSRectFillUsingOperation(rect, NSCompositingOperationSourceIn);
+                     }
 
-                       // a gap around the dot, in the lower right corner, keeps it apart from the note
-                       const NSRect gap = NSMakeRect(side * 0.66, 0, side * 0.34, side * 0.34);
-                       [NSColor.clearColor set];
-                       NSBezierPath* const gapPath = [NSBezierPath bezierPathWithOvalInRect:gap];
-                       NSGraphicsContext.currentContext.compositingOperation = NSCompositingOperationCopy;
-                       [gapPath fill];
-                       NSGraphicsContext.currentContext.compositingOperation = NSCompositingOperationSourceOver;
+                     // a gap around the dot, in the lower right corner, keeps it apart from the note
+                     const NSRect gap = NSMakeRect(side * 0.66, 0, side * 0.34, side * 0.34);
+                     [NSColor.clearColor set];
+                     NSBezierPath* const gapPath = [NSBezierPath bezierPathWithOvalInRect:gap];
+                     NSGraphicsContext.currentContext.compositingOperation = NSCompositingOperationCopy;
+                     [gapPath fill];
+                     NSGraphicsContext.currentContext.compositingOperation = NSCompositingOperationSourceOver;
 
-                       [dotColor set];
-                       [[NSBezierPath bezierPathWithOvalInRect:NSInsetRect(gap, side * 0.045, side * 0.045)] fill];
-                       return YES;
+                     [dotColor set];
+                     [[NSBezierPath bezierPathWithOvalInRect:NSInsetRect(gap, side * 0.045, side * 0.045)] fill];
+                     return YES;
                    }];
 }
 

@@ -90,9 +90,9 @@ SET(ICONS_BUILD_DIR ${PROJECT_SOURCE_DIR}/resources/icons/build)
 
 add_executable(appExec
     src/main.cpp
-    src/ui/Controller.cpp
-    src/ui/Headless.cpp
-    src/ui/Post.cpp
+    src/app/Controller.cpp
+    src/app/Headless.cpp
+    src/app/Post.cpp
     src/workers/base/UpdateChecker.cpp
 )
 soundbuddy_add_core(appExec PRIVATE)

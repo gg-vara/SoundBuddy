@@ -19,7 +19,7 @@
 #include "src/helpers/Options.h"
 #include "src/helpers/Platform.h"
 #include "src/logs/Logs.h"
-#include "src/ui/Headless.h"
+#include "src/app/Headless.h"
 #include "src/ui/Run.h"
 #include "version.h"
 

@@ -85,7 +85,7 @@ On Windows, clangd and CMake are taken from the CLANG64 environment of `MSYS2_RO
 
 `SoundBuddy --data-dir <folder>` keeps to that folder : settings of previous versions are not imported, start at login stays off, nothing opens in other apps, no update is looked for, and it runs beside another instance. Add `--library <file>` to read that iTunes XML library, as the real one is otherwise left alone.
 
-`--headless` then removes the window : the app is driven through its standard input and output (see `src/ui/Headless.h`), as `tests/headless.test.ts` does.
+`--headless` then removes the window : the app is driven through its standard input and output (see `src/app/Headless.h`), as `tests/headless.test.ts` does.
 
 ### Static analysis and layout
 
@@ -105,7 +105,7 @@ Tests run under their own identity (`tests/support/version.h`) : they never touc
 
 ## User interface
 
-The user interface is a web page shown in the system webview, hosted by a native shell : a window and a tray icon on Windows (WebView2, `src/ui/win`), a window and a menu bar item on macOS (WKWebView, `src/ui/mac`). The application state and its workers live in C++ (`src/ui/Controller.cpp`); the page shows it, and asks for changes :
+The user interface is a web page shown in the system webview, hosted by a native shell : a window and a tray icon on Windows (WebView2, `src/ui/win`), a window and a menu bar item on macOS (WKWebView, `src/ui/mac`). The application state and its workers live in C++ (`src/app/Controller.cpp`); the page shows it, and asks for changes :
 
 - `src/ui/page` : the page, in TypeScript with [Solid](https://www.solidjs.com), its states in an [XState](https://stately.ai/docs/xstate) machine (`src/machine.ts`), built by [Vite](https://vite.dev) into a single HTML file embedded in the executable
 - `bun run dev` (from `src/ui/page`) : the page in a browser, with live reload, against a stand-in of the application (`src/dev/fakeNative.ts`)

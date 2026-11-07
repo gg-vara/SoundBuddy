@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2018-2026 Guillaume Vara <guillaume.vara@gmail.com>
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-// The messages between the application and its page (src/ui/PageMessages.h), against the page's types : every message
+// The messages between the application and its page (src/app/PageMessages.h), against the page's types : every message
 // the application can send, and the calls it handles, are written as TypeScript into the file given as argument, each
 // value "satisfies" its type. The page-contract-types test then checks them with tsc (see tests/CMakeLists.txt)
 
@@ -18,7 +18,7 @@
 #include "TestData.h"
 #include "src/helpers/Platform.h"
 #include "src/settings/Settings.h"
-#include "src/ui/PageMessages.h"
+#include "src/app/PageMessages.h"
 #include "src/workers/base/Message.h"
 #include "src/workers/heartbeat/HeartbeatThread.h"
 #include "src/workers/shout/ShoutPayload.h"
