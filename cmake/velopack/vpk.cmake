@@ -4,10 +4,11 @@
 # Runs Velopack's CLI, in CMake script mode : see velopack_pack / velopack_publish targets in cmake/Velopack.cmake
 #
 # ACTION=pack : fetches the previous GitHub release (for delta updates), then packages PACK_DIR into RELEASES_DIR,
-#   with the section of CHANGELOG for PACK_VERSION as release notes
+#   with the section of CHANGELOG for PACK_VERSION as release notes. The installer and the portable archive are then
+#   renamed with the version, and as unsigned when UNSIGNED is set
 # ACTION=publish : uploads RELEASES_DIR as the vPACK_VERSION GitHub release, published unless
-#   SOUNDBUDDY_RELEASE_DRAFT environment variable is set; named as unsigned when UNSIGNED is set; tagged on the
-#   SOUNDBUDDY_RELEASE_COMMIT environment variable if set, else on the tip of the default branch
+#   SOUNDBUDDY_RELEASE_DRAFT environment variable is set; tagged on the SOUNDBUDDY_RELEASE_COMMIT environment variable
+#   if set, else on the tip of the default branch
 #
 # The GitHub token comes from GITHUB_TOKEN environment variable, else from GitHub CLI (gh auth token)
 
@@ -117,6 +118,34 @@ if(ACTION STREQUAL "pack")
 
     execute_process(COMMAND ${VPK} pack ${pack_args} COMMAND_ERROR_IS_FATAL ANY)
 
+    # Velopack has no option for these names, and uploads what this list tells. Only what people download by hand :
+    # installed copies find the update packages by their names, in releases.${CHANNEL}.json
+    set(assets_file ${RELEASES_DIR}/assets.${CHANNEL}.json)
+    file(READ ${assets_file} assets)
+    string(JSON assets_count LENGTH "${assets}")
+    math(EXPR last_asset "${assets_count} - 1")
+    foreach(index RANGE ${last_asset})
+        string(JSON asset_type GET "${assets}" ${index} Type)
+        if(asset_type STREQUAL "Installer" OR asset_type STREQUAL "Portable")
+            string(JSON asset_name GET "${assets}" ${index} RelativeFileName)
+            cmake_path(GET asset_name EXTENSION LAST_ONLY asset_extension)
+            set(new_name "${PACK_ID}-${PACK_VERSION}-${CHANNEL}-")
+            if(asset_type STREQUAL "Installer")
+                string(APPEND new_name "Setup")
+            else()
+                string(APPEND new_name "Portable")
+            endif()
+            if(UNSIGNED)
+                string(APPEND new_name "-unsigned")
+            endif()
+            string(APPEND new_name "${asset_extension}")
+
+            file(RENAME ${RELEASES_DIR}/${asset_name} ${RELEASES_DIR}/${new_name})
+            string(JSON assets SET "${assets}" ${index} RelativeFileName "\"${new_name}\"")
+        endif()
+    endforeach()
+    file(WRITE ${assets_file} "${assets}")
+
     message(STATUS "Packages ready in ${RELEASES_DIR}")
 
 #
@@ -133,16 +162,11 @@ elseif(ACTION STREQUAL "publish")
         message(FATAL_ERROR "No GitHub token : set GITHUB_TOKEN environment variable, or log in with GitHub CLI (gh auth login)")
     endif()
 
-    set(release_name "${PACK_ID} v${PACK_VERSION}")
-    if(UNSIGNED)
-        string(APPEND release_name " (unsigned)")
-    endif()
-
     # the other platform may already have created the release
     set(upload_args
         --token ${token}
         --tag v${PACK_VERSION}
-        --releaseName "${release_name}"
+        --releaseName "${PACK_ID} v${PACK_VERSION}"
         --merge
     )
 
