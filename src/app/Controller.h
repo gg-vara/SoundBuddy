@@ -42,10 +42,8 @@ class Shell {
  public:
     virtual ~Shell() = default;
 
-    // "event" (a JSON object with a "type") to the page : false if no page is loaded
-    virtual bool sendToPage(const std::string& event) = 0;
-
-    virtual void showWindow() = 0;
+    // "event" (a JSON object with a "type") to the page, if one is loaded
+    virtual void sendToPage(const std::string& event) = 0;
 
     virtual void setTrayState(TrayState state) = 0;
 
@@ -55,8 +53,8 @@ class Shell {
     // modal message
     virtual void tell(std::string_view title, std::string_view text, Severity severity) = 0;
 
-    // ends the user interface
-    virtual void quit() = 0;
+    // ends the user interface, and the process with "exitCode"
+    virtual void quit(int exitCode) = 0;
 };
 
 // The application state and its workers, on the application thread (AppThread) : it may wait there, the window stays responsive
@@ -80,9 +78,6 @@ class Controller {
     void command(std::string_view request);
 
     // native menus
-
-    // shows the window, on "panel"
-    void openPanel(Panel panel);
 
     void openPlatform();
     static void openDataFolder();
@@ -111,7 +106,6 @@ class Controller {
     TabState _feederTab;
     heartbeat::Status _status { .text = {}, .connectivity = heartbeat::Connectivity::Checking };
     std::string _nowPlaying;  // last shout, as JSON
-    std::optional<Panel> _pendingPanel;
     TrayState::Dot _trayDot = TrayState::Dot::None;
     bool _searchingUpdates = false;
     std::optional<page::UpdateResult> _updateResult;

@@ -13,22 +13,18 @@
 
 #include <algorithm>
 #include <deque>
-#include <functional>
 #include <memory>
-#include <mutex>
 #include <stdexcept>
 #include <string>
 #include <string_view>
-#include <utility>
 
 #include "page.h"
 #include "src/helpers/Platform.h"
 #include "src/i18n/Translations.h"
 #include "src/logs/Logs.h"
 #include "src/app/Controller.h"
-#include "src/app/PageMessages.h"
 #include "src/app/AppThread.h"
-#include "src/ui/Dialog.h"
+#include "src/ui/NativeShell.h"
 #include "src/ui/Run.h"
 #include "version.h"
 
@@ -36,12 +32,9 @@ namespace ui {
 
 namespace {
 
-// posted to the window
+// sent to the window
 constexpr UINT postedTasksMessage = WM_APP + 1;
 constexpr UINT trayIconMessage = WM_APP + 2;
-
-// tray menu
-enum class MenuCommand : UINT { OpenMonitor = 1, Preferences, MyPlatform, Warnings, DataFolder, Quit, About };
 
 // size of the window, in pixels at 96 DPI
 constexpr int defaultWidth = 760;
@@ -60,35 +53,6 @@ constexpr bool devTools = true;
 #else
 constexpr bool devTools = false;
 #endif
-
-// tasks posted by the application thread, run by the window
-struct PostedTasks {
-    std::mutex mutex;
-    HWND window = nullptr;  // none : tasks are dropped
-    std::deque<std::function<void()>> tasks;
-};
-
-PostedTasks& postedTasks() {
-    static PostedTasks instance;
-    return instance;
-}
-
-void setPostTarget(HWND window) {
-    auto& posted = postedTasks();
-    const std::scoped_lock lock { posted.mutex };
-    posted.window = window;
-    if (!window) posted.tasks.clear();
-}
-
-void runPostedTasks() {
-    std::deque<std::function<void()>> tasks;
-    {
-        auto& posted = postedTasks();
-        const std::scoped_lock lock { posted.mutex };
-        tasks.swap(posted.tasks);
-    }
-    for (const auto& task : tasks) task();
-}
 
 // "setting" of the personalization : AppsUseLightTheme for windows, SystemUsesLightTheme for the taskbar
 bool isDark(const wchar_t* setting) {
@@ -123,15 +87,6 @@ std::wstring trayIconName(TrayState state) {
     if (state.dot == TrayState::Dot::Ok) name += L"_OK";
     if (state.dot == TrayState::Dot::Issue) name += L"_ISSUE";
     return name;
-}
-
-void postToWindow(std::function<void()> task) {
-    auto& posted = postedTasks();
-    const std::scoped_lock lock { posted.mutex };
-    if (!posted.window) return;
-
-    posted.tasks.push_back(std::move(task));
-    if (posted.tasks.size() == 1) PostMessageW(posted.window, postedTasksMessage, 0, 0);
 }
 
 // pointer carried by a message parameter, or a window data
@@ -177,11 +132,10 @@ MainWindow::MainWindow() {
     _taskbarCreatedMessage = RegisterWindowMessageW(L"TaskbarCreated");
     _addTrayIcon();
 
-    setPostTarget(_window);
-    _app = std::make_unique<AppThread>(*this);
+    _startApplication();
 
 #ifdef _DEBUG
-    _show();
+    _showNow();
 #endif
 }
 
@@ -207,20 +161,23 @@ int MainWindow::run() {
 // Shell
 //
 
-bool MainWindow::sendToPage(const std::string& event) {
-    if (!_pageLoaded) return false;
-
-    postToWindow([this, event] {
-        if (_view && _pageLoaded) _view->browser.eval("sb.receive(" + event + ");");
-    });
-    return true;
+void MainWindow::_wakeUiThread() {
+    PostMessageW(_window, postedTasksMessage, 0, 0);
 }
 
-void MainWindow::showWindow() {
-    postToWindow([this] { _show(); });
+bool MainWindow::_isUiThread() const {
+    return GetWindowThreadProcessId(_window, nullptr) == GetCurrentThreadId();
 }
 
-void MainWindow::_show() {
+void MainWindow::_evalNow(const std::string& script) {
+    if (_view) _view->browser.eval(script);
+}
+
+void MainWindow::_resolveNow(const std::string& id, const std::string& answer) {
+    if (_view) _view->browser.resolve(id, 0, answer);
+}
+
+void MainWindow::_showNow() {
     if (!_centered) {
         _center();
         _centered = true;
@@ -233,25 +190,7 @@ void MainWindow::_show() {
     _focusView();
 }
 
-bool MainWindow::ask(std::string_view title, std::string_view question, Answer byDefault) {
-    return dialogAnswer(
-        &postToWindow, _closing, byDefault == Answer::Yes,
-        [this, title = std::string { title }, question = std::string { question }, byDefault] { return _ask(title, question, byDefault); }
-    );
-}
-
-void MainWindow::tell(std::string_view title, std::string_view text, Severity severity) {
-    dialogAnswer(&postToWindow, _closing, /*ifClosing=*/true, [this, title = std::string { title }, text = std::string { text }, severity] {
-        _tell(title, text, severity);
-        return true;
-    });
-}
-
-void MainWindow::quit() {
-    postToWindow([this] { _quit(); });
-}
-
-bool MainWindow::_ask(const std::string& title, const std::string& question, Answer byDefault) {
+bool MainWindow::_askNow(const std::string& title, const std::string& question, Answer byDefault) {
     const UINT defaultButton = byDefault == Answer::No ? MB_DEFBUTTON2 : MB_DEFBUTTON1;
     const auto answer = MessageBoxW(
         _dialogOwner(), platform::widen(question).c_str(), platform::widen(title).c_str(),
@@ -260,29 +199,22 @@ bool MainWindow::_ask(const std::string& title, const std::string& question, Ans
     return answer == IDYES;
 }
 
-void MainWindow::_tell(const std::string& title, const std::string& text, Severity severity) {
+void MainWindow::_tellNow(const std::string& title, const std::string& text, Severity severity) {
     const UINT icon = severity == Severity::Error ? MB_ICONERROR : MB_ICONINFORMATION;
     MessageBoxW(_dialogOwner(), platform::widen(text).c_str(), platform::widen(title).c_str(), MB_OK | MB_SETFOREGROUND | icon);
 }
 
-void MainWindow::_quit() {
+void MainWindow::_quitNow(int exitCode) {
     // the webview pumps messages while it is created : it ends first
     if (_creatingView) {
-        postToWindow([this] { _quit(); });
+        _postToUi([this, exitCode] { _quitNow(exitCode); });
         return;
     }
 
     ShowWindow(_window, SW_HIDE);
     _destroyView();
     Shell_NotifyIconW(NIM_DELETE, &_trayIcon);
-    PostQuitMessage(0);
-}
-
-void MainWindow::_stopApplication() {
-    // in that order : a dialog it waits for would never be answered, as this thread is about to wait for it
-    _closing = true;
-    setPostTarget(nullptr);
-    _app.reset();
+    PostQuitMessage(exitCode);
 }
 
 HWND MainWindow::_dialogOwner() const {
@@ -314,14 +246,14 @@ LRESULT MainWindow::_handle(UINT message, WPARAM wParam, LPARAM lParam) {
 
     switch (message) {
         case postedTasksMessage:
-            runPostedTasks();
+            _runPosted();
             return 0;
 
         case trayIconMessage:
             switch (LOWORD(lParam)) {
                 case NIN_SELECT:
                 case NIN_KEYSELECT:
-                    _show();
+                    _showNow();
                     break;
                 case WM_CONTEXTMENU:
                     _showTrayMenu();
@@ -432,7 +364,7 @@ void MainWindow::_applyTheme() {
 
 void MainWindow::_createView() {
     _creatingView = true;
-    _pageLoaded = false;
+    _viewCreated();
 
     try {
         // pumps messages until WebView2 is ready
@@ -441,7 +373,7 @@ void MainWindow::_createView() {
         _creatingView = false;
         logs::error("UI", "Webview unavailable : {}", e.what());
         ShowWindow(_window, SW_HIDE);
-        _tell(
+        _tellNow(
             APP_NAME,
             i18n::format(
                 i18n::tr("%1 needs the Microsoft Edge WebView2 Runtime to show its window. Please install it, then try again."),
@@ -463,32 +395,11 @@ void MainWindow::_createView() {
     _configureView();
     _resizeView();
 
-    // answered from the application thread, which may be busy : the page waits for that, not the window
     _view->browser.bind(
-        "sbQuery",
-        [this, viewNumber = _viewNumber.load()](const std::string& id, const std::string& request, void* /*argument*/) {
-            if (!_app) return;
-
-            _app->run([this, viewNumber, id, request](Controller& controller) {
-                auto answer = controller.query(request);
-
-                // what the application sends from now on comes after this answer, which holds what it sent so far
-                if (viewNumber == _viewNumber) _pageLoaded = true;
-
-                postToWindow([this, viewNumber, id, answer = std::move(answer)] {
-                    if (_view && viewNumber == _viewNumber) _view->browser.resolve(id, 0, answer);
-                });
-            });
-        },
-        nullptr
+        "sbQuery", [this](const std::string& id, const std::string& request, void* /*argument*/) { _pageQuery(id, request); }, nullptr
     );
     _view->browser.bind(
-        "sbCommand",
-        [this](const std::string& id, const std::string& request, void* /*argument*/) {
-            if (_app) _app->run([request](Controller& controller) { controller.command(request); });
-            _view->browser.resolve(id, 0, "null");
-        },
-        nullptr
+        "sbCommand", [this](const std::string& id, const std::string& request, void* /*argument*/) { _pageCommand(id, request); }, nullptr
     );
 
     _view->browser.set_html(page::html);
@@ -496,8 +407,7 @@ void MainWindow::_createView() {
 }
 
 void MainWindow::_destroyView() {
-    _pageLoaded = false;
-    ++_viewNumber;
+    _viewDestroyed();
     _view.reset();
 }
 
@@ -579,12 +489,10 @@ void MainWindow::_addTrayIcon() {
 }
 
 // the taskbar's theme changed
-void MainWindow::setTrayState(TrayState state) {
-    postToWindow([this, state] {
-        const auto sameIcon = state.shouting == _trayState.shouting && state.dot == _trayState.dot;
-        _trayState = state;
-        if (!sameIcon) _updateTrayIcon();
-    });
+void MainWindow::_applyTrayState(TrayState state) {
+    const auto sameIcon = state.shouting == _trayState.shouting && state.dot == _trayState.dot;
+    _trayState = state;
+    if (!sameIcon) _updateTrayIcon();
 }
 
 void MainWindow::_updateTrayIcon() {
@@ -605,7 +513,7 @@ void MainWindow::_showTrayMenu() {
     add(MenuCommand::OpenMonitor, i18n::tr("Open monitor..."));
     AppendMenuW(menu, MF_SEPARATOR, 0, nullptr);
     add(MenuCommand::Preferences, i18n::tr("Preferences"));
-    add(MenuCommand::MyPlatform, i18n::format(i18n::tr("My %1"), { DEST_PLATFORM_PRODUCT_NAME }), _trayState.canOpenPlatform);
+    add(MenuCommand::MyPlatform, i18n::format(i18n::tr("My %1"), { DEST_PLATFORM_PRODUCT_NAME }), _canOpenPlatform());
     AppendMenuW(menu, MF_SEPARATOR, 0, nullptr);
     add(MenuCommand::Warnings, i18n::tr("Read latest upload warnings report"), Controller::hasWarnings());
     add(MenuCommand::DataFolder, i18n::tr("Access upload data folder"));
@@ -625,35 +533,7 @@ void MainWindow::_showTrayMenu() {
 }
 
 void MainWindow::_onMenuCommand(UINT command) {
-    const auto onApplication = [this](auto task) {
-        if (_app) _app->run(std::move(task));
-    };
-
-    switch (static_cast<MenuCommand>(command)) {
-        case MenuCommand::OpenMonitor:
-            _show();
-            break;
-        case MenuCommand::Preferences:
-            onApplication([](Controller& controller) { controller.openPanel(Panel::Preferences); });
-            break;
-        case MenuCommand::MyPlatform:
-            onApplication([](Controller& controller) { controller.openPlatform(); });
-            break;
-        case MenuCommand::Warnings:
-            onApplication([](Controller& controller) { controller.openPanel(Panel::Warnings); });
-            break;
-        case MenuCommand::DataFolder:
-            onApplication([](Controller&) { Controller::openDataFolder(); });
-            break;
-        case MenuCommand::About:
-            onApplication([](Controller& controller) { controller.openPanel(Panel::About); });
-            break;
-        case MenuCommand::Quit:
-            onApplication([](Controller& controller) { controller.requestQuit(); });
-            break;
-        default:
-            break;
-    }
+    _runMenuCommand(static_cast<MenuCommand>(command));
 }
 
 //

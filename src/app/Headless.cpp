@@ -59,12 +59,7 @@ std::string dialog(std::string_view kind, std::string_view title, std::string_vi
 
 class HeadlessShell final : public Shell {
  public:
-    bool sendToPage(const std::string& event) override {
-        writeLine(oneLine(event));
-        return true;
-    }
-
-    void showWindow() override {}
+    void sendToPage(const std::string& event) override { writeLine(oneLine(event)); }
 
     void setTrayState(TrayState state) override {
         const char* dot = "none";
@@ -82,23 +77,27 @@ class HeadlessShell final : public Shell {
         writeLine(dialog(severity == Severity::Error ? "error" : "information", title, text));
     }
 
-    void quit() override {
+    void quit(int exitCode) override {
         {
             const std::scoped_lock lock { _mutex };
-            _running = false;
+            _exitCode = exitCode;
+            _quit = true;
         }
         _stopped.notify_all();
     }
 
-    void waitUntilQuit() {
+    // the exit code it was asked to quit with
+    int waitUntilQuit() {
         std::unique_lock lock { _mutex };
-        _stopped.wait(lock, [this] { return !_running; });
+        _stopped.wait(lock, [this] { return _quit; });
+        return _exitCode;
     }
 
  private:
     std::mutex _mutex;
     std::condition_variable _stopped;
-    bool _running = true;
+    bool _quit = false;
+    int _exitCode = 0;
 };
 
 void handleLine(Controller& controller, std::size_t number, std::string_view line) {
@@ -160,6 +159,7 @@ int runHeadless() {
 #endif
 
     HeadlessShell shell;
+    int exitCode = 0;
     {
         AppThread app { shell };
 
@@ -167,10 +167,10 @@ int runHeadless() {
 
         std::thread { [&app] { readLines(app); } }.detach();
 
-        shell.waitUntilQuit();
+        exitCode = shell.waitUntilQuit();
     }
 
-    return 0;
+    return exitCode;
 }
 
 }  // namespace ui

@@ -123,7 +123,6 @@ struct State {
     bool hasWarnings = false;
     bool searchingUpdates = false;
     std::optional<UpdateResult> updateResult;
-    std::optional<Panel> panel;
 };
 
 std::string state(const State& state);

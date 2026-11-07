@@ -141,7 +141,6 @@ int main(int argc, char* argv[]) {
         .hasWarnings = true,
         .searchingUpdates = true,
         .updateResult = ui::page::UpdateResult { .kind = Kind::Failed, .version = {}, .error = "Error" },
-        .panel = ui::Panel::Warnings,
     };
     const ui::page::State started {};
 

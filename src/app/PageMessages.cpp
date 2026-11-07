@@ -217,12 +217,6 @@ std::string state(const State& state) {
     yyjson_mut_obj_add_bool(doc, root, "searchingUpdates", state.searchingUpdates);
     yyjson_mut_obj_add_val(doc, root, "updateResult", updateResultValue(doc, state.updateResult));
 
-    if (state.panel) {
-        addString(doc, root, "panel", panelName(*state.panel));
-    } else {
-        yyjson_mut_obj_add_null(doc, root, "panel");
-    }
-
     return object.write();
 }
 

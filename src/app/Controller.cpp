@@ -5,9 +5,11 @@
 
 #include <yyjson.h>
 
+#include <cassert>
 #include <chrono>
 #include <cstddef>
 #include <cstdint>
+#include <cstdlib>
 #include <filesystem>
 #include <format>
 #include <fstream>
@@ -19,6 +21,7 @@
 #include <system_error>
 #include <utility>
 
+#include "src/app/AppThread.h"
 #include "src/helpers/Json.h"
 #include "src/helpers/Platform.h"
 #include "src/i18n/Translations.h"
@@ -102,6 +105,8 @@ Controller::~Controller() {
 //
 
 std::string Controller::query(std::string_view request) {
+    assert(AppThread::isCurrent());
+
     const auto call = parseCall(request);
 
     const auto query = page::query(call.name);
@@ -126,6 +131,8 @@ std::string Controller::query(std::string_view request) {
 }
 
 void Controller::command(std::string_view request) {
+    assert(AppThread::isCurrent());
+
     const auto call = parseCall(request);
 
     const auto command = page::command(call.name);
@@ -195,9 +202,7 @@ std::string Controller::_state(yyjson_val* translationKeys) {
         .hasWarnings = hasWarnings(),
         .searchingUpdates = _searchingUpdates,
         .updateResult = _updateResult,
-        .panel = _pendingPanel,
     };
-    _pendingPanel.reset();
 
     // texts of the page, in the user interface language
     std::size_t index = 0;
@@ -220,13 +225,6 @@ settings::Settings Controller::_shownSettings() const {
 //
 // Native menus
 //
-
-void Controller::openPanel(Panel panel) {
-    // a page loading meanwhile finds it in the state
-    if (!_shell.sendToPage(page::panelEvent(panel))) _pendingPanel = panel;
-
-    _shell.showWindow();
-}
 
 void Controller::openPlatform() {
     const auto platformHomeUrl = _appSettings.getConnectivityInfos().getPlaformHomeUrl();
@@ -260,6 +258,8 @@ void Controller::checkForUpdates() {
 }
 
 void Controller::requestQuit() {
+    assert(AppThread::isCurrent());
+
     // already asking
     if (_quitting) return;
     _quitting = true;
@@ -280,7 +280,7 @@ void Controller::requestQuit() {
     // stops the heartbeat, aborting its request in progress if any
     _heartbeatWorker.reset();
 
-    _shell.quit();
+    _shell.quit(EXIT_SUCCESS);
 }
 
 bool Controller::_canOpenPlatform() const {

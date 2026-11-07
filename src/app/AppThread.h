@@ -24,6 +24,9 @@ class AppThread {
     AppThread(const AppThread&) = delete;
     void operator=(const AppThread&) = delete;
 
+    // whether this is that thread
+    static bool isCurrent();
+
     // "task" later on that thread, after those asked before
     void run(std::function<void(Controller&)> task);
 

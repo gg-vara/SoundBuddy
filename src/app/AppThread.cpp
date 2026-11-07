@@ -8,6 +8,7 @@
 #endif
 
 #include <condition_variable>
+#include <cstdlib>
 #include <deque>
 #include <exception>
 #include <functional>
@@ -21,6 +22,11 @@
 namespace ui {
 
 namespace {
+
+bool& onThisThread() {
+    thread_local bool instance = false;
+    return instance;
+}
 
 struct Tasks {
     std::mutex mutex;
@@ -83,7 +89,7 @@ void runGuarded(Controller*& pointer, Shell& shell) {
     }
 
     stopAccepting();
-    shell.quit();
+    shell.quit(EXIT_FAILURE);
 }
 
 }  // namespace
@@ -102,6 +108,8 @@ AppThread::AppThread(Shell& shell) {
     startAccepting();
 
     _thread = std::jthread([this, &shell] {
+        onThisThread() = true;
+
 #ifdef _WIN32
         // opening links and folders goes through the shell, which expects it
         CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
@@ -117,6 +125,10 @@ AppThread::AppThread(Shell& shell) {
 
 AppThread::~AppThread() {
     stopAccepting();
+}
+
+bool AppThread::isCurrent() {
+    return onThisThread();
 }
 
 void AppThread::run(std::function<void(Controller&)> task) {
