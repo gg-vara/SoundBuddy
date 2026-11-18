@@ -13,9 +13,9 @@
     "format": "biome check --write ."
   },
   "dependencies": {
-    "@solidjs/web": "^2.0.0-rc.20",
+    "@solidjs/web": "^2.0.1",
     "lucide": "^1.68.0",
-    "solid-js": "^2.0.0-rc.20",
+    "solid-js": "^2.0.1",
     "xstate": "^5.33.3"
   },
   "devDependencies": {
