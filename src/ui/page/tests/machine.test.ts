@@ -117,21 +117,12 @@ describe('menu and panels', () => {
     expect(native.commands).toEqual([['checkUpdates', null]]);
   });
 
-  test('preferences are saved, then closed', async () => {
+  test('preferences stay open while logging in through the browser', async () => {
     const { page, native } = await loadedPage();
     page.send({ type: 'ui.openPanel', panel: 'preferences' });
+    page.send({ type: 'ui.command', name: 'connect', argument: 'https://new.test' });
     expect(regionState(page.getSnapshot(), 'panel')).toBe('preferences');
-
-    const credentials = { platformHostUrl: 'https://new.test', platformUsername: 'me', platformPassword: 'pw' };
-    page.send({ type: 'ui.savePreferences', credentials });
-    expect(regionState(page.getSnapshot(), 'panel')).toBe('closed');
-    expect(native.commands).toEqual([['savePreferences', credentials]]);
-  });
-
-  test('saving is only possible from the preferences', async () => {
-    const { page, native } = await loadedPage();
-    page.send({ type: 'ui.savePreferences', credentials: { platformHostUrl: '', platformUsername: '', platformPassword: '' } });
-    expect(native.commands).toEqual([]);
+    expect(native.commands).toEqual([['connect', 'https://new.test']]);
   });
 
   test('warnings are read, then shown', async () => {

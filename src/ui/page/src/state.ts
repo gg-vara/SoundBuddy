@@ -35,13 +35,17 @@ export interface Shout {
 
 export interface Settings {
   platformHostUrl: string;
-  platformUsername: string;
-  platformPassword: string;
+  platformUsername: string; // who logged in through the browser
   autoRunShout: boolean;
   runAtStartup: boolean;
 }
 
-export type Credentials = Pick<Settings, 'platformHostUrl' | 'platformUsername' | 'platformPassword'>;
+// logging in through the browser : waiting for it, or why it did not work
+export interface Login {
+  waiting: boolean;
+  url: string; // where the browser was sent, once known
+  error: string;
+}
 
 export interface AppInfo {
   name: string;
@@ -78,6 +82,7 @@ export interface NativeState {
   hasWarnings: boolean;
   searchingUpdates: boolean;
   updateResult: UpdateResult | null;
+  login: Login;
 }
 
 // state changes, through sb.receive()
@@ -89,7 +94,8 @@ export type NativeEvent =
   | { type: 'settings'; settings: Settings; canOpenPlatform: boolean }
   | { type: 'warnings'; hasWarnings: boolean }
   | { type: 'update'; searching: boolean; result: UpdateResult | null }
-  | { type: 'panel'; panel: PanelName };
+  | { type: 'panel'; panel: PanelName }
+  | { type: 'login'; login: Login };
 
 // as many messages as a tab keeps, as the application
 export const maxLogEntries = 100;
@@ -106,6 +112,7 @@ export interface PageData {
   hasWarnings: boolean;
   searchingUpdates: boolean;
   updateResult: UpdateResult | null;
+  login: Login;
   requestedPanel: PanelName | null; // by the application, until opened
 }
 
@@ -122,6 +129,7 @@ export function fromNativeState(state: NativeState): PageData {
     hasWarnings: state.hasWarnings,
     searchingUpdates: state.searchingUpdates,
     updateResult: state.updateResult,
+    login: state.login,
     requestedPanel: null,
   };
 }
@@ -146,6 +154,8 @@ export function applyEvent(data: PageData, event: NativeEvent): PageData {
       };
     case 'nowPlaying':
       return { ...data, nowPlaying: event.shout };
+    case 'login':
+      return { ...data, login: event.login };
     case 'settings':
       return { ...data, settings: event.settings, canOpenPlatform: event.canOpenPlatform };
     case 'warnings':

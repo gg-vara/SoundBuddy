@@ -49,6 +49,7 @@ soundbuddy_test(logs)
 soundbuddy_test(platform)
 soundbuddy_test(upload)
 soundbuddy_test(session)
+soundbuddy_test(browser_login)
 soundbuddy_test(i18n)
 # import of the settings of previous versions, as QSettings stored them : in the registry on Windows, the preferences on macOS
 soundbuddy_test(settings)

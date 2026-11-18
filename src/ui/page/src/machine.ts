@@ -8,7 +8,6 @@ import { assign, fromPromise, type SnapshotFrom, setup } from 'xstate';
 import type { CommandName, Native } from './native';
 import {
   applyEvent,
-  type Credentials,
   fromNativeState,
   type NativeEvent,
   type NativeState,
@@ -38,8 +37,7 @@ export type PageEvent =
   | { type: 'ui.openMenu' }
   | { type: 'ui.closeMenu' }
   | { type: 'ui.openPanel'; panel: PanelName }
-  | { type: 'ui.closePanel' }
-  | { type: 'ui.savePreferences'; credentials: Credentials };
+  | { type: 'ui.closePanel' };
 
 export const pageMachine = setup({
   types: {
@@ -66,9 +64,6 @@ export const pageMachine = setup({
     command: ({ context }, params: { name: CommandName }) => context.native.command(params.name),
     forwardCommand: ({ context, event }) => {
       if (event.type === 'ui.command') context.native.command(event.name, event.argument);
-    },
-    savePreferences: ({ context, event }) => {
-      if (event.type === 'ui.savePreferences') context.native.command('savePreferences', event.credentials);
     },
     bufferEvent: assign({
       pending: ({ context, event }) => (event.type === 'native.event' ? [...context.pending, event.event] : context.pending),
@@ -214,9 +209,7 @@ export const pageMachine = setup({
           states: {
             closed: { id: 'panelClosed' },
             about: {},
-            preferences: {
-              on: { 'ui.savePreferences': { target: 'closed', actions: 'savePreferences' } },
-            },
+            preferences: {},
             warnings: {
               initial: 'loading',
               states: {

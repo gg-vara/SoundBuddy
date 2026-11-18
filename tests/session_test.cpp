@@ -7,6 +7,7 @@
 #include <fstream>
 #include <ios>
 #include <iterator>
+#include <stop_token>
 #include <string>
 
 #include "Check.h"
@@ -63,20 +64,30 @@ int main() {
     secrets::remove(file);
     CHECK(!secrets::load(file).has_value(), "removed");
 
-    // a login : a password counts, as tokens would, and replaces those there were
-    secrets::store(file, "{}");
-    {
-        const PlatformSession session { "https://host.example", "user", file, "password" };
-        CHECK(session.hasLogin(), "a password is a login");
-        CHECK(!secrets::load(file).has_value(), "it replaces the previous tokens");
-    }
+    // tokens of another host are not sent to this one
+    secrets::remove(file);
+    CHECK(!PlatformSession("https://host.example", file).hasLogin(), "no tokens, no login");
+    secrets::store(file, R"({"host":"https://host.example","access":"a","refresh":"r","accessExpiresAt":0})");
+    CHECK(PlatformSession("https://host.example", file).hasLogin(), "tokens are a login");
+    CHECK(!PlatformSession("https://other.example", file).hasLogin(), "not for another host");
 
-    // tokens of another host or user are not sent to this one
-    const std::string tokens = R"({"host":"https://host.example","username":"user","access":"a","refresh":"r","accessExpiresAt":0})";
-    secrets::store(file, tokens);
-    CHECK(PlatformSession("https://host.example", "user", file).hasLogin(), "tokens are a login");
-    CHECK(!PlatformSession("https://other.example", "user", file).hasLogin(), "not for another host");
-    CHECK(!PlatformSession("https://host.example", "other", file).hasLogin(), "not for another user");
+    // where the browser goes : the API's tokens, with PKCE, for SoundBuddy, coming back to this computer
+    const auto url = PlatformSession("soundvitrine.example", file).authorizationUrl("http://127.0.0.1:1234/callback", "st", "ch");
+    CHECK(url.starts_with("https://soundvitrine.example/api/auth/oauth2/authorize?response_type=code&client_id=soundbuddy&"), "authorize");
+    CHECK(url.find("&redirect_uri=http%3A%2F%2F127.0.0.1%3A1234%2Fcallback&") != std::string::npos, "the redirect, encoded");
+    CHECK(url.find("&code_challenge=ch&code_challenge_method=S256&") != std::string::npos, "PKCE");
+    CHECK(url.find("&scope=library%3Awrite%20shout%3Awrite%20offline_access&") != std::string::npos, "what is asked");
+    CHECK(url.ends_with("&resource=https%3A%2F%2Fsoundvitrine.example%2Fapi%2Fv1"), "for the API");
+
+    // the logout forgets, even when the platform cannot be told : here, a port where nothing listens
+    secrets::store(file, R"({"host":"http://127.0.0.1:9","access":"a","refresh":"r","accessExpiresAt":0})");
+    {
+        PlatformSession session { "http://127.0.0.1:9", file };
+        CHECK(session.hasLogin(), "logged in");
+        net::HttpClient client { "test" };
+        session.logout(client, std::stop_token {});
+        CHECK(!session.hasLogin() && !secrets::load(file).has_value(), "logged out");
+    }
     secrets::remove(file);
 
     return check::summary();

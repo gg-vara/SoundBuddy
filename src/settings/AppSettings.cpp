@@ -3,7 +3,6 @@
 
 #include "AppSettings.h"
 
-#include <functional>
 #include <memory>
 #include <utility>
 
@@ -15,6 +14,8 @@ AppSettings::AppSettings() :
     _file(platform::dataDirectory() / "settings.json") {
     if (auto stored = settings::load(_file)) {
         _values = std::move(*stored);
+        // written again as it is now : the password earlier versions kept there goes
+        save();
     } else if (!platform::isIsolated()) {
         if (auto legacy = _readLegacySettings()) {
             _values = std::move(*legacy);
@@ -23,9 +24,6 @@ AppSettings::AppSettings() :
     }
 }
 
-void AppSettings::startSession(std::function<void()> onPasswordUsed) {
-    _session = std::make_shared<net::PlatformSession>(
-        _values.platformHostUrl, _values.platformUsername, platform::dataDirectory() / "session.dat", _values.platformPassword,
-        std::move(onPasswordUsed)
-    );
+void AppSettings::startSession() {
+    _session = std::make_shared<net::PlatformSession>(_values.platformHostUrl, platform::dataDirectory() / "session.dat");
 }

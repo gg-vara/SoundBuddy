@@ -2,6 +2,15 @@
 
 Each section becomes the notes of its GitHub release, and of the update that installed copies download (see `cmake/velopack/vpk.cmake`).
 
+## Unreleased
+
+> **Requires the SoundVitrine released with it** : SoundBuddy logs in through the browser, which earlier servers do not offer.
+
+### Changed
+
+- Connecting to SoundVitrine happens in the browser, on its own pages : SoundBuddy no longer asks for the password, nor keeps it. The preferences tell who is logged in, and disconnect
+- The password earlier versions kept in their settings is removed : log in again through the browser
+
 ## 0.14.2
 
 > **Requires SoundVitrine 0.13 or newer** : this version logs in with OAuth, which older servers do not offer. It cannot connect to them.

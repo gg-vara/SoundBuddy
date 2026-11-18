@@ -6,10 +6,12 @@
 #include <yyjson.h>
 
 #include <memory>
+#include <thread>
 #include <optional>
 #include <string>
 #include <string_view>
 
+#include "src/net/BrowserLogin.h"
 #include "src/settings/AppSettings.h"
 #include "src/app/PageMessages.h"
 #include "src/workers/base/Message.h"
@@ -110,6 +112,8 @@ class Controller {
     bool _searchingUpdates = false;
     std::optional<page::UpdateResult> _updateResult;
     bool _quitting = false;
+    page::Login _login;
+    int _loginRun = 0;  // to ignore what a login replaced or cancelled meanwhile still tells
 
     // workers, stopped by the destructor : the watcher, which hands shouts to the uploader, stops first
     std::unique_ptr<HeartbeatThread> _heartbeatWorker;
@@ -117,6 +121,8 @@ class Controller {
     std::unique_ptr<ShoutUploader> _shoutUploader;
     std::unique_ptr<ShoutWatcher> _shoutWorker;
     UpdateChecker _updateChecker;
+    std::unique_ptr<net::BrowserLogin> _browserLogin;
+    std::jthread _logout;  // tells the platform, without the user waiting for it
 
     TabState& _tab(Tab tab) { return tab == Tab::Shout ? _shoutTab : _feederTab; }
 
@@ -129,7 +135,11 @@ class Controller {
     void _runFeeder();
 
     // settings
-    void _savePreferences(yyjson_val* values);
+    void _connect(std::string hostUrl);
+    void _loggedIn(int run, const std::string& username);
+    void _loginFailed(int run, const std::string& why);
+    void _cancelLogin();
+    void _disconnect();
     void _setRunAtStartup(bool enabled);
     void _setAutoRunShout(bool enabled);
     void _onConnectivityChanged();
@@ -147,6 +157,7 @@ class Controller {
     int _runStarted(Tab tab);  // new log : returns the run number, for _runFinished()
     void _runFinished(Tab tab, int run);
     void _sendSettings();
+    void _sendLogin();
     void _sendWarnings();
     void _sendUpdate();
 

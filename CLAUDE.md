@@ -39,12 +39,12 @@ No window, and nothing of the session's real data : see `platform::isolate()`. W
 It is driven by lines on its standard input, and answers with JSON lines (`src/app/Headless.h`, `tests/headless.test.ts`) :
 
 ```
-command ["savePreferences",{"platformHostUrl":"http://localhost:3000","platformUsername":"testcurator","platformPassword":"testpassword"}]
+command ["connect","http://localhost:3000"]
 command ["runFeeder",null]
 query ["ready",[]]
 ```
 
-Those credentials are the ones of SoundVitrine's `bun run dev:seed`. Its log is `<data folder>/logs/soundbuddy.log`.
+`connect` starts a login through the browser : isolated, nothing is opened, and the `login` event gives the address instead. Opened in a browser, SoundVitrine's `bun run dev:seed` takes `testcurator` / `testpassword`, then comes back to the app. `tests/headless.test.ts` plays the browser itself (`logIn()`). Its log is `<data folder>/logs/soundbuddy.log`.
 
 Shouts still need the real music app : `runShouts` watches iTunes, so nothing replaces it in these runs yet.
 
@@ -59,7 +59,7 @@ Shouts still need the real music app : `runShouts` watches iTunes, so nothing re
 
 ## What SoundVitrine expects
 
-SoundVitrine's `/oauth/token`, `/api/v1/me`, `/api/v1/me/library` and `/api/v1/me/shouts`, so a version with them on the server is required. `src/net/PlatformSession` holds the login : the password is exchanged once, then removed from `settings.json`, and the tokens are kept by `src/helpers/SecretStore` (DPAPI, Keychain), named after the data folder so that `--data-dir` never reaches the real ones. A refresh token works once and using one twice ends the login : all workers share one session, which must stay the same object for as long as the login does. To try them, SoundVitrine's `bun run dev:seed`.
+SoundVitrine's OAuth endpoints (`/api/auth/oauth2/authorize`, `token`, `revoke`), `/api/v1/me`, `/api/v1/me/library` and `/api/v1/me/shouts`. The user logs in through the browser (`src/net/BrowserLogin`) : the client `soundbuddy`, public, with PKCE, comes back to a listener on `127.0.0.1` (`src/net/LoopbackRedirect`), and asks for tokens of the API (`resource`, RFC 8707). `src/net/PlatformSession` holds the login, its tokens kept by `src/helpers/SecretStore` (DPAPI, Keychain), named after the data folder so that `--data-dir` never reaches the real ones. No password goes through SoundBuddy. A refresh token works once and using one twice ends the login : all workers share one session, which must stay the same object for as long as the login does. To try them, SoundVitrine's `bun run dev:seed`.
 
 ## Conventions
 

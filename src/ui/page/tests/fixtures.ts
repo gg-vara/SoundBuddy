@@ -26,7 +26,6 @@ export function nativeState(changes: Partial<NativeState> = {}): NativeState {
     settings: {
       platformHostUrl: 'https://host.test',
       platformUsername: 'user',
-      platformPassword: 'secret',
       autoRunShout: false,
       runAtStartup: false,
     },
@@ -34,6 +33,7 @@ export function nativeState(changes: Partial<NativeState> = {}): NativeState {
     hasWarnings: false,
     searchingUpdates: false,
     updateResult: null,
+    login: { waiting: false, url: '', error: '' },
     ...changes,
   };
 }

@@ -132,9 +132,16 @@ yyjson_mut_val* settingsValue(yyjson_mut_doc* doc, const settings::Settings& set
     auto* const value = yyjson_mut_obj(doc);
     addString(doc, value, "platformHostUrl", settings.platformHostUrl);
     addString(doc, value, "platformUsername", settings.platformUsername);
-    addString(doc, value, "platformPassword", settings.platformPassword);
     yyjson_mut_obj_add_bool(doc, value, "autoRunShout", settings.autoRunShout);
     yyjson_mut_obj_add_bool(doc, value, "runAtStartup", settings.runAtStartup);
+    return value;
+}
+
+yyjson_mut_val* loginValue(yyjson_mut_doc* doc, const Login& login) {
+    auto* const value = yyjson_mut_obj(doc);
+    yyjson_mut_obj_add_bool(doc, value, "waiting", login.waiting);
+    addString(doc, value, "url", login.url);
+    addString(doc, value, "error", login.error);
     return value;
 }
 
@@ -218,6 +225,7 @@ std::string state(const State& state) {
     yyjson_mut_obj_add_bool(doc, root, "hasWarnings", state.hasWarnings);
     yyjson_mut_obj_add_bool(doc, root, "searchingUpdates", state.searchingUpdates);
     yyjson_mut_obj_add_val(doc, root, "updateResult", updateResultValue(doc, state.updateResult));
+    yyjson_mut_obj_add_val(doc, root, "login", loginValue(doc, state.login));
 
     return object.write();
 }
@@ -278,6 +286,12 @@ std::string panelEvent(Panel panel) {
     const auto opened = event("panel");
     addString(opened.doc(), opened.root(), "panel", panelName(panel));
     return opened.write();
+}
+
+std::string loginEvent(const Login& login) {
+    const auto changed = event("login");
+    yyjson_mut_obj_add_val(changed.doc(), changed.root(), "login", loginValue(changed.doc(), login));
+    return changed.write();
 }
 
 }  // namespace ui::page

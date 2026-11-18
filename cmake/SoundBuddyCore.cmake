@@ -20,7 +20,10 @@ function(soundbuddy_add_core target scope)
         ${src}/helpers/Platform.cpp
         ${src}/i18n/Translations.cpp
         ${src}/logs/Logs.cpp
+        ${src}/net/BrowserLogin.cpp
         ${src}/net/HttpClient.cpp
+        ${src}/net/LoopbackRedirect.cpp
+        ${src}/net/Pkce.cpp
         ${src}/net/PlatformSession.cpp
         ${src}/net/SseParser.cpp
         ${src}/settings/AppSettings.cpp
@@ -56,8 +59,10 @@ function(soundbuddy_add_core target scope)
             ole32 oleaut32 uuid
             # HTTP client
             winhttp
-            # file hashes
+            # file hashes, PKCE
             bcrypt
+            # where the browser comes back after a login
+            ws2_32
             # library compression (Compression API, MSZIP)
             cabinet
             # platform services : shell, registry

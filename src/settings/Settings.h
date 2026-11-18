@@ -11,10 +11,9 @@
 namespace settings {
 
 struct Settings {
-    // SoundVitrine connectivity
+    // SoundVitrine connectivity : who logged in through the browser, the tokens being kept apart (src/net/PlatformSession.h)
     std::string platformHostUrl;
     std::string platformUsername;
-    std::string platformPassword;
 
     // automation
     bool autoRunShout = false;

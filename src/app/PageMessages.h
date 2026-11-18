@@ -43,7 +43,9 @@ enum class Command {
     RunFeeder,
     SetAutoRunShout,
     SetRunAtStartup,
-    SavePreferences,
+    Connect,
+    CancelLogin,
+    Disconnect,
     OpenPlatform,
     OpenDataFolder,
     CheckUpdates,
@@ -56,13 +58,15 @@ inline constexpr std::array<std::pair<Query, std::string_view>, 2> queryNames { 
     { Query::Warnings, "warnings" },
 } };
 
-inline constexpr std::array<std::pair<Command, std::string_view>, 11> commandNames { {
+inline constexpr std::array<std::pair<Command, std::string_view>, 13> commandNames { {
     { Command::RunShouts, "runShouts" },
     { Command::StopShouts, "stopShouts" },
     { Command::RunFeeder, "runFeeder" },
     { Command::SetAutoRunShout, "setAutoRunShout" },
     { Command::SetRunAtStartup, "setRunAtStartup" },
-    { Command::SavePreferences, "savePreferences" },
+    { Command::Connect, "connect" },
+    { Command::CancelLogin, "cancelLogin" },
+    { Command::Disconnect, "disconnect" },
     { Command::OpenPlatform, "openPlatform" },
     { Command::OpenDataFolder, "openDataFolder" },
     { Command::CheckUpdates, "checkUpdates" },
@@ -100,6 +104,13 @@ struct UpdateResult {
     std::string error;    // when failed
 };
 
+// logging in through the browser : waiting for it, or why it did not work
+struct Login {
+    bool waiting = false;
+    std::string url;    // where the browser was sent, once known
+    std::string error;  // translated, empty unless it failed
+};
+
 struct LogEntry {
     workers::Message message;
     std::int64_t time = 0;  // milliseconds since the epoch
@@ -123,6 +134,7 @@ struct State {
     bool hasWarnings = false;
     bool searchingUpdates = false;
     std::optional<UpdateResult> updateResult;
+    Login login;
 };
 
 std::string state(const State& state);
@@ -142,5 +154,6 @@ std::string settingsEvent(const settings::Settings& settings, bool canOpenPlatfo
 std::string warningsEvent(bool hasWarnings);
 std::string updateEvent(bool searching, const std::optional<UpdateResult>& result);
 std::string panelEvent(Panel panel);
+std::string loginEvent(const Login& login);
 
 }  // namespace ui::page
