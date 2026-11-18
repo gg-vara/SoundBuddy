@@ -11,9 +11,12 @@
 #include "src/settings/AppSettings.h"
 #include "src/net/PlatformSession.h"
 
-// what a worker gets to reach "host" : a login whose access token has expired, to renew there first
+// what a worker gets to reach "host" : a login whose access token has expired, to renew there first. Named after the test including
+// this (__BASE_FILE__) : on macOS, a Keychain item made by one test program asks permission (a dialog, waiting forever on CI) to
+// another
 inline AppSettings::ConnectivityInfos connectedTo(const std::string& host) {
-    const auto tokensFile = std::filesystem::temp_directory_path() / "soundbuddy-test-session.dat";
+    const auto tokensFile =
+        std::filesystem::temp_directory_path() / ("soundbuddy-" + std::filesystem::path { __BASE_FILE__ }.stem().string() + "-session.dat");
     secrets::store(tokensFile, R"({"host":")" + host + R"(","access":"a","refresh":"r","accessExpiresAt":0})");
     return {
         .platformHostUrl = host, .username = "user", .session = std::make_shared<net::PlatformSession>(host, tokensFile), .areOK = true
