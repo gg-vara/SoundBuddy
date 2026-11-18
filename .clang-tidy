@@ -53,8 +53,8 @@ CheckOptions:
   readability-implicit-bool-conversion.AllowPointerConditions: true
   # const pointers, not what they point to : C handles (HANDLE, yyjson_val*...) are passed to APIs taking them mutable
   misc-const-correctness.WarnPointersAsPointers: false
-  # umbrella headers whose symbols come from internal headers : C APIs (windows.h, WebView2.h...), and libc++ (<chrono> literals)
-  misc-include-cleaner.IgnoreHeaders: 'include/[A-Za-z0-9_]+.h;__[a-z_]+/[a-z0-9_]+.h'
+  # umbrella headers whose symbols come from internal headers : C APIs (windows.h, WebView2.h, winsock2.h...), and libc++ (<chrono> literals)
+  misc-include-cleaner.IgnoreHeaders: 'include/[A-Za-z0-9_]+.h;__[a-z_]+/[a-z0-9_]+.h;psdk_inc/[a-z0-9_]+.h'
   # plain structs
   misc-non-private-member-variables-in-classes.IgnoreClassesWithAllMemberVariablesBeingPublic: true
   cppcoreguidelines-special-member-functions.AllowSoleDefaultDtor: true
