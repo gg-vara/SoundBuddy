@@ -2,9 +2,11 @@
 
 Each section becomes the notes of its GitHub release, and of the update that installed copies download (see `cmake/velopack/vpk.cmake`).
 
-## Unreleased
+## 0.15.0
 
-> **Requires the SoundVitrine released with it** : SoundBuddy logs in through the browser, which earlier servers do not offer.
+> **Requires SoundVitrine 0.15.0 or newer** : SoundBuddy logs in through the browser, which earlier servers do not offer. It cannot connect to them.
+
+> **Unsigned build** : this installer is not code-signed yet. Windows SmartScreen may block it ("Windows protected your PC") : choose **More info**, then **Run anyway**.
 
 ### Changed
 
