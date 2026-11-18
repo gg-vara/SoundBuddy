@@ -52,7 +52,6 @@ export function fakeNative(): Native {
     settings: {
       platformHostUrl: 'https://soundvitrine.test',
       platformUsername: 'dev',
-      platformPassword: 'dev',
       autoRunShout: false,
       runAtStartup: false,
     },
@@ -60,9 +59,11 @@ export function fakeNative(): Native {
     hasWarnings: true,
     searchingUpdates: false,
     updateResult: null,
+    login: { waiting: false, url: '', error: '' },
   };
 
   let shoutTimer: ReturnType<typeof setInterval> | undefined;
+  let loginTimer: ReturnType<typeof setTimeout> | undefined;
 
   return {
     ready: async () => state,
@@ -112,14 +113,26 @@ export function fakeNative(): Native {
           state.settings = { ...state.settings, runAtStartup: argument === true };
           send({ type: 'settings', settings: state.settings, canOpenPlatform: true });
           break;
-        case 'savePreferences':
-          state.settings = { ...state.settings, ...(argument as object) };
-          send({ type: 'settings', settings: state.settings, canOpenPlatform: state.settings.platformHostUrl !== '' });
-          send({ type: 'status', status: { text: 'Asking for credentials validation...', connectivity: 'checking' } });
-          setTimeout(
-            () => send({ type: 'status', status: { text: `Logged as "${state.settings.platformUsername}"`, connectivity: 'connected' } }),
-            1200,
-          );
+        // as if the user logged in, in the browser, after a while
+        case 'connect':
+          state.settings = { ...state.settings, platformHostUrl: String(argument), platformUsername: '' };
+          send({ type: 'settings', settings: state.settings, canOpenPlatform: false });
+          send({ type: 'login', login: { waiting: true, url: `${state.settings.platformHostUrl}/api/auth/oauth2/authorize`, error: '' } });
+          loginTimer = setTimeout(() => {
+            state.settings = { ...state.settings, platformUsername: 'dev' };
+            send({ type: 'login', login: { waiting: false, url: '', error: '' } });
+            send({ type: 'settings', settings: state.settings, canOpenPlatform: true });
+            send({ type: 'status', status: { text: 'Logged as "dev"', connectivity: 'connected' } });
+          }, 3000);
+          break;
+        case 'cancelLogin':
+          clearTimeout(loginTimer);
+          send({ type: 'login', login: { waiting: false, url: '', error: '' } });
+          break;
+        case 'disconnect':
+          state.settings = { ...state.settings, platformUsername: '' };
+          send({ type: 'settings', settings: state.settings, canOpenPlatform: false });
+          send({ type: 'status', status: { text: 'Waiting for appropriate credentials.', connectivity: 'refused' } });
           break;
         case 'checkUpdates':
           send({ type: 'update', searching: true, result: null });

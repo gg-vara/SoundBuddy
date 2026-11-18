@@ -1,8 +1,8 @@
 // SPDX-FileCopyrightText: 2018-2026 Guillaume Vara <guillaume.vara@gmail.com>
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-// Preferences : the credentials are saved together; launching at startup applies right away
-import { Eye, EyeOff, Save } from 'lucide';
+// Preferences : logging in through the browser, on the platform's own pages, and launching at startup, applied right away
+import { LogIn, LogOut, X } from 'lucide';
 import { createEffect, createMemo, createSignal, untrack } from 'solid-js';
 import { t } from '../i18n';
 import { regionState } from '../machine';
@@ -14,19 +14,13 @@ import { Toggle } from './Toggle';
 export function PreferencesSheet(props: { view: View }) {
   const data = () => loaded(props.view);
   const open = createMemo(() => regionState(props.view.snapshot(), 'panel') === 'preferences');
+  const login = () => data().login;
+  const connect = () => props.view.send({ type: 'ui.command', name: 'connect', argument: host().trim() });
 
-  // drafts, from the current settings on each opening
+  // a draft, from the current settings on each opening
   const [host, setHost] = createSignal('');
-  const [username, setUsername] = createSignal('');
-  const [password, setPassword] = createSignal('');
-  const [revealed, setRevealed] = createSignal(false);
   createEffect(open, isOpen => {
-    if (!isOpen) return;
-    const settings = untrack(() => data().settings);
-    setHost(settings.platformHostUrl);
-    setUsername(settings.platformUsername);
-    setPassword(settings.platformPassword);
-    setRevealed(false);
+    if (isOpen) setHost(untrack(() => data().settings.platformHostUrl));
   });
 
   return (
@@ -36,10 +30,7 @@ export function PreferencesSheet(props: { view: View }) {
         autocomplete="off"
         onSubmit={event => {
           event.preventDefault();
-          props.view.send({
-            type: 'ui.savePreferences',
-            credentials: { platformHostUrl: host().trim(), platformUsername: username().trim(), platformPassword: password() },
-          });
+          connect();
         }}
       >
         <h2>{t('Preferences')}</h2>
@@ -50,32 +41,42 @@ export function PreferencesSheet(props: { view: View }) {
             placeholder={t('Host URL')}
             spellcheck="false"
             autofocus
+            disabled={data().canOpenPlatform || login().waiting}
             value={host()}
             onInput={event => setHost(event.currentTarget.value)}
           />
-          <input
-            type="text"
-            placeholder={t('Username')}
-            spellcheck="false"
-            value={username()}
-            onInput={event => setUsername(event.currentTarget.value)}
-          />
-          <div class="password">
-            <input
-              type={revealed() ? 'text' : 'password'}
-              placeholder={t(data().canOpenPlatform ? 'Password (empty keeps your login)' : 'Password')}
-              value={password()}
-              onInput={event => setPassword(event.currentTarget.value)}
-            />
-            <button
-              type="button"
-              class="icon-button"
-              title={t(revealed() ? 'Hide password' : 'Show password')}
-              onClick={() => setRevealed(!revealed())}
-            >
-              <Icon icon={revealed() ? EyeOff : Eye} />
-            </button>
-          </div>
+          {data().canOpenPlatform ? (
+            <div class="update-row">
+              <span role="status">{t('Logged in as "%1".', data().settings.platformUsername)}</span>
+              <button type="button" class="button" onClick={() => props.view.send({ type: 'ui.command', name: 'disconnect' })}>
+                <Icon icon={LogOut} />
+                {t('Disconnect')}
+              </button>
+            </div>
+          ) : login().waiting ? (
+            <div class="update-row">
+              <span role="status">{t('Finish logging in, in the browser.')}</span>
+              <button type="button" class="button" onClick={connect}>
+                {t('Open the browser again')}
+              </button>
+              <button
+                type="button"
+                class="icon-button"
+                title={t('Cancel')}
+                onClick={() => props.view.send({ type: 'ui.command', name: 'cancelLogin' })}
+              >
+                <Icon icon={X} />
+              </button>
+            </div>
+          ) : (
+            <div class="update-row">
+              <span role="alert">{login().error}</span>
+              <button type="submit" class="button primary" disabled={host().trim() === ''}>
+                <Icon icon={LogIn} />
+                {t('Connect through the browser')}
+              </button>
+            </div>
+          )}
         </fieldset>
         <fieldset>
           <legend>{t('Automation')}</legend>
@@ -88,11 +89,7 @@ export function PreferencesSheet(props: { view: View }) {
         </fieldset>
         <div class="actions">
           <button type="button" class="button" onClick={() => props.view.send({ type: 'ui.closePanel' })}>
-            {t('Cancel')}
-          </button>
-          <button type="submit" class="button primary">
-            <Icon icon={Save} />
-            {t('Save')}
+            {t('Close')}
           </button>
         </div>
       </form>

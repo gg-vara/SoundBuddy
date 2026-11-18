@@ -54,7 +54,6 @@ std::optional<settings::Settings> AppSettings::_readLegacySettings() {
         legacy = settings::Settings {
             .platformHostUrl = readString(key, L"PlatformHostUrl").value_or(""),
             .platformUsername = readString(key, L"PlatformUsername").value_or(""),
-            .platformPassword = readString(key, L"PlatformPassword").value_or(""),
             .autoRunShout = readBoolean(key, L"AutoRunShout"),
             .runAtStartup = readBoolean(key, L"MustRunAtStartup"),
         };

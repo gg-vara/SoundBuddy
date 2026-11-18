@@ -51,9 +51,10 @@ class AppSettings {
         return { .platformHostUrl = _values.platformHostUrl, .username = _values.platformUsername, .session = _session, .areOK = true };
     }
 
-    // from the current values, the password being exchanged for tokens : "onPasswordUsed" tells when it can go.
-    // Workers keep the session they got for as long as they run
-    void startSession(std::function<void()> onPasswordUsed);
+    // for the current host, with the tokens kept for it. Workers keep the session they got for as long as they run
+    void startSession();
+
+    const std::shared_ptr<net::PlatformSession>& session() const { return _session; }
 
 #ifdef __APPLE__
     // preferences domain where QSettings stored the settings of previous versions

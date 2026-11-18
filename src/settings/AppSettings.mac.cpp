@@ -72,15 +72,13 @@ std::optional<settings::Settings> AppSettings::_readLegacySettings() {
 
     const auto hostUrl = value("PlatformHostUrl");
     const auto username = value("PlatformUsername");
-    const auto password = value("PlatformPassword");
     const auto autoRunShout = value("AutoRunShout");
     const auto runAtStartup = value("MustRunAtStartup");
-    if (!hostUrl.get() && !username.get() && !password.get() && !autoRunShout.get() && !runAtStartup.get()) return std::nullopt;
+    if (!hostUrl.get() && !username.get() && !autoRunShout.get() && !runAtStartup.get()) return std::nullopt;
 
     return settings::Settings {
         .platformHostUrl = toString(hostUrl.get()).value_or(""),
         .platformUsername = toString(username.get()).value_or(""),
-        .platformPassword = toString(password.get()).value_or(""),
         .autoRunShout = toBoolean(autoRunShout.get()),
         .runAtStartup = toBoolean(runAtStartup.get()),
     };

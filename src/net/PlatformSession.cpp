@@ -9,7 +9,6 @@
 #include <cstdint>
 #include <filesystem>
 #include <format>
-#include <functional>
 #include <mutex>
 #include <stop_token>
 #include <string>
@@ -28,10 +27,18 @@ namespace {
 
 constexpr std::string_view clientId = "soundbuddy";
 
+// what SoundBuddy asks to do, which the user allows in the browser : offline_access, to stay logged in with a refresh token
+constexpr std::string_view scopes = "library:write shout:write offline_access";
+
+// OAuth's endpoints, as Better Auth serves them on the platform
+constexpr std::string_view authorizeEndpoint = "/api/auth/oauth2/authorize";
+constexpr std::string_view tokenEndpoint = "/api/auth/oauth2/token";
+constexpr std::string_view revokeEndpoint = "/api/auth/oauth2/revoke";
+
 // renewed that long before it ends, not to send what expires on the way
 constexpr std::int64_t expiryMarginSeconds = 60;
 
-// what is waiting for tokens is told sooner than the default, while a platform checking a password has the time it needs
+// what is waiting for tokens is told sooner than the default
 constexpr std::chrono::seconds tokensTimeout { 10 };
 
 std::int64_t nowSeconds() {
@@ -92,26 +99,16 @@ std::string PlatformSession::explain(const Response& response) {
     return response.body;
 }
 
-PlatformSession::PlatformSession(
-    const std::string& hostUrl, std::string username, std::filesystem::path tokensFile, std::string password,
-    std::function<void()> onPasswordUsed
-) :
+PlatformSession::PlatformSession(const std::string& hostUrl, std::filesystem::path tokensFile) :
     _hostUrl(hostUrl),
     _apiUrl(apiUrlOf(hostUrl)),
-    _username(std::move(username)),
-    _tokensFile(std::move(tokensFile)),
-    _onPasswordUsed(std::move(onPasswordUsed)),
-    _password(std::move(password)) {
-    if (_password.empty()) {
-        _loadTokens();
-    } else {
-        _forgetTokens();
-    }
+    _tokensFile(std::move(tokensFile)) {
+    _loadTokens();
 }
 
 bool PlatformSession::hasLogin() const {
     const std::scoped_lock lock { _mutex };
-    return !_password.empty() || !_refreshToken.empty();
+    return !_refreshToken.empty();
 }
 
 Response PlatformSession::send(HttpClient& client, const Request& request, const std::stop_token& stop) {
@@ -142,46 +139,22 @@ PlatformSession::Access PlatformSession::_access(HttpClient& client, const std::
         return { .failure = std::move(cancelled) };
     }
 
-    if (_password.empty()) {
-        if (_refreshToken.empty()) return { .failure = refused(std::string { i18n::tr("Waiting for appropriate credentials.") }) };
+    if (_refreshToken.empty()) return { .failure = refused(std::string { i18n::tr("Waiting for appropriate credentials.") }) };
 
-        // another thread may have renewed it meanwhile
-        const auto stillGood = _accessToken != tokenRefused && nowSeconds() < _accessExpiresAt - expiryMarginSeconds;
-        if (stillGood) return { .token = _accessToken };
-    }
+    // another thread may have renewed it meanwhile
+    const auto stillGood = _accessToken != tokenRefused && nowSeconds() < _accessExpiresAt - expiryMarginSeconds;
+    if (stillGood) return { .token = _accessToken };
 
-    return _exchange.fly(lock, [this, &client, &stop, password = _password, refreshToken = _refreshToken] {
-        return _exchangeTokens(client, stop, password, refreshToken);
-    });
+    return _exchange.fly(lock, [this, &client, &stop, refreshToken = _refreshToken] { return _refresh(client, stop, refreshToken); });
 }
 
-PlatformSession::Access PlatformSession::_exchangeTokens(
-    HttpClient& client, const std::stop_token& stop, const std::string& password, const std::string& refreshToken
-) {
-    if (!password.empty()) {
-        auto response = _askTokens(
-            client, stop,
-            std::format(
-                "{}&{}&{}&{}", field("grant_type", "password"), field("client_id", clientId), field("username", _username),
-                field("password", password)
-            )
-        );
-        if (!response.ok() && !isRefusal(response)) return { .failure = std::move(response) };
-
-        {
-            const std::scoped_lock lock { _mutex };
-            _password.clear();
-        }
-        if (_onPasswordUsed) _onPasswordUsed();
-        if (!response.ok()) return { .failure = refused(explain(response)) };
-
-        const std::scoped_lock lock { _mutex };
-        return { .token = _accessToken };
-    }
-
-    auto response = _askTokens(
-        client, stop,
-        std::format("{}&{}&{}", field("grant_type", "refresh_token"), field("client_id", clientId), field("refresh_token", refreshToken))
+PlatformSession::Access PlatformSession::_refresh(HttpClient& client, const std::stop_token& stop, const std::string& refreshToken) {
+    auto response = _post(
+        client, stop, tokenEndpoint,
+        std::format(
+            "{}&{}&{}&{}", field("grant_type", "refresh_token"), field("client_id", clientId), field("refresh_token", refreshToken),
+            field("resource", resource())
+        )
     );
     if (response.ok()) {
         const std::scoped_lock lock { _mutex };
@@ -194,8 +167,51 @@ PlatformSession::Access PlatformSession::_exchangeTokens(
     return { .failure = refused(explain(response)) };
 }
 
-Response PlatformSession::_askTokens(HttpClient& client, const std::stop_token& stop, std::string_view fields) {
-    Request request { .method = "POST", .url = _apiUrl + "/oauth/token" };
+std::string PlatformSession::authorizationUrl(std::string_view redirectUri, std::string_view state, std::string_view challenge) const {
+    return std::format(
+        "{}{}?{}&{}&{}&{}&{}&{}&{}&{}", _apiUrl, authorizeEndpoint, field("response_type", "code"), field("client_id", clientId),
+        field("redirect_uri", redirectUri), field("scope", scopes), field("state", state), field("code_challenge", challenge),
+        field("code_challenge_method", "S256"), field("resource", resource())
+    );
+}
+
+Response PlatformSession::login(
+    HttpClient& client, std::string_view code, std::string_view verifier, std::string_view redirectUri, const std::stop_token& stop
+) {
+    auto response = _post(
+        client, stop, tokenEndpoint,
+        std::format(
+            "{}&{}&{}&{}&{}&{}", field("grant_type", "authorization_code"), field("client_id", clientId), field("code", code),
+            field("code_verifier", verifier), field("redirect_uri", redirectUri), field("resource", resource())
+        )
+    );
+    if (isRefusal(response)) return refused(explain(response));
+    return response;
+}
+
+void PlatformSession::logout(HttpClient& client, const std::stop_token& stop) {
+    std::string refreshToken;
+    {
+        const std::scoped_lock lock { _mutex };
+        refreshToken = _refreshToken;
+    }
+    _forgetTokens();
+    if (refreshToken.empty()) return;
+
+    // its answer changes nothing here : the login is over for SoundBuddy anyway
+    const auto response = _post(
+        client, stop, revokeEndpoint,
+        std::format("{}&{}&{}", field("token", refreshToken), field("token_type_hint", "refresh_token"), field("client_id", clientId))
+    );
+    if (!response.ok()) {
+        logs::warning(
+            "Session", "The platform was not told of the logout : {}", response.error.empty() ? explain(response) : response.error
+        );
+    }
+}
+
+Response PlatformSession::_post(HttpClient& client, const std::stop_token& stop, std::string_view endpoint, std::string_view fields) {
+    Request request { .method = "POST", .url = _apiUrl + std::string { endpoint } };
     request.timeout = tokensTimeout;
     request.headers = {
         { .name = "Content-Type", .value = "application/x-www-form-urlencoded" },
@@ -204,7 +220,7 @@ Response PlatformSession::_askTokens(HttpClient& client, const std::stop_token& 
     request.body = std::string { fields };
 
     auto response = client.send(request, stop);
-    if (response.ok()) _keepTokens(response);
+    if (response.ok() && endpoint == tokenEndpoint) _keepTokens(response);
     return response;
 }
 
@@ -227,12 +243,11 @@ void PlatformSession::_keepTokens(const Response& response) {
     auto* const object = yyjson_mut_obj(stored.get());
     yyjson_mut_doc_set_root(stored.get(), object);
     yyjson_mut_obj_add_strncpy(stored.get(), object, "host", _hostUrl.data(), _hostUrl.size());
-    yyjson_mut_obj_add_strncpy(stored.get(), object, "username", _username.data(), _username.size());
     yyjson_mut_obj_add_strncpy(stored.get(), object, "access", access.data(), access.size());
     yyjson_mut_obj_add_strncpy(stored.get(), object, "refresh", refresh.data(), refresh.size());
     yyjson_mut_obj_add_sint(stored.get(), object, "accessExpiresAt", expiresAt);
 
-    // works until the next start : the login is then asked again
+    // works until the next start : the user then logs in again
     if (!secrets::store(_tokensFile, json::write(stored))) logs::warning("Session", "The login could not be stored");
 }
 
@@ -252,7 +267,7 @@ void PlatformSession::_loadTokens() {
 
     const auto doc = json::parse(*content);
     auto* const root = json::root(doc);
-    if (json::string(yyjson_obj_get(root, "host")) != _hostUrl || json::string(yyjson_obj_get(root, "username")) != _username) return;
+    if (json::string(yyjson_obj_get(root, "host")) != _hostUrl) return;
 
     _accessToken = json::string(yyjson_obj_get(root, "access"));
     _refreshToken = json::string(yyjson_obj_get(root, "refresh"));

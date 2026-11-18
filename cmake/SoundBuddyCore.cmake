@@ -20,6 +20,7 @@ function(soundbuddy_add_core target scope)
         ${src}/helpers/Platform.cpp
         ${src}/i18n/Translations.cpp
         ${src}/logs/Logs.cpp
+        ${src}/net/BrowserLogin.cpp
         ${src}/net/HttpClient.cpp
         ${src}/net/LoopbackRedirect.cpp
         ${src}/net/Pkce.cpp

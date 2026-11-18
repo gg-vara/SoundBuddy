@@ -16,6 +16,7 @@
 #include <ios>
 #include <iterator>
 #include <memory>
+#include <stop_token>
 #include <string>
 #include <string_view>
 #include <system_error>
@@ -26,6 +27,8 @@
 #include "src/helpers/Platform.h"
 #include "src/i18n/Translations.h"
 #include "src/logs/Logs.h"
+#include "src/net/BrowserLogin.h"
+#include "src/net/HttpClient.h"
 #include "src/settings/Settings.h"
 #include "src/app/PageMessages.h"
 #include "src/app/Post.h"
@@ -93,6 +96,7 @@ Controller::Controller(Shell& shell) :
 }
 
 Controller::~Controller() {
+    _browserLogin.reset();
     // the watcher stops first, as it feeds the uploader
     _shoutWorker.reset();
     _shoutUploader.reset();
@@ -157,8 +161,14 @@ void Controller::command(std::string_view request) {
         case page::Command::SetRunAtStartup:
             _setRunAtStartup(json::boolean(call.argument));
             break;
-        case page::Command::SavePreferences:
-            _savePreferences(call.argument);
+        case page::Command::Connect:
+            _connect(std::string { json::string(call.argument) });
+            break;
+        case page::Command::CancelLogin:
+            _cancelLogin();
+            break;
+        case page::Command::Disconnect:
+            _disconnect();
             break;
         case page::Command::OpenPlatform:
             openPlatform();
@@ -202,6 +212,7 @@ std::string Controller::_state(yyjson_val* translationKeys) {
         .hasWarnings = hasWarnings(),
         .searchingUpdates = _searchingUpdates,
         .updateResult = _updateResult,
+        .login = _login,
     };
 
     // texts of the page, in the user interface language
@@ -371,35 +382,89 @@ void Controller::_runFeeder() {
 // Settings
 //
 
-void Controller::_savePreferences(yyjson_val* values) {
+void Controller::_connect(std::string hostUrl) {
+    // a login in progress gives way, and nothing it still tells counts
+    _browserLogin.reset();
+    const auto run = ++_loginRun;
+
     auto& settings = _appSettings.values();
-    const auto previous = settings;
-    settings.platformHostUrl = json::string(yyjson_obj_get(values, "platformHostUrl"));
-    settings.platformUsername = json::string(yyjson_obj_get(values, "platformUsername"));
-    settings.platformPassword = json::string(yyjson_obj_get(values, "platformPassword"));
+    settings.platformHostUrl = std::move(hostUrl);
+    settings.platformUsername.clear();
     _appSettings.save();
 
-    // the same login stays the same session, or a worker renewing its tokens would leave the new one with those it just used up
-    const auto sameLogin = settings.platformHostUrl == previous.platformHostUrl && settings.platformUsername == previous.platformUsername &&
-                           settings.platformPassword == previous.platformPassword;
-    if (!sameLogin) _startSession();
+    // a new session : a worker renewing the tokens of the previous one would use up those of the new one
+    _startSession();
+    _sendSettings();
+    _onConnectivityChanged();
+
+    _login = { .waiting = true, .url = {}, .error = {} };
+    _sendLogin();
+
+    _browserLogin = std::make_unique<net::BrowserLogin>(
+        _appSettings.session(),
+        net::BrowserLogin::Callbacks {
+            .onUrl =
+                [this, run](const std::string& url) {
+                    post([this, run, url] {
+                        if (run != _loginRun) return;
+                        _login.url = url;
+                        _sendLogin();
+                        platform::openUrl(url);
+                    });
+                },
+            .onLoggedIn = [this, run](const std::string& username) { post([this, run, username] { _loggedIn(run, username); }); },
+            .onFailed = [this, run](const std::string& why) { post([this, run, why] { _loginFailed(run, why); }); },
+        }
+    );
+}
+
+void Controller::_loggedIn(int run, const std::string& username) {
+    if (run != _loginRun) return;
+    _browserLogin.reset();
+
+    _appSettings.values().platformUsername = username;
+    _appSettings.save();
+
+    _login = {};
+    _sendLogin();
+    _sendSettings();
+    _onConnectivityChanged();
+}
+
+void Controller::_loginFailed(int run, const std::string& why) {
+    if (run != _loginRun) return;
+    _browserLogin.reset();
+
+    _login = { .waiting = false, .url = {}, .error = why };
+    _sendLogin();
+}
+
+void Controller::_cancelLogin() {
+    _browserLogin.reset();
+    ++_loginRun;
+
+    _login = {};
+    _sendLogin();
+}
+
+void Controller::_disconnect() {
+    _cancelLogin();
+
+    _appSettings.values().platformUsername.clear();
+    _appSettings.save();
+
+    // forgotten at once, the platform being told meanwhile. The previous logout, if any, ends first
+    _logout = std::jthread { [session = _appSettings.session()](const std::stop_token& stop) {
+        net::HttpClient client { APP_NAME "/" APP_CURRENT_VERSION };
+        session->logout(client, stop);
+    } };
 
     _sendSettings();
     _onConnectivityChanged();
 }
 
 void Controller::_startSession() {
-    _appSettings.startSession([this, used = _appSettings.values().platformPassword] {
-        post([this, used] {
-            // unless another one was given since
-            auto& settings = _appSettings.values();
-            if (used.empty() || settings.platformPassword != used) return;
-
-            settings.platformPassword.clear();
-            _appSettings.save();
-            _sendSettings();
-        });
-    });
+    _appSettings.startSession();
 }
 
 void Controller::_setRunAtStartup(bool enabled) {
@@ -508,6 +573,10 @@ void Controller::_sendTrayState() {
 void Controller::_sendSettings() {
     _shell.sendToPage(page::settingsEvent(_shownSettings(), _canOpenPlatform()));
     _sendTrayState();
+}
+
+void Controller::_sendLogin() {
+    _shell.sendToPage(page::loginEvent(_login));
 }
 
 void Controller::_sendWarnings() {

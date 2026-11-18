@@ -21,7 +21,6 @@ namespace {
 
 constexpr const char* platformHostUrl = "platformHostUrl";
 constexpr const char* platformUsername = "platformUsername";
-constexpr const char* platformPassword = "platformPassword";
 constexpr const char* autoRunShout = "autoRunShout";
 constexpr const char* runAtStartup = "runAtStartup";
 
@@ -52,7 +51,6 @@ std::optional<Settings> load(const std::filesystem::path& file) {
     return Settings {
         .platformHostUrl = readString(root, platformHostUrl, defaults.platformHostUrl),
         .platformUsername = readString(root, platformUsername, defaults.platformUsername),
-        .platformPassword = readString(root, platformPassword, defaults.platformPassword),
         .autoRunShout = readBool(root, autoRunShout, defaults.autoRunShout),
         .runAtStartup = readBool(root, runAtStartup, defaults.runAtStartup),
     };
@@ -67,7 +65,6 @@ bool save(const std::filesystem::path& file, const Settings& settings) {
 
     addString(doc.get(), root, platformHostUrl, settings.platformHostUrl);
     addString(doc.get(), root, platformUsername, settings.platformUsername);
-    addString(doc.get(), root, platformPassword, settings.platformPassword);
     yyjson_mut_obj_add_bool(doc.get(), root, autoRunShout, settings.autoRunShout);
     yyjson_mut_obj_add_bool(doc.get(), root, runAtStartup, settings.runAtStartup);
 

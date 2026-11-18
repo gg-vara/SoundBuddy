@@ -94,8 +94,7 @@ int main() {
     CHECK(!settings::load(file), "missing file : nothing");
 
     settings::Settings values { .platformHostUrl = "https://host.example",
-                                .platformUsername = "j\xC3\xA9r\xC3\xB4me \"q\"",
-                                .platformPassword = "p\\w\n",
+                                .platformUsername = "j\xC3\xA9r\xC3\xB4me \"q\\\n\"",
                                 .autoRunShout = true,
                                 .runAtStartup = false };
     CHECK(settings::save(file, values), "save creates directories");
@@ -104,7 +103,7 @@ int main() {
     auto loaded = settings::load(file);
     CHECK(
         loaded && loaded->platformHostUrl == values.platformHostUrl && loaded->platformUsername == values.platformUsername &&
-            loaded->platformPassword == values.platformPassword && loaded->autoRunShout && !loaded->runAtStartup,
+            loaded->autoRunShout && !loaded->runAtStartup,
         "round trip : UTF-8, escapes"
     );
 
@@ -150,17 +149,14 @@ int main() {
         AppSettings appSettings;
         const auto& imported = appSettings.values();
         CHECK(
-            imported.platformHostUrl == "https://legacy.example" && imported.platformUsername == "l\xC3\xA9gacy" &&
-                imported.platformPassword == "secret" && imported.autoRunShout && !imported.runAtStartup,
+            imported.platformHostUrl == "https://legacy.example" && imported.platformUsername == "l\xC3\xA9gacy" && imported.autoRunShout &&
+                !imported.runAtStartup,
             "previous versions settings imported"
         );
         CHECK(std::filesystem::exists(dataFile), "settings file created by the import");
-        appSettings.startSession({});
-        CHECK(
-            appSettings.getConnectivityInfos().areOK &&
-                appSettings.getConnectivityInfos().getPlaformHomeUrl() == "https://legacy.example/u/l\xC3\xA9gacy",
-            "connectivity infos"
-        );
+        // their password is left behind : the user logs in through the browser
+        appSettings.startSession();
+        CHECK(!appSettings.getConnectivityInfos().areOK, "no login imported");
     }
     {
         legacy::write(LEGACY_NAME("PlatformHostUrl"), "https://changed.example");
@@ -175,8 +171,8 @@ int main() {
 #ifdef _WIN32
     // QSettings doubles the '@' starting a text
     std::filesystem::remove(dataFile);
-    legacy::write(L"PlatformPassword", "@@pass");
-    CHECK(AppSettings().values().platformPassword == "@pass", "escaped '@' of QSettings");
+    legacy::write(L"PlatformUsername", "@@user");
+    CHECK(AppSettings().values().platformUsername == "@user", "escaped '@' of QSettings");
 #endif
 
     legacy::clear();

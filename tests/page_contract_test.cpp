@@ -81,7 +81,6 @@ int main(int argc, char* argv[]) {
     const settings::Settings settings {
         .platformHostUrl = "https://example.com",
         .platformUsername = "user",
-        .platformPassword = "password",
         .autoRunShout = true,
         .runAtStartup = false,
     };
@@ -117,6 +116,8 @@ int main(int argc, char* argv[]) {
     events.push_back(ui::page::panelEvent(ui::Panel::Preferences));
     events.push_back(ui::page::panelEvent(ui::Panel::Warnings));
     events.push_back(ui::page::panelEvent(ui::Panel::About));
+    events.push_back(ui::page::loginEvent({ .waiting = true, .url = "https://example.com/api/auth/oauth2/authorize", .error = {} }));
+    events.push_back(ui::page::loginEvent({ .waiting = false, .url = {}, .error = "Access was denied" }));
 
     // states : a page loading while the app runs, then just started
     const ui::page::State running {
@@ -141,6 +142,7 @@ int main(int argc, char* argv[]) {
         .hasWarnings = true,
         .searchingUpdates = true,
         .updateResult = ui::page::UpdateResult { .kind = Kind::Failed, .version = {}, .error = "Error" },
+        .login = { .waiting = true, .url = "https://example.com/api/auth/oauth2/authorize", .error = {} },
     };
     const ui::page::State started {};
 

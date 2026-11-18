@@ -90,22 +90,47 @@ async function sendTime(window: string, message: number, wParam = 0): Promise<nu
   return Number(output);
 }
 
-// tokens answered after "tokensDelayMs", or by "tokensAnswer"
+// a login through the browser gives tokens at once, which the API takes once, to tell who logged in : renewing them then answers
+// after "tokensDelayMs", by "tokensAnswer"
 let server: ReturnType<typeof Bun.serve>;
 let tokensDelayMs = 0;
 let tokensAnswer: (() => Response) | null = null;
+let tokenCount = 0;
+const meAnswered = new Set<string>();
 
 beforeAll(() => {
   server = Bun.serve({
     port: 0,
     idleTimeout: 120,
     async fetch(request) {
-      if (new URL(request.url).pathname !== '/oauth/token') return new Response('', { status: 404 });
+      const path = new URL(request.url).pathname;
+      if (path.startsWith('/api/v1/')) {
+        const first = path === '/api/v1/me' && !meAnswered.has(request.headers.get('authorization') ?? '');
+        meAnswered.add(request.headers.get('authorization') ?? '');
+        return first ? Response.json({ username: 'tester', scopes: [] }) : new Response(null, { status: 401 });
+      }
+      if (path !== '/api/auth/oauth2/token') return new Response('', { status: 404 });
+      const fields = new URLSearchParams(await request.text());
+      if (fields.get('grant_type') === 'authorization_code') {
+        return Response.json({ access_token: `access-${++tokenCount}`, refresh_token: 'refresh', token_type: 'Bearer', expires_in: 3600 });
+      }
       await Bun.sleep(tokensDelayMs);
       return tokensAnswer?.() ?? new Response('error code: 522', { status: 522 });
     },
   });
 });
+
+// as the user does, in the preferences then in the browser
+async function logIn(page: Page) {
+  await page.evaluate(`sbCommand('connect', 'http://localhost:${server.port}')`);
+  await page.until(`sbQuery('ready', []).then(state => state.login.url !== '')`, 'where the browser goes');
+  const url = new URL((await page.evaluate(`sbQuery('ready', []).then(state => state.login.url)`)) as string);
+  const back = new URL(url.searchParams.get('redirect_uri') ?? '');
+  back.searchParams.set('code', 'code');
+  back.searchParams.set('state', url.searchParams.get('state') ?? '');
+  await fetch(back);
+  await page.until(`sbQuery('ready', []).then(state => state.canOpenPlatform)`, 'logged in');
+}
 
 // a port nothing listens to
 function freePort(): number {
@@ -193,8 +218,6 @@ async function start(settings: Record<string, unknown> | null = {}): Promise<App
       join(folder, 'settings.json'),
       JSON.stringify({
         platformHostUrl: `http://localhost:${server.port}`,
-        platformUsername: 'tester',
-        platformPassword: 'password1',
         autoRunShout: false,
         runAtStartup: false,
         ...settings,
@@ -208,11 +231,12 @@ async function start(settings: Record<string, unknown> | null = {}): Promise<App
     stdout: 'ignore',
     stderr: 'ignore',
   });
-  const page = await Page.of(port);
-  await page.loaded();
-
-  const app = { process: process_, folder, port, page };
+  // stopped after the test, even when it ends here
+  const app = { process: process_, folder, port, page: undefined as unknown as Page };
   running.push(app);
+  app.page = await Page.of(port);
+  await app.page.loaded();
+  if (settings) await logIn(app.page);
   return app;
 }
 
@@ -231,7 +255,7 @@ async function quitWithShoutsRunning(app: App) {
 
 afterEach(async () => {
   for (const app of running.splice(0)) {
-    app.page.close();
+    app.page?.close();
     app.process.kill();
     await app.process.exited;
   }
@@ -266,7 +290,8 @@ test(
 
     void app.page.evaluate(`sbCommand('quit', null)`).catch(() => {});
     expect(await app.process.exited).toBe(0);
-    expect(readFileSync(join(app.folder, 'logs', 'soundbuddy.log'), 'utf8')).not.toContain('[ERROR]');
+    const log = readFileSync(join(app.folder, 'logs', 'soundbuddy.log'), 'utf8');
+    expect(log.split('\n').filter(line => line.includes('[ERROR]'))).toEqual([]);
   },
   TIMEOUT_MS,
 );
